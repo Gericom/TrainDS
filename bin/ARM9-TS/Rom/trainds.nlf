@@ -1,0 +1,15 @@
+#NLF --- NitroROM List File
+T,"D:/Projects/DS/CW/TrainDS/bin/ARM9-TS/Rom"
+V,1.1
+H,"./main_header.sbin","./main_files.sbin",0
+9,"./main.nef","./main.sbin","*","./main_defs.sbin","*"
+7,"D:/NitroSDK/components/mongoose/ARM7-TS/Rom/mongoose_sub.nef","D:/NitroSDK/components/mongoose/ARM7-TS/Rom/mongoose_sub.sbin","*","D:/NitroSDK/components/mongoose/ARM7-TS/Rom/mongoose_sub_defs.sbin","*"
+
+# File Images
+F,00000000,00004000,ff,ffff,ffff,"main_header.sbin","*",569e75f8,512,1
+F,00004000,0000abe4,ff,ffff,0008,"main.sbin","*",569e75f8,512,1
+F,0000ac00,00031b28,ff,ffff,000c,"D:/NitroSDK/components/mongoose/ARM7-TS/Rom/mongoose_sub.sbin","*",47906bc2,512,1
+F,00031c00,00031c09,ff,ffff,0010,"main_files.sbin","*",569e75f8,512,1
+F,00031e00,00031e00,ff,ffff,0012,"*FILEALLOC","*",00000000,512,1
+F,00031e00,00032640,ff,ffff,001a,"D:/NitroSDK/include/nitro/specfiles/default.bnr","*",475913b6,512,1
+#
