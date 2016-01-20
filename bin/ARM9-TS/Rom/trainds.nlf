@@ -1,15 +1,19 @@
 #NLF --- NitroROM List File
 T,"D:/Projects/DS/CW/TrainDS/bin/ARM9-TS/Rom"
 V,1.1
-H,"./main_header.sbin","./main_files.sbin",0
+H,"./main_header.sbin","./main_files.sbin",4
 9,"./main.nef","./main.sbin","*","./main_defs.sbin","*"
 7,"D:/NitroSDK/components/mongoose/ARM7-TS/Rom/mongoose_sub.nef","D:/NitroSDK/components/mongoose/ARM7-TS/Rom/mongoose_sub.sbin","*","D:/NitroSDK/components/mongoose/ARM7-TS/Rom/mongoose_sub_defs.sbin","*"
 
 # File Images
-F,00000000,00004000,ff,ffff,ffff,"main_header.sbin","*",569e7ebb,512,1
-F,00004000,0000c204,ff,ffff,0008,"main.sbin","*",569e7eba,512,1
-F,0000c400,00033328,ff,ffff,000c,"D:/NitroSDK/components/mongoose/ARM7-TS/Rom/mongoose_sub.sbin","*",47906bc2,512,1
-F,00033400,00033409,ff,ffff,0010,"main_files.sbin","*",569e7ebb,512,1
-F,00033600,00033600,ff,ffff,0012,"*FILEALLOC","*",00000000,512,1
-F,00033600,00033e40,ff,ffff,001a,"D:/NitroSDK/include/nitro/specfiles/default.bnr","*",475913b6,512,1
+F,00000000,00004000,ff,ffff,ffff,"main_header.sbin","*",569fc8fc,512,1
+F,00004000,0000dca4,ff,ffff,0008,"main.sbin","*",569fc8fc,512,1
+F,0000de00,00034d28,ff,ffff,000c,"D:/NitroSDK/components/mongoose/ARM7-TS/Rom/mongoose_sub.sbin","*",47906bc2,512,1
+F,00034e00,00034e76,ff,ffff,0010,"main_files.sbin","*",569fc8fc,512,1
+F,00035000,00035020,ff,ffff,0012,"*FILEALLOC","*",00000000,512,1
+F,00035200,00035a40,ff,ffff,001a,"D:/NitroSDK/include/nitro/specfiles/default.bnr","*",475913b6,512,1
+F,00035c00,00035cb8,ff,0000,ffff,"files/data/map/grass.ntfp","/data/map/grass.ntfp",569f9d80,512,0
+F,00035e00,00036200,ff,0001,ffff,"files/data/map/grass.ntft","/data/map/grass.ntft",569f9d80,512,0
+F,00036200,00036324,ff,0002,ffff,"files/data/map/grass_track_horizontal.ntfp","/data/map/grass_track_horizontal.ntfp",569fc75f,512,0
+F,00036400,00036800,ff,0003,ffff,"files/data/map/grass_track_horizontal.ntft","/data/map/grass_track_horizontal.ntft",569fc75f,512,0
 #

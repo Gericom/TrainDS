@@ -1,6 +1,8 @@
 #include <nitro.h>
+#include <nnsys/gfd.h>
 #include "core.h"
-#include "terrain/tile.h"
+#include "terrain/terrain.h"
+#include "terrain/TerrainManager.h"
 
 #define	DEFAULT_DMA_NUMBER		MI_DMA_MAX_NUM
 
@@ -78,13 +80,23 @@ void NitroMain ()
 	G3X_AlphaTest(FALSE, 0);                   // AlphaTest OFF
 	G3X_AlphaBlend(TRUE);                      // AlphaTest ON
 
+	G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3),31, 0x7fff, 63, FALSE);
 	G3_ViewPort(0, 0, 255, 191);
+
+	uint32_t szWork = NNS_GfdGetLnkTexVramManagerWorkSize( 4096 );
+    void* pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);
+    NNS_GfdInitLnkTexVramManager(256 * 1024, 0, pMgrWork, szWork, TRUE);
+
+	szWork = NNS_GfdGetLnkPlttVramManagerWorkSize( 4096 );
+    pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);
+    NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
+
+	gTerrainManager = new TerrainManager();
 
 	OS_WaitVBlankIntr();
 
     GX_DispOn();
     GXS_DispOn();
-
 
 	while(1)
 	{
@@ -92,7 +104,7 @@ void NitroMain ()
 		G3_MtxMode(GX_MTXMODE_PROJECTION);
 		{
 			G3_Identity();
-			G3_Perspective(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 16 * 4096, NULL);
+			G3_Perspective(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096, NULL);
 			G3_StoreMtx(0);
 		}
 		G3_MtxMode(GX_MTXMODE_TEXTURE);
@@ -103,30 +115,39 @@ void NitroMain ()
 		{
 			G3_Identity();
 			VecFx32 pos;
-			pos.x = 0;
-			pos.y = 4096 * 100 / 16;
-			pos.z = 4096 * 150 / 16;
+			pos.x = 8 * FX32_ONE;
+			pos.y = 2 * FX32_ONE;
+			pos.z = 8 * FX32_ONE;
 			VecFx32 up;
 			up.x = 0;
 			up.y = 4096;
 			up.z = 0;
 			VecFx32 dst;
-			dst.x = 0;
+			dst.x = 4.5 * FX32_ONE;
 			dst.y = 0;
-			dst.z = 0;
-			G3_LookAt(&pos, &up, &dst, NULL);
+			dst.z = 4.5 * FX32_ONE;
+			
+			G3_RotX(FX32_SIN45, FX32_COS45);
+			G3_Translate(0, -2 * FX32_ONE, 0);
+			//G3_LookAt(&pos, &up, &dst, NULL);
 			G3_Translate(-8 * FX32_ONE, 0, -8 * FX32_ONE);
+			tile_t dummyTile;
+			dummyTile.y = 0;
 			for(int y = 0; y < 16; y++)
 			{
 				for(int x = 0; x < 16; x++)
 				{
-					tile_render(NULL);
+					if(y == 5)//(x+y)&1)
+						dummyTile.groundType = 1;
+					else 
+						dummyTile.groundType = 0;
+					tile_render(&dummyTile);
 					G3_Translate(FX32_ONE, 0, 0);
 				}
 				G3_Translate(-16 * FX32_ONE, 0, FX32_ONE);
 			}
 		}
-		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
+		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 		OS_WaitVBlankIntr();
 	}
 }
