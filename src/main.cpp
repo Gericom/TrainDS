@@ -31,8 +31,6 @@ static void Init()
 	//Done in NitroStartup
 	//OS_Init();
 	OS_InitTick();
-	FX_Init();
-
 	GX_Init();
 
 	GX_DispOff();
