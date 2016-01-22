@@ -36,13 +36,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <NMakeBuildCommandLine>build</NMakeBuildCommandLine>
+    <NMakeBuildCommandLine>call build.bat 2&lt;&amp;1 | sed -u -f errparse.sed</NMakeBuildCommandLine>
     <NMakeOutput>
     </NMakeOutput>
     <NMakeCleanCommandLine>clean</NMakeCleanCommandLine>
     <NMakeReBuildCommandLine>rebuild</NMakeReBuildCommandLine>
-    <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <IncludePath>$(NITROSDK_ROOT)\include;$(ProjectDir)\src;$(NITROSYSTEM_ROOT)\include;$(IncludePath)</IncludePath>
+    <NMakePreprocessorDefinitions>SDK_ARM9;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <IncludePath>$(NITROSDK_ROOT)\include;$(ProjectDir)\src;$(NITROSYSTEM_ROOT)\include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C\MSL_Common\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <NMakeBuildCommandLine>build</NMakeBuildCommandLine>

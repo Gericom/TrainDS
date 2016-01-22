@@ -12,7 +12,7 @@ typedef s32 int32_t;
 
 #define MKTAG(a0,a1,a2,a3) ((uint32)((a0) | ((a1) << 8) | ((a2) << 16) | ((a3) << 24))) 
 
-#define NOCASH_Break() asm("mov r11, r11");
+#define NOCASH_Break() asm("mov r11, r11")
 
 extern NNSFndHeapHandle mHeapHandle;
 

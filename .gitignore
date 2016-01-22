@@ -1,4 +1,6 @@
 TrainDS.nlf
-build*/
-Debug*/
+build/
+Debug/
 obj*/
+*.suo
+*.user

@@ -74,17 +74,17 @@ void NitroMain ()
 	G3X_SetShading(GX_SHADING_TOON); 
 	G3X_AntiAlias(TRUE);
 	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
-
+	
 	G3X_AlphaTest(FALSE, 0);                   // AlphaTest OFF
 	G3X_AlphaBlend(TRUE);                      // AlphaTest ON
 
 	G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3),31, 0x7fff, 63, FALSE);
 	G3_ViewPort(0, 0, 255, 191);
-
+	
 	uint32_t szWork = NNS_GfdGetLnkTexVramManagerWorkSize( 4096 );
     void* pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);
     NNS_GfdInitLnkTexVramManager(256 * 1024, 0, pMgrWork, szWork, TRUE);
-
+	
 	szWork = NNS_GfdGetLnkPlttVramManagerWorkSize( 4096 );
     pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);
     NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
