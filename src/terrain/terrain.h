@@ -11,9 +11,19 @@ typedef struct
 	int nitroFormat;
 } texture_t;
 
+#define TILE_CORNER_FLAT	0
+#define TILE_CORNER_UP		1
+#define TILE_CORNER_DOWN	2
+
+#define TILE_HEIGHT			(FX32_HALF >> 1)
+
 typedef struct
 {
 	uint16_t y;
+	uint8_t ltCorner : 2;
+	uint8_t rtCorner : 2;
+	uint8_t lbCorner : 2;
+	uint8_t rbCorner : 2;
 	uint8_t groundType;
 } tile_t;
 
@@ -21,8 +31,8 @@ void tile_render(tile_t* tile);
 
 typedef struct
 {
-	tile_t tiles[16][16];//[y][x]
-} sector_t;
+	tile_t tiles[128][128];
+} map_t;
 
 
 #endif

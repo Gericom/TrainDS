@@ -4,10 +4,12 @@
 #include "terrain.h"
 #include "TerrainManager.h"
 
+static fx32 tile_corner_to_y[4] = {0, TILE_HEIGHT, -TILE_HEIGHT, 0};
+
 void tile_render(tile_t* tile)
 {
 	texture_t* tex = gTerrainManager->GetTerrainTexture(tile->groundType);
-	G3_Color(GX_RGB(31,31,31));
+	//G3_Color(GX_RGB(31,31,31));
 	if(tex == NULL)
 	{
 		G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S8, GX_TEXSIZE_T8, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
@@ -26,18 +28,43 @@ void tile_render(tile_t* tile)
 			G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 
 	}
-	//if(tile->groundType == 0) G3_Color(GX_RGB(129 >> 3, 159 >> 3, 42 >> 3));
-	//else if(tile->groundType == 1) G3_Color(GX_RGB(31,31,31));
-	G3_Begin(GX_BEGIN_QUADS);
+	G3_PushMtx();
 	{
-		if(tex != NULL) G3_TexCoord(0, 0);
-		G3_Vtx(0, 0, 0);
-		if(tex != NULL) G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
-		G3_Vtx(0, 0,  FX32_ONE);
-		if(tex != NULL) G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
-		G3_Vtx(FX32_ONE, 0,  FX32_ONE);
-		if(tex != NULL) G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
-		G3_Vtx(FX32_ONE, 0, 0);
+		G3_Translate(0, tile->y * TILE_HEIGHT, 0);
+		//Can we do it with one quad?
+		//if(tile->ltCorner + tile->rtCorner + tile->lbCorner + tile->rbCorner == 0 ||
+		//	(tile->ltCorner == TILE_CORNER_UP && tile->rbCorner == TILE_CORNER_DOWN && tile->rtCorner + tile->lbCorner == 0) ||
+		//	(tile->ltCorner == TILE_CORNER_DOWN && tile->rbCorner == TILE_CORNER_UP && tile->rtCorner + tile->lbCorner == 0) ||
+		//	(tile->rtCorner == TILE_CORNER_DOWN && tile->lbCorner == TILE_CORNER_UP && tile->ltCorner + tile->rbCorner == 0) ||
+		//	(tile->rtCorner == TILE_CORNER_UP && tile->lbCorner == TILE_CORNER_DOWN && tile->ltCorner + tile->rbCorner == 0))
+		//{
+			G3_Begin(GX_BEGIN_QUADS);
+			{
+				if(tile->ltCorner + tile->rtCorner + tile->lbCorner + tile->rbCorner == 0)
+					G3_Normal(0, GX_FX16_FX10_MAX, 0);
+				else if(tile->ltCorner == TILE_CORNER_UP && tile->rtCorner == TILE_CORNER_UP && tile->lbCorner + tile->rbCorner == 0)
+					G3_Normal(0, 497, 124);
+				else if(tile->lbCorner == TILE_CORNER_UP && tile->rbCorner == TILE_CORNER_UP && tile->ltCorner + tile->rtCorner == 0)
+					G3_Normal(0, 497, -124);
+				if(tex != NULL) G3_TexCoord(0, 0);
+				G3_Vtx(0, tile_corner_to_y[tile->ltCorner], 0);
+				if(tex != NULL) G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
+				G3_Vtx(0, tile_corner_to_y[tile->lbCorner],  FX32_ONE);
+				if(tex != NULL) G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
+				G3_Vtx(FX32_ONE, tile_corner_to_y[tile->rbCorner],  FX32_ONE);
+				if(tex != NULL) G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
+				G3_Vtx(FX32_ONE, tile_corner_to_y[tile->rtCorner], 0);
+			}
+			G3_End();
+		//}
+		//else
+		//{
+			//Just one corner up
+		//	if(tile->ltCorner + tile->rtCorner + tile->lbCorner + tile->rbCorner == TILE_CORNER_UP)
+		//	{
+
+		//	}
+		//}
 	}
-	G3_End();
+	G3_PopMtx(1);
 }

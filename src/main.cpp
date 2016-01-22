@@ -112,6 +112,15 @@ void NitroMain ()
 		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
 		{
 			G3_Identity();
+			G3_MtxMode(GX_MTXMODE_POSITION);
+
+			G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
+			//Do this with identity matrix, because we don't want to rotate it
+			G3_LightVector(GX_LIGHTID_0, 0, GX_FX16_FX10_MIN, 0);
+			G3_LightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
+			G3_MaterialColorDiffAmb(GX_RGB(31,31,31), GX_RGB(20,20,20), FALSE);
+			G3_MaterialColorSpecEmi(GX_RGB(8,8,8), GX_RGB(0,0,0), FALSE);
+
 			VecFx32 pos;
 			pos.x = 8 * FX32_ONE;
 			pos.y = 2 * FX32_ONE;
@@ -127,22 +136,55 @@ void NitroMain ()
 			
 			G3_RotX(FX32_SIN45, FX32_COS45);
 			G3_Translate(0, -2 * FX32_ONE, 0);
+			G3_RotY(-FX32_SIN45, FX32_COS45);
 			//G3_LookAt(&pos, &up, &dst, NULL);
 			G3_Translate(-8 * FX32_ONE, 0, -8 * FX32_ONE);
+
 			tile_t dummyTile;
 			dummyTile.y = 0;
 			for(int y = 0; y < 16; y++)
 			{
-				for(int x = 0; x < 16; x++)
+				G3_PushMtx();
 				{
-					if(y == 5)//(x+y)&1)
-						dummyTile.groundType = 1;
-					else 
-						dummyTile.groundType = 0;
-					tile_render(&dummyTile);
-					G3_Translate(FX32_ONE, 0, 0);
+					for(int x = 0; x < 16; x++)
+					{
+						if(y == 5)//(x+y)&1)
+						{
+							dummyTile.groundType = 1;
+							dummyTile.y = 1;
+						}
+						else 
+						{
+							dummyTile.groundType = 0;
+							dummyTile.y = 0;
+						}
+						if(y == 6)
+						{
+							dummyTile.ltCorner = TILE_CORNER_UP;
+							dummyTile.rtCorner = TILE_CORNER_UP;
+							dummyTile.lbCorner = TILE_CORNER_FLAT;
+							dummyTile.rbCorner = TILE_CORNER_FLAT;
+						}
+						else if(y == 4)
+						{
+							dummyTile.ltCorner = TILE_CORNER_FLAT;
+							dummyTile.rtCorner = TILE_CORNER_FLAT;
+							dummyTile.lbCorner = TILE_CORNER_UP;
+							dummyTile.rbCorner = TILE_CORNER_UP;
+						}
+						else
+						{
+							dummyTile.ltCorner = TILE_CORNER_FLAT;
+							dummyTile.rtCorner = TILE_CORNER_FLAT;
+							dummyTile.lbCorner = TILE_CORNER_FLAT;
+							dummyTile.rbCorner = TILE_CORNER_FLAT;
+						}
+						tile_render(&dummyTile);
+						G3_Translate(FX32_ONE, 0, 0);
+					}
 				}
-				G3_Translate(-16 * FX32_ONE, 0, FX32_ONE);
+				G3_PopMtx(1);
+				G3_Translate(0, 0, FX32_ONE);
 			}
 		}
 		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);

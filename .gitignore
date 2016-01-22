@@ -1,7 +1,8 @@
 TrainDS.nlf
 build/
 Debug/
-obj*/
+obj/
+tmp/
 *.suo
 *.user
 run.bat
