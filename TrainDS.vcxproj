@@ -37,8 +37,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <NMakeBuildCommandLine>call build.bat 2&lt;&amp;1 | sed -u -f errparse.sed</NMakeBuildCommandLine>
-    <NMakeOutput>
-    </NMakeOutput>
+    <NMakeOutput>run.bat</NMakeOutput>
     <NMakeCleanCommandLine>clean</NMakeCleanCommandLine>
     <NMakeReBuildCommandLine>rebuild</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>SDK_ARM9;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>

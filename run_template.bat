@@ -1,0 +1,1 @@
+"P:\ath\to\emulator.exe" TrainDS.nds
