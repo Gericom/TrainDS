@@ -55,7 +55,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include=".gitignore" />
-    <None Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core.cpp" />
