@@ -1,0 +1,46 @@
+;;;;;;;;;;;;;;;;;;;;;;
+;; Wave Archive
+
+@WAVEARC
+ @PATH "swar"
+	
+;;;;;;;;;;;;;;;;;;;;;;
+;; Bank
+
+@BANK
+ @PATH "bnk" 
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Player
+
+@PLAYER
+ 
+;;;;;;;;;;;;;;;;;;;;;;
+;; Sequence
+
+@SEQ
+ @PATH "mid"
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Sequence Archive
+
+@SEQARC
+ @PATH "mus"
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Stream Player
+
+@STRM_PLAYER
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Stream
+
+@STRM
+ @PATH "strm"
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Group
+
+@GROUP
+
+

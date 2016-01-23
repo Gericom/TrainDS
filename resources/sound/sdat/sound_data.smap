@@ -1,0 +1,21 @@
+# GROUP:
+# label                     number      hsize  type    number      hsize
+
+# SEQ:
+# label                     number fileID bnk vol cpr ppr ply      hsize       size name
+
+# SEQARC:
+# label                     number fileID                                      size name
+
+# BANK:
+# label                     number fileID wa0 wa1 wa2 wa3          hsize       size name
+
+# WAVEARC:
+# label                     number fileID                                      size name
+
+# STRM:
+# label                     number fileID vol pri ply                          size name
+
+# FAT:
+# fileID     offset       size name
+
