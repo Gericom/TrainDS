@@ -11,6 +11,17 @@ void TitleMenu::Initialize(int arg)
 	//{
 	mState = TITLEMENU_STATE_MENU_IN;
 	//}
+
+	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
+	MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
+	(void)GX_DisableBankForLCDC();
+
+	MI_CpuFillFast((void *)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
+	MI_CpuClearFast((void *)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
+
+	MI_CpuFillFast((void *)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
+	MI_CpuClearFast((void *)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
+
 	GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_16_I);
 	GXS_SetVisiblePlane(GX_PLANEMASK_OBJ);
 
@@ -113,6 +124,11 @@ void TitleMenu::Render()
 	case TITLEMENU_STATE_INTRO:
 		break;
 	case TITLEMENU_STATE_MENU_IN:
+		if(mStateCounter == 0)
+		{
+			NNS_SndStrmHandleInit(&mMusicHandle);
+			NNS_SndArcStrmStart(&mMusicHandle, STRM_TITLE, 0);
+		}
 		pButtonLarge = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 0);
 		pButtonLargeSel = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 2);
 		pButtonSmall = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 1);
@@ -211,5 +227,6 @@ void TitleMenu::VBlank()
 
 void TitleMenu::Finalize()
 {
-
+	NNS_FndFreeToExpHeap(mHeapHandle, mFontData);
+	NNS_FndFreeToExpHeap(mHeapHandle, mCellDataSub);
 }

@@ -31,12 +31,15 @@
 ;; Stream Player
 
 @STRM_PLAYER
+ PLAYER_STRM : STEREO, 6, 7
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Stream
 
 @STRM
  @PATH "strm"
+ STRM_INTRO : ADPCM, "STRM_INTRO.wav", 127, 64, PLAYER_STRM
+ STRM_TITLE : ADPCM, "STRM_TITLE.wav", 127, 64, PLAYER_STRM
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Group

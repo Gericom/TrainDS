@@ -71,5 +71,3 @@ texture_t* TerrainManager::GetTerrainTexture(int terrainId)
 {
 	return mTerrainTextures[terrainId];
 }
-
-TerrainManager* gTerrainManager;

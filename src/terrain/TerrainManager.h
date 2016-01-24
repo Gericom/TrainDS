@@ -11,6 +11,4 @@ public:
 	texture_t* GetTerrainTexture(int terrainId);
 };
 
-extern TerrainManager* gTerrainManager;
-
 #endif

@@ -27,7 +27,9 @@ typedef struct
 	uint8_t groundType;
 } tile_t;
 
-void tile_render(tile_t* tile);
+class TerrainManager;
+
+void tile_render(tile_t* tile, TerrainManager* terrainManager);
 
 typedef struct
 {

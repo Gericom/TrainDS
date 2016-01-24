@@ -10,4 +10,6 @@ public:
 	virtual void Finalize() = 0;
 };
 
+extern Menu* gRunningMenu;
+
 #endif

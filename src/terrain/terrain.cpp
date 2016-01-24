@@ -6,9 +6,11 @@
 
 static fx32 tile_corner_to_y[4] = {0, TILE_HEIGHT, -TILE_HEIGHT, 0};
 
-void tile_render(tile_t* tile)
+//TODO: Make a map class or something that requires a terrainmanager in its constructor,
+//		and make that class include this function
+void tile_render(tile_t* tile, TerrainManager* terrainManager)
 {
-	texture_t* tex = gTerrainManager->GetTerrainTexture(tile->groundType);
+	texture_t* tex = terrainManager->GetTerrainTexture(tile->groundType);
 	//G3_Color(GX_RGB(31,31,31));
 	if(tex == NULL)
 	{

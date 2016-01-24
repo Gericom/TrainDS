@@ -3,7 +3,6 @@
 #include <nnsys/g2d.h>
 #include "Menu.h"
 
-
 #define TITLEMENU_ARG_PLAY_INTRO		0
 #define TITLEMENU_ARG_DONT_PLAY_INTRO	1
 
@@ -29,6 +28,7 @@ private:
 	NNSG2dCharCanvas mCanvas;
 	NNSG2dTextCanvas mTextCanvas;
 	int mKeyTimeout;
+	NNSSndStrmHandle mMusicHandle;
 public:
 	void Initialize(int arg);
 	void Render();

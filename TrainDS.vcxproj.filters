@@ -40,15 +40,15 @@
     <ClCompile Include="src\menu\TitleMenu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\menu\Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\core.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\terrain\terrainmanager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\terrain\terrain.h">
@@ -58,6 +58,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\menu\TitleMenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\menu\Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\terrain\TerrainManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

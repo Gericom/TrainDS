@@ -15,7 +15,11 @@
 
 # STRM:
 # label                     number fileID vol pri ply                          size name
+  STRM_INTRO                     0      0 127  64   0                        696412 strm/STRM_INTRO.adpcm.strm
+  STRM_TITLE                     1      1 127  64   0                       5085700 strm/STRM_TITLE.adpcm.strm
 
 # FAT:
 # fileID     offset       size name
+       0 0x000001c0     696412 strm/STRM_INTRO.adpcm.strm
+       1 0x000aa220    5085700 strm/STRM_TITLE.adpcm.strm
 
