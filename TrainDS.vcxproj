@@ -57,6 +57,7 @@
     <None Include="build.ps1" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\terrain\Map.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\menu\Game.cpp" />
@@ -67,6 +68,7 @@
     <ClCompile Include="src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\terrain\Map.h" />
     <ClInclude Include="src\core.h" />
     <ClInclude Include="src\menu\Game.h" />
     <ClInclude Include="src\menu\Menu.h" />

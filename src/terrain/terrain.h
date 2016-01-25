@@ -15,7 +15,8 @@ typedef struct
 #define TILE_CORNER_UP		1
 #define TILE_CORNER_DOWN	2
 
-#define TILE_HEIGHT			(FX32_HALF >> 1)
+//#define TILE_HEIGHT			(FX32_HALF >> 1)
+#define TILE_HEIGHT			(FX32_HALF - (FX32_HALF >> 2))
 
 typedef struct
 {
@@ -30,11 +31,6 @@ typedef struct
 class TerrainManager;
 
 void tile_render(tile_t* tile, TerrainManager* terrainManager);
-
-typedef struct
-{
-	tile_t tiles[128][128];
-} map_t;
 
 
 #endif

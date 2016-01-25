@@ -23,28 +23,28 @@ void Core_PreInit()
     mHeapHandle = NNS_FndCreateExpHeap(appHeapMemory, appHeapSize);
 }
 
-void* operator new ( std::size_t blocksize )
+void* operator new(std::size_t blocksize)
 {
-    void* block = NNS_FndAllocFromExpHeapEx(mHeapHandle, blocksize, 16);//OS_AllocFromHeap( ARENA_ID, HEAP_ID, blocksize );
+    void* block = NNS_FndAllocFromExpHeapEx(mHeapHandle, blocksize, 16);
 	MI_CpuClear32(block, blocksize);
 	return block;
 }
 
-void* operator new[] ( std::size_t blocksize )
+void* operator new[](std::size_t blocksize)
 {
-    void* block = NNS_FndAllocFromExpHeapEx(mHeapHandle, blocksize, 16);//return OS_AllocFromHeap( ARENA_ID, HEAP_ID, blocksize );
+    void* block = NNS_FndAllocFromExpHeapEx(mHeapHandle, blocksize, 16);
 	MI_CpuClear32(block, blocksize);
 	return block;
 }
 
-void operator delete ( void* block ) throw()
+void operator delete(void* block) throw()
 {
-    NNS_FndFreeToExpHeap(mHeapHandle, block);//OS_FreeToHeap( ARENA_ID, HEAP_ID, block );
+    NNS_FndFreeToExpHeap(mHeapHandle, block);
 }
 
-void operator delete[] ( void* block ) throw()
+void operator delete[](void* block) throw()
 {
-    NNS_FndFreeToExpHeap(mHeapHandle, block);//OS_FreeToHeap( ARENA_ID, HEAP_ID, block );
+    NNS_FndFreeToExpHeap(mHeapHandle, block);
 }
 
 #define SOUND_HEAP_SIZE 0x80000
