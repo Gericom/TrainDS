@@ -38,13 +38,9 @@ void Game::Initialize(int arg)
 	G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3),31, 0x7fff, 63, FALSE);
 	G3_ViewPort(0, 0, 255, 191);
 
-	uint32_t szWork = NNS_GfdGetLnkTexVramManagerWorkSize( 4096 );
-    void* pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);
-    NNS_GfdInitLnkTexVramManager(256 * 1024, 0, pMgrWork, szWork, TRUE);
-	
-	szWork = NNS_GfdGetLnkPlttVramManagerWorkSize( 4096 );
-    pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);
-    NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
+	GX_SetDispSelect(GX_DISP_SELECT_SUB_MAIN);
+
+	NNS_GfdResetLnkTexVramState();
 
 	mTerrainManager = new TerrainManager();
 
@@ -110,8 +106,8 @@ void Game::Render()
 
 		VecFx32 pos;
 		pos.x = 2 * FX32_ONE;
-		pos.y = 2 * FX32_ONE;
-		pos.z = 0 * FX32_ONE;
+		pos.y = 1.5 * FX32_ONE;
+		pos.z = -0.5 * FX32_ONE;
 		VecFx32 up;
 		up.x = 0;
 		up.y = FX32_ONE;
@@ -121,9 +117,6 @@ void Game::Render()
 		dst.y = 0;
 		dst.z = -2 * FX32_ONE;
 			
-		//G3_RotX(FX32_SIN45, FX32_COS45);
-		//G3_Translate(0, -2 * FX32_ONE, 0);
-		//G3_RotY(-FX32_SIN45, FX32_COS45);
 		G3_LookAt(&pos, &up, &dst, NULL);
 		G3_Translate(-8 * FX32_ONE, 0, -8 * FX32_ONE);
 

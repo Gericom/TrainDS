@@ -1,5 +1,6 @@
 #include <nitro.h>
 #include <nnsys/fnd.h>
+#include <nnsys/gfd.h>
 #include <nnsys/snd.h>
 #include "core.h"
 
@@ -63,4 +64,14 @@ void Core_Init()
     NNS_SndArcInit(&mSndArc, "/data/sound_data.sdat", mSndHeapHandle, FALSE);
     NNS_SndArcPlayerSetup(mSndHeapHandle);
 	NNS_SndArcStrmInit(STREAM_THREAD_PRIO, mSndHeapHandle);
+
+	//If we do it like this, we can only use 2 vram blocks for textures in the whole game
+	//Should I do this different?
+	uint32_t szWork = NNS_GfdGetLnkTexVramManagerWorkSize( 4096 );
+    void* pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);
+    NNS_GfdInitLnkTexVramManager(256 * 1024, 0, pMgrWork, szWork, TRUE);
+	
+	szWork = NNS_GfdGetLnkPlttVramManagerWorkSize( 4096 );
+    pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);
+    NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
 }

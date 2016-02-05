@@ -32,6 +32,7 @@ static void Init()
 	//Done in NitroStartup
 	//OS_Init();
 	OS_InitTick();
+	OS_InitThread();
 	GX_Init();
 
 	GX_DispOff();
@@ -70,8 +71,8 @@ void NitroMain ()
     GX_DispOn();
     GXS_DispOn();
 
-	Menu* menu = new Game();
-	menu->Initialize(0);//TITLEMENU_ARG_DONT_PLAY_INTRO);
+	Menu* menu = new TitleMenu();//Game();
+	menu->Initialize(/*0);//*/TITLEMENU_ARG_DONT_PLAY_INTRO);
 	while(1)
 	{
 		menu->Render();

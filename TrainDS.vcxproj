@@ -57,6 +57,8 @@
     <None Include="build.ps1" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\engine\PathWorker.cpp" />
+    <ClCompile Include="src\engine\TrackPiece.cpp" />
     <ClCompile Include="src\terrain\Map.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -68,6 +70,8 @@
     <ClCompile Include="src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\engine\PathWorker.h" />
+    <ClInclude Include="src\engine\TrackPiece.h" />
     <ClInclude Include="src\terrain\Map.h" />
     <ClInclude Include="src\core.h" />
     <ClInclude Include="src\menu\Game.h" />

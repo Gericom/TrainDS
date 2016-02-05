@@ -1,9 +1,56 @@
 #include <nitro.h>
 #include <nnsys/g2d.h>
+#include <nnsys/gfd.h>
 #include "core.h"
 #include "util.h"
 #include "Menu.h"
 #include "TitleMenu.h"
+
+#define STACK_SIZE     1024
+#define THREAD1_PRIO   (OS_THREAD_LAUNCHER_PRIORITY - 6)
+static void proc1(void *p1);
+OSThread thread1;
+u32 stack1[STACK_SIZE / sizeof(u32)];
+
+BOOL flip_flag = TRUE;// Flip switch flag
+BOOL swap = FALSE;
+
+static void TitleMenu_VBlankIntr();
+
+static GXOamAttr sOamBak[128];
+
+static void setupSubOAM()
+{
+    int     i;
+    int     x, y;
+    int     idx = 0;
+
+    GXS_SetOBJVRamModeBmp(GX_OBJVRAMMODE_BMP_2D_W256);
+
+    for (i = 0; i < 128; ++i)
+    {
+        sOamBak[i].attr01 = 0;
+        sOamBak[i].attr23 = 0;
+    }
+
+    for (y = 0; y < 192; y += 64)
+    {
+        for (x = 0; x < 256; x += 64, idx++)
+        {
+            G2_SetOBJAttr(&sOamBak[idx],
+                          x,
+                          y,
+                          0,
+                          GX_OAM_MODE_BITMAPOBJ,
+                          FALSE,
+                          GX_OAM_EFFECT_NONE,
+                          GX_OAM_SHAPE_64x64, GX_OAM_COLOR_16, (y / 8) * 32 + (x / 8), 15, 0);
+        }
+    }
+
+    DC_FlushRange(&sOamBak[0], sizeof(sOamBak));
+    GXS_LoadOAM(&sOamBak[0], 0, sizeof(sOamBak));
+}
 
 void TitleMenu::Initialize(int arg)
 {
@@ -13,20 +60,50 @@ void TitleMenu::Initialize(int arg)
 	//}
 
 	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
-	MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
-	(void)GX_DisableBankForLCDC();
+	MI_CpuClearFast((void*)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
+	GX_DisableBankForLCDC();
 
-	MI_CpuFillFast((void *)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
-	MI_CpuClearFast((void *)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
+	MI_CpuFillFast((void*)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
+	MI_CpuClearFast((void*)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
 
-	MI_CpuFillFast((void *)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
-	MI_CpuClearFast((void *)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
+	MI_CpuFillFast((void*)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
+	MI_CpuClearFast((void*)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
 
-	GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_16_I);
-	GXS_SetVisiblePlane(GX_PLANEMASK_OBJ);
+	OS_SetIrqFunction(OS_IE_V_BLANK, TitleMenu_VBlankIntr);
+
+	OS_CreateThread(&thread1, proc1, NULL, stack1 + STACK_SIZE / sizeof(u32), STACK_SIZE, THREAD1_PRIO);
+    OS_WakeupThreadDirect(&thread1);
+
+	G3X_Init();
+	G3X_InitMtxStack();
+	GX_SetBankForTex(GX_VRAM_TEX_01_AB);
+	GX_SetBankForTexPltt(GX_VRAM_TEXPLTT_0123_E);
+   
+   	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_3D);
+	GX_SetVisiblePlane(GX_PLANEMASK_BG0);
+   	GXS_SetGraphicsMode(GX_BGMODE_0);
+
+	G3X_SetShading(GX_SHADING_TOON); 
+	G3X_AntiAlias(TRUE);
+	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+	
+	G3X_AlphaTest(FALSE, 0);                   // AlphaTest OFF
+	G3X_AlphaBlend(TRUE);                      // AlphaTest ON
+
+	G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3),31, 0x7fff, 63, FALSE);
+	G3_ViewPort(0, 0, 255, 191);
+
+	setupSubOAM();
+
+	GX_SetBankForOBJ(GX_VRAM_OBJ_16_F);
+
+	GX_SetDispSelect(GX_DISP_SELECT_MAIN_SUB);
+
+	NNS_GfdResetLnkTexVramState();
+	NNS_GfdResetLnkPlttVramState();
 
 	NNS_G2dInitOamManagerModule();
-	NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_SUB);
+	NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_MAIN);
 
 	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL);
 	MI_CpuClear8(&mFont, sizeof(mFont));
@@ -39,14 +116,14 @@ void TitleMenu::Initialize(int arg)
 	void* mCharDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCGR", NULL);
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
 	NNS_G2dInitImageProxy(&mImageProxy);
-	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImageProxy);
+	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImageProxy);
 	NNS_FndFreeToExpHeap(mHeapHandle, mCharDataSub);
 
 	NNSG2dPaletteData* mPalDataSubUnpacked;
 	void* mPalDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCLR", NULL);
     NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
 	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
-	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImagePaletteProxy);
+	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxy);
 	NNS_FndFreeToExpHeap(mHeapHandle, mPalDataSub);
 
 	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, ((uint8_t*)G2S_GetOBJCharPtr()) + 2048, 12, 2, NNS_G2D_CHARA_COLORMODE_16);
@@ -72,7 +149,6 @@ void TitleMenu::Initialize(int arg)
 	mSelButton = 0;
 	mStateCounter = 0;
 	mKeyTimeout = 0;
-	((uint16_t*)HW_DB_BG_PLTT)[0] = GX_RGB(43 >> 3, 54 >> 3, 40 >> 3);
 }
 
 void TitleMenu::HandleKeys()
@@ -110,6 +186,14 @@ void TitleMenu::HandleKeys()
 		}
 	}
 	else mKeyTimeout--;
+}
+
+static void SetSwapBuffersflag(void)
+{
+    OSIntrMode old = OS_DisableInterrupts();    // interrupts disabled
+    G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+    swap = TRUE;
+    OS_RestoreInterrupts(old);
 }
 
 void TitleMenu::Render()
@@ -217,6 +301,9 @@ void TitleMenu::Render()
 	case TITLEMENU_STATE_MENU_OUT:
 		break;
 	}
+	G3X_Reset();
+	//Do 3d stuff here
+	SetSwapBuffersflag();
 }
 
 void TitleMenu::VBlank()
@@ -229,4 +316,79 @@ void TitleMenu::Finalize()
 {
 	NNS_FndFreeToExpHeap(mHeapHandle, mFontData);
 	NNS_FndFreeToExpHeap(mHeapHandle, mCellDataSub);
+}
+
+static void TitleMenu_VBlankIntr()
+{
+	OS_SetIrqCheckFlag(OS_IE_V_BLANK);
+	OS_WakeupThreadDirect(&thread1);
+}
+
+static void setupFrame2N(void)
+{
+    GX_SetDispSelect(GX_DISP_SELECT_MAIN_SUB);
+
+    GX_ResetBankForSubOBJ();
+    GX_SetBankForSubBG(GX_VRAM_SUB_BG_128_C);
+    GX_SetBankForLCDC(GX_VRAM_LCDC_D);
+    GX_SetCapture(GX_CAPTURE_SIZE_256x192,
+                  GX_CAPTURE_MODE_A,
+                  GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+
+    GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_3D);
+    GX_SetVisiblePlane(GX_PLANEMASK_BG0);
+    G2_SetBG0Priority(3);
+
+    GXS_SetGraphicsMode(GX_BGMODE_5);
+    GXS_SetVisiblePlane(GX_PLANEMASK_BG2);
+    G2S_SetBG2ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256,
+                           GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+    G2S_SetBG2Priority(3);
+    G2S_BG2Mosaic(FALSE);
+}
+
+static void setupFrame2N_1(void)
+{
+    GX_SetDispSelect(GX_DISP_SELECT_SUB_MAIN);
+
+    GX_ResetBankForSubBG();
+    GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_128_D);
+    GX_SetBankForLCDC(GX_VRAM_LCDC_C);
+    GX_SetCapture(GX_CAPTURE_SIZE_256x192,
+                  GX_CAPTURE_MODE_A,
+				  GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_C_0x00000, 16, 0);
+
+    GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_3D);
+    GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
+    G2_SetBG0Priority(3);
+
+    GXS_SetGraphicsMode(GX_BGMODE_5);
+    GXS_SetVisiblePlane(GX_PLANEMASK_OBJ);
+}
+
+//Thread for double 3d
+static void proc1(void *p1)
+{
+    while (1)
+    {
+		if (GX_GetVCount() <= 193)
+		{
+			OS_SpinWait(784);
+		}
+		if (!G3X_IsGeometryBusy() && swap)
+		// If the rendering and swap operations are both finished, the upper and lower screens switch.
+		{
+			if (flip_flag)                 // flip switch (operation to switch the upper and lower screens)
+			{
+				setupFrame2N_1();
+			}
+			else
+			{
+				setupFrame2N();
+			}
+			swap = FALSE;
+			flip_flag = !flip_flag;
+		}
+		OS_SleepThread(NULL);   // Puts this thread to sleep. It will next wake when OS_WakeupThreadDirect() is called.
+    }
 }
