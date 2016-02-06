@@ -1,0 +1,25 @@
+# GROUP:
+# label                     number      hsize  type    number      hsize
+
+# SEQ:
+# label                     number fileID bnk vol cpr ppr ply      hsize       size name
+
+# SEQARC:
+# label                     number fileID                                      size name
+
+# BANK:
+# label                     number fileID wa0 wa1 wa2 wa3          hsize       size name
+
+# WAVEARC:
+# label                     number fileID                                      size name
+
+# STRM:
+# label                     number fileID vol pri ply                          size name
+  STRM_INTRO                     0      0 127  64   0                        696412 strm/STRM_INTRO.adpcm.strm
+  STRM_TITLE                     1      1 127  64   0                       5085700 strm/STRM_TITLE.adpcm.strm
+
+# FAT:
+# fileID     offset       size name
+       0 0x000001c0     696412 strm/STRM_INTRO.adpcm.strm
+       1 0x000aa220    5085700 strm/STRM_TITLE.adpcm.strm
+

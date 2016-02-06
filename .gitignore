@@ -1,0 +1,8 @@
+TrainDS.nlf
+build/
+Debug/
+obj/
+tmp/
+*.suo
+*.user
+run.bat
