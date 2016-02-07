@@ -1,5 +1,6 @@
 #include <nitro.h>
 #include <nnsys/g2d.h>
+#include <nnsys/g3d.h>
 #include <nnsys/gfd.h>
 #include "core.h"
 #include "util.h"
@@ -54,10 +55,11 @@ static void setupSubOAM()
 
 void TitleMenu::Initialize(int arg)
 {
-	//if(arg == TITLEMENU_ARG_DONT_PLAY_INTRO)
-	//{
-	mState = TITLEMENU_STATE_MENU_IN;
-	//}
+	if(arg == TITLEMENU_ARG_DONT_PLAY_INTRO)
+	{
+		mState = TITLEMENU_STATE_MENU_IN;
+	}
+	else mState = TITLEMENU_STATE_INTRO;
 
 	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
 	MI_CpuClearFast((void*)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
@@ -149,6 +151,19 @@ void TitleMenu::Initialize(int arg)
 	mSelButton = 0;
 	mStateCounter = 0;
 	mKeyTimeout = 0;
+
+	//Load the 3d models
+	mBGModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/menu/title/title.nsbmd", NULL);
+	NNS_G3dResDefaultSetup(mBGModel);
+	NNSG3dResFileHeader* mBGTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/menu/title/title.nsbtx", NULL);
+	NNS_G3dResDefaultSetup(mBGTextures);
+	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mBGModel), 0);
+	NNS_G3dMdlSetMdlLightEnableFlagAll(model, 0);
+	NNS_G3dMdlSetMdlEmiAll(model, 0x7FFF);
+	NNSG3dResTex* tex = NNS_G3dGetTex(mBGTextures);
+	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mBGModel), tex);
+	NNS_G3dRenderObjInit(&mBGRenderObj, model);
+	NNS_FndFreeToExpHeap(mHeapHandle, mBGTextures);
 }
 
 void TitleMenu::HandleKeys()
@@ -206,6 +221,17 @@ void TitleMenu::Render()
 	switch(mState)
 	{
 	case TITLEMENU_STATE_INTRO:
+		if(mStateCounter == 0)
+		{
+			NNS_SndStrmHandleInit(&mMusicHandle);
+			NNS_SndArcStrmStart(&mMusicHandle, STRM_INTRO, 0);
+		}
+		mStateCounter++;
+		if(mStateCounter == 20 * 60)
+		{
+			mState = TITLEMENU_STATE_MENU_IN;
+			mStateCounter = 0;
+		}
 		break;
 	case TITLEMENU_STATE_MENU_IN:
 		if(mStateCounter == 0)
@@ -302,7 +328,33 @@ void TitleMenu::Render()
 		break;
 	}
 	G3X_Reset();
-	//Do 3d stuff here
+	G3X_ResetMtxStack();
+	//NNS_G3dGlbPerspective(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096);
+	//NNS_G3dGlbFrustum(2365, -2365, -3153, 3153, 1 * 4096, 512 * 4096);
+	//if(flip_flag)
+	//	NNS_G3dGlbFrustum(((-2365 * 2) * 614) >> 12, ((-2365 * 2) * 4710) >> 12, -3153, 3153, 1 * 4096, 512 * 4096);
+	//else NNS_G3dGlbFrustum(((2365 * 2) * 4710) >> 12, ((2365 * 2) * 614) >> 12, -3153, 3153, 1 * 4096, 512 * 4096);
+	if(!flip_flag)
+		NNS_G3dGlbFrustum(/*2365*/4730, /*-2365*/0, -3153, 3153, 1 * 4096, 512 * 4096);
+	else NNS_G3dGlbFrustum(/*-2365*/-788 * 2, /*-2365 * 3*/-4730 - 788 * 2, -3153, 3153, 1 * 4096, 512 * 4096);
+	//NNS_G3dGlbLightVector(GX_LIGHTID_0,  -FX16_SQRT1_3, -FX16_SQRT1_3, FX16_SQRT1_3);
+	//NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
+	VecFx32 pos;
+	pos.x = -35992;//-8.787
+	pos.y = 19239;//4.697
+	pos.z = 54395;//13.280
+	VecFx32 up;
+	up.x = 0;
+	up.y = 4096;
+	up.z = 0;
+	VecFx32 dst;
+	dst.x = 34648;//8.459
+	dst.y = -40219;//-9.819
+	dst.z = -24461;//-5.972
+	NNS_G3dGlbLookAt(&pos, &up, &dst);
+	NNS_G3dGlbFlushP();
+	NNS_G3dDraw(&mBGRenderObj);
+	NNS_G3dGeFlushBuffer();
 	SetSwapBuffersflag();
 }
 
@@ -316,6 +368,7 @@ void TitleMenu::Finalize()
 {
 	NNS_FndFreeToExpHeap(mHeapHandle, mFontData);
 	NNS_FndFreeToExpHeap(mHeapHandle, mCellDataSub);
+	NNS_FndFreeToExpHeap(mHeapHandle, mBGModel);
 }
 
 static void TitleMenu_VBlankIntr()
