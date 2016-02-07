@@ -126,21 +126,21 @@ void TitleMenu::Initialize(int arg)
 	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxy);
 	NNS_FndFreeToExpHeap(mHeapHandle, mPalDataSub);
 
-	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, ((uint8_t*)G2S_GetOBJCharPtr()) + 2048, 12, 2, NNS_G2D_CHARA_COLORMODE_16);
+	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, ((uint8_t*)G2_GetOBJCharPtr()) + 2048, 12, 2, NNS_G2D_CHARA_COLORMODE_16);
 	NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
 	NNS_G2dCharCanvasClear(&mCanvas, 0);
 	NNS_G2dTextCanvasDrawTextRect(
 		&mTextCanvas, 0, 0, 96, 16, 4, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Missions");
 
-	mCanvas.charBase = ((uint8_t*)G2S_GetOBJCharPtr()) + 2048 * 2;
+	mCanvas.charBase = ((uint8_t*)G2_GetOBJCharPtr()) + 2048 * 2;
 	NNS_G2dTextCanvasDrawTextRect(
 		&mTextCanvas, 0, 0, 96, 16, 4, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Sandbox");
 
-	mCanvas.charBase = ((uint8_t*)G2S_GetOBJCharPtr()) + 2048 * 3;
+	mCanvas.charBase = ((uint8_t*)G2_GetOBJCharPtr()) + 2048 * 3;
 	NNS_G2dTextCanvasDrawTextRect(
 		&mTextCanvas, 0, 0, 64, 16, 4, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Depot");
 
-	mCanvas.charBase = ((uint8_t*)G2S_GetOBJCharPtr()) + 2048 * 4;
+	mCanvas.charBase = ((uint8_t*)G2_GetOBJCharPtr()) + 2048 * 4;
 	NNS_G2dTextCanvasDrawTextRect(
 		&mTextCanvas, 0, 0, 64, 16, 4, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Options");
 
