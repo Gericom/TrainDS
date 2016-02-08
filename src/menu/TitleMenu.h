@@ -29,6 +29,9 @@ private:
 	NNSG2dTextCanvas mTextCanvas;
 	int mKeyTimeout;
 	NNSSndStrmHandle mMusicHandle;
+
+	NNSG3dResFileHeader* mBGModel;
+	NNSG3dRenderObj mBGRenderObj;
 public:
 	void Initialize(int arg);
 	void Render();

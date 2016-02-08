@@ -1,4 +1,5 @@
 #include <nitro.h>
+#include <nnsys/g3d.h>
 #include <nnsys/gfd.h>
 #include "core.h"
 #include "terrain/TerrainManager.h"
@@ -60,6 +61,7 @@ static void Init()
 	//card_lock_id = (u16)OS_GetLockID();
 
 	Core_Init();
+	NNS_G3dInit();
 }
 
 void NitroMain ()
@@ -72,7 +74,7 @@ void NitroMain ()
     GXS_DispOn();
 
 	Menu* menu = new TitleMenu();//Game();
-	menu->Initialize(/*0);//*/TITLEMENU_ARG_DONT_PLAY_INTRO);
+	menu->Initialize(0);///*0);//*/TITLEMENU_ARG_DONT_PLAY_INTRO);
 	while(1)
 	{
 		menu->Render();
