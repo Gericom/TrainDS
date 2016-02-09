@@ -74,7 +74,7 @@ void NitroMain ()
     GXS_DispOn();
 
 	Menu* menu = new TitleMenu();//Game();
-	menu->Initialize(0);///*0);//*/TITLEMENU_ARG_DONT_PLAY_INTRO);
+	menu->Initialize(TITLEMENU_ARG_PLAY_INTRO);///*0);//*/TITLEMENU_ARG_DONT_PLAY_INTRO);
 	while(1)
 	{
 		menu->Render();

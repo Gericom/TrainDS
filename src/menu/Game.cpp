@@ -41,6 +41,7 @@ void Game::Initialize(int arg)
 	GX_SetDispSelect(GX_DISP_SELECT_SUB_MAIN);
 
 	NNS_GfdResetLnkTexVramState();
+	NNS_GfdResetLnkPlttVramState();
 
 	mTerrainManager = new TerrainManager();
 
@@ -82,6 +83,7 @@ void Game::Initialize(int arg)
 void Game::Render()
 {
 	G3X_Reset();
+	G3X_ResetMtxStack();
 	G3_MtxMode(GX_MTXMODE_PROJECTION);
 	{
 		G3_Identity();
@@ -144,5 +146,5 @@ void Game::VBlank()
 
 void Game::Finalize()
 {
-
+	delete mTerrainManager;
 }
