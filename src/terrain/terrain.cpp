@@ -62,6 +62,7 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 				G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
 				G3_Vtx(vtx[3].x, vtx[3].y, vtx[3].z);
 			}
+			G3_End();
 		}
 		else if((tile->ltCorner == TILE_CORNER_UP && tile->rbCorner == TILE_CORNER_DOWN && tile->rtCorner + tile->lbCorner == 0) || 
 				(tile->ltCorner == TILE_CORNER_DOWN && tile->rbCorner == TILE_CORNER_UP && tile->rtCorner + tile->lbCorner == 0) || 
@@ -81,7 +82,7 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 				else if(normal.y < GX_FX32_FX10_MIN) normal.y = GX_FX32_FX10_MIN;
 				if(normal.z > GX_FX32_FX10_MAX) normal.z = GX_FX32_FX10_MAX;
 				else if(normal.z < GX_FX32_FX10_MIN) normal.z = GX_FX32_FX10_MIN;
-				G3_Normal(normal.x, normal.y, normal.z);
+				G3_Normal(-normal.x, -normal.y, -normal.z);
 				G3_TexCoord(0, 0);
 				G3_Vtx(vtx[0].x, vtx[0].y, vtx[0].z);
 				G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
@@ -91,6 +92,7 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 				G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
 				G3_Vtx(vtx[3].x, vtx[3].y, vtx[3].z);
 			}
+			G3_End();
 		}
 		else if((tile->ltCorner == TILE_CORNER_UP && tile->rtCorner == TILE_CORNER_UP && tile->lbCorner + tile->rbCorner == 0) || 
 				(tile->ltCorner == TILE_CORNER_DOWN && tile->rtCorner == TILE_CORNER_DOWN && tile->lbCorner + tile->rbCorner == 0) || 
@@ -114,7 +116,7 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 				else if(normal.y < GX_FX32_FX10_MIN) normal.y = GX_FX32_FX10_MIN;
 				if(normal.z > GX_FX32_FX10_MAX) normal.z = GX_FX32_FX10_MAX;
 				else if(normal.z < GX_FX32_FX10_MIN) normal.z = GX_FX32_FX10_MIN;
-				G3_Normal(normal.x, normal.y, normal.z);
+				G3_Normal(-normal.x, -normal.y, -normal.z);
 				G3_TexCoord(0, 0);
 				G3_Vtx(vtx[0].x, vtx[0].y, vtx[0].z);
 				G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
@@ -124,6 +126,7 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 				G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
 				G3_Vtx(vtx[3].x, vtx[3].y, vtx[3].z);
 			}
+			G3_End();
 		}
 		else
 		{
@@ -156,7 +159,7 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 				else if(normal.y < GX_FX32_FX10_MIN) normal.y = GX_FX32_FX10_MIN;
 				if(normal.z > GX_FX32_FX10_MAX) normal.z = GX_FX32_FX10_MAX;
 				else if(normal.z < GX_FX32_FX10_MIN) normal.z = GX_FX32_FX10_MIN;
-				G3_Normal(normal.x, normal.y, normal.z);
+				G3_Normal(-normal.x, -normal.y, -normal.z);
 				G3_TexCoord(0, 0);
 				G3_Vtx(vtx[idx].x, vtx[idx].y, vtx[idx].z);
 				idx = (idx + 1) & 3;
@@ -168,6 +171,120 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 				idx = (idx + 1) & 3;
 			}
 			G3_End();
+		}
+	}
+	G3_PopMtx(1);
+}
+
+void trackpiece_render(trackpiece_t* piece, TerrainManager* terrainManager)
+{
+	texture_t* tex = terrainManager->GetTrackTexture();
+	G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
+					GX_TEXGEN_TEXCOORD,    // use texcoord
+					(GXTexSizeS)tex->nitroWidth,        // 16 pixels
+					(GXTexSizeT)tex->nitroHeight,        // 16 pixels
+					GX_TEXREPEAT_ST,     // no repeat
+					GX_TEXFLIP_NONE,       // no flip
+					GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+					NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+	);
+	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
+	G3_PushMtx();
+	{
+		G3_Translate(piece->x * FX32_ONE, piece->y * TILE_HEIGHT + (FX32_ONE >> 4), piece->z * FX32_ONE);
+		switch(piece->kind)
+		{
+		case TRACKPIECE_KIND_FLAT:
+			{
+				switch(piece->rot)
+				{
+					case TRACKPIECE_ROT_0:
+						break;
+					case TRACKPIECE_ROT_90:
+						G3_Translate(0, 0, FX32_ONE);
+						G3_RotY(FX32_SIN90, FX32_COS90);
+						break;
+					case TRACKPIECE_ROT_180:
+						G3_Translate(FX32_ONE, 0, FX32_ONE);
+						G3_RotY(FX32_SIN180, FX32_COS180);
+						break;
+					case TRACKPIECE_ROT_270:
+						G3_Translate(FX32_ONE, 0, 0);
+						G3_RotY(FX32_SIN270, FX32_COS270);
+						break;
+				}
+				VecFx32 vtx[4] =
+				{
+					{0, 0, 0},
+					{0, 0,  FX32_ONE},
+					{FX32_ONE, 0,  FX32_ONE},
+					{FX32_ONE, 0, 0}
+				};
+				G3_Begin(GX_BEGIN_QUADS);
+				{
+					G3_Normal(0, GX_FX16_FX10_MAX, 0);
+					G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(vtx[0].x, vtx[0].y, vtx[0].z);
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);	
+					G3_Vtx(vtx[1].x, vtx[1].y, vtx[1].z);
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);	
+					G3_Vtx(vtx[2].x, vtx[2].y, vtx[2].z);
+					G3_TexCoord(0, 0);
+					G3_Vtx(vtx[3].x, vtx[3].y, vtx[3].z);
+				}
+				G3_End();
+				break;
+			}
+		case TRACKPIECE_KIND_FLAT_SMALL_CURVED:
+			{
+				switch(piece->rot)
+				{
+					case TRACKPIECE_ROT_0:
+						break;
+					case TRACKPIECE_ROT_90:
+						G3_Translate(0, 0, FX32_ONE);
+						G3_RotY(FX32_SIN90, FX32_COS90);
+						break;
+					case TRACKPIECE_ROT_180:
+						G3_Translate(FX32_ONE, 0, FX32_ONE);
+						G3_RotY(FX32_SIN180, FX32_COS180);
+						break;
+					case TRACKPIECE_ROT_270:
+						G3_Translate(FX32_ONE, 0, 0);
+						G3_RotY(FX32_SIN270, FX32_COS270);
+						break;
+				}
+				G3_Begin(GX_BEGIN_QUAD_STRIP);
+				{
+					G3_Normal(0, GX_FX16_FX10_MAX, 0);
+					G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(0, 0, 0);
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(0, 0, FX32_ONE);
+
+					G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_HALF);
+					G3_Vtx(1556, 0, -328);
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_HALF);
+					G3_Vtx(3154, 0, 3482);
+
+					G3_TexCoord(0, 0);
+					G3_Vtx(2908, 0, -1188);
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
+					G3_Vtx(5775, 0, 1679);
+
+					G3_TexCoord(0, -(8 << tex->nitroHeight) * FX32_HALF);
+					G3_Vtx(3768, 0, -2540);
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, -(8 << tex->nitroHeight) * FX32_HALF);
+					G3_Vtx(7578, 0, -842);
+
+					G3_TexCoord(0, -(8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(FX32_ONE, 0, -FX32_ONE);
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, -(8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(2 * FX32_ONE, 0, -FX32_ONE);
+				}
+				G3_End();
+				break;
+			}
 		}
 	}
 	G3_PopMtx(1);

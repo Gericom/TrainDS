@@ -28,9 +28,27 @@ typedef struct
 	uint8_t groundType;
 } tile_t;
 
+#define TRACKPIECE_KIND_FLAT					0
+#define TRACKPIECE_KIND_FLAT_SMALL_CURVED		1	//	_/	2x2
+
+#define TRACKPIECE_ROT_0						0	// ->
+#define TRACKPIECE_ROT_90						1	// ^
+#define TRACKPIECE_ROT_180						2	// <-
+#define TRACKPIECE_ROT_270						3	// V
+
+typedef struct
+{
+	uint8_t kind : 6;
+	uint8_t rot : 2;
+	uint16_t x;
+	uint16_t y;
+	uint16_t z;
+} trackpiece_t;
+
 class TerrainManager;
 
 void tile_render(tile_t* tile, TerrainManager* terrainManager);
+void trackpiece_render(trackpiece_t* piece, TerrainManager* terrainManager);
 
 
 #endif

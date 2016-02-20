@@ -65,6 +65,34 @@ TerrainManager::TerrainManager()
 	mTerrainTextures[1]->nitroWidth = GX_TEXSIZE_S32;
 	mTerrainTextures[1]->nitroHeight = GX_TEXSIZE_T32;
 	mTerrainTextures[1]->nitroFormat = GX_TEXFMT_PLTT256;
+
+	buffer = Util_LoadFileToBuffer("/data/map/track.ntft", &size);
+	DC_FlushRange(buffer, size);
+
+	texKey = NNS_GfdAllocTexVram(size, FALSE, 0);
+	GX_BeginLoadTex();
+	{
+		GX_LoadTex(buffer, NNS_GfdGetTexKeyAddr(texKey), size);
+	}
+	GX_EndLoadTex();
+	NNS_FndFreeToExpHeap(mHeapHandle, buffer);
+
+	buffer = Util_LoadFileToBuffer("/data/map/track.ntfp", &size);
+	DC_FlushRange(buffer, size);
+
+	plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
+	GX_BeginLoadTexPltt();
+	{
+		GX_LoadTexPltt(buffer, NNS_GfdGetPlttKeyAddr(plttKey), size);
+	}
+	GX_EndLoadTexPltt();
+	NNS_FndFreeToExpHeap(mHeapHandle, buffer);
+
+	mTrackTexture.texKey = texKey;
+	mTrackTexture.plttKey = plttKey;
+	mTrackTexture.nitroWidth = GX_TEXSIZE_S64;
+	mTrackTexture.nitroHeight = GX_TEXSIZE_T64;
+	mTrackTexture.nitroFormat = GX_TEXFMT_A3I5;
 }
 
 texture_t* TerrainManager::GetTerrainTexture(int terrainId)

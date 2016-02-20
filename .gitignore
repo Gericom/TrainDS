@@ -6,3 +6,4 @@ tmp/
 *.suo
 *.user
 run.bat
+*.swatch
