@@ -1,8 +1,11 @@
 #include <nitro.h>
+#include <nnsys/g3d.h>
 #include "core.h"
+#include "util.h"
 #include "Menu.h"
 #include "../terrain/terrain.h"
 #include "../terrain/TerrainManager.h"
+#include "../engine/PathWorker.h"
 #include "Game.h"
 
 static tile_t sDummyMap[16][16];
@@ -123,13 +126,40 @@ void Game::Initialize(int arg)
 	sDummyPieces[7].x = 5;
 	sDummyPieces[7].y = 0;
 	sDummyPieces[7].z = 6;
+
+	for(int i = 0; i < 8; i++)
+	{
+		sDummyPieces[i].prev[0] = &sDummyPieces[(i == 0) ? 7 : (i - 1)];
+		sDummyPieces[i].prev[1] = sDummyPieces[i].prev[2] = sDummyPieces[i].prev[3] = NULL;
+		sDummyPieces[i].next[0] = &sDummyPieces[(i == 7) ? 0 : (i + 1)];
+		sDummyPieces[i].next[1] = sDummyPieces[i].next[2] = sDummyPieces[i].next[3] = NULL;
+	}
+
+	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL);
+	NNS_G3dResDefaultSetup(mLocModel);
+	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL);
+	NNS_G3dResDefaultSetup(mLocTextures);
+	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mLocModel), 0);
+	NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);
+	NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(21,21,21), GX_RGB(15,15,15), FALSE);
+	NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0,0,0), GX_RGB(0,0,0), FALSE);
+	NNS_G3dMdlSetMdlDiffAll(model, GX_RGB(21,21,21));
+	NNS_G3dMdlSetMdlAmbAll(model, GX_RGB(15,15,15));
+	NNS_G3dMdlSetMdlSpecAll(model, GX_RGB(0,0,0));
+	NNS_G3dMdlSetMdlEmiAll(model, GX_RGB(0,0,0));
+	NNSG3dResTex* tex = NNS_G3dGetTex(mLocTextures);
+	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mLocModel), tex);
+	NNS_G3dRenderObjInit(&mLocRenderObj, model);
+	NNS_FndFreeToExpHeap(mHeapHandle, mLocTextures);
+
+	mPathWorker = new PathWorker(&sDummyPieces[0], 0);
 }
 
 void Game::Render()
 {
 	G3X_Reset();
 	G3X_ResetMtxStack();
-	G3_MtxMode(GX_MTXMODE_PROJECTION);
+	/*G3_MtxMode(GX_MTXMODE_PROJECTION);
 	{
 		G3_Identity();
 		G3_PerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096, 40960, NULL);
@@ -142,22 +172,6 @@ void Game::Render()
 	G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
 	{
 		G3_Identity();
-		//G3_MtxMode(GX_MTXMODE_POSITION);
-
-		/*G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
-		//Do this with identity matrix, because we don't want to rotate it
-		G3_LightVector(GX_LIGHTID_0, -FX16_SQRT1_3, -FX16_SQRT1_3, FX16_SQRT1_3);
-		G3_LightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
-		G3_MaterialColorDiffAmb(GX_RGB(31,31,31), GX_RGB(25,25,25), FALSE);
-		G3_MaterialColorSpecEmi(GX_RGB(8,8,8), GX_RGB(0,0,0), FALSE);*/
-
-		//G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
-		//Do this with identity matrix, because we don't want to rotate it
-		//{-1630.32, -3750.56, -229.392}
-		//G3_LightVector(GX_LIGHTID_0, -1630, -3751, -229);//-FX16_SQRT1_3, -FX16_SQRT1_3, FX16_SQRT1_3);
-		//G3_LightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
-		//G3_MaterialColorDiffAmb(GX_RGB(31,31,31), GX_RGB(25,25,25), FALSE);
-		//G3_MaterialColorSpecEmi(GX_RGB(8,8,8), GX_RGB(0,0,0), FALSE);
 
 		VecFx32 pos;
 		//pos.x = 2 * FX32_ONE;
@@ -186,28 +200,10 @@ void Game::Render()
 
 		G3_LookAt(&pos, &up, &dst, NULL);
 
-		/*G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
-		//Do this with identity matrix, because we don't want to rotate it
-		//{-1630.32, -3750.56, -229.392}
-		G3_LightVector(GX_LIGHTID_0, -1630, -3751, -229);//-FX16_SQRT1_3, -FX16_SQRT1_3, FX16_SQRT1_3);
-		G3_LightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
-		G3_MaterialColorDiffAmb(GX_RGB(31,31,31), GX_RGB(25,25,25), FALSE);
-		G3_MaterialColorSpecEmi(GX_RGB(8,8,8), GX_RGB(0,0,0), FALSE);*/
 		G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
-		//Do this with identity matrix, because we don't want to rotate it
-		//{-2888.16, -307.163, 2888.16}
-		//G3_LightVector(GX_LIGHTID_0, -2888, -307, 2888);//-FX16_SQRT1_3, -FX16_SQRT1_3, FX16_SQRT1_3);
-		//{568.566, -307.223, 4044.69}
-		//175.700, -8.000, 180.000
-		//G3_LightVector(GX_LIGHTID_0, 569, -307, 4045);
-		//{2888.16, -307.163, 2888.16}
-		//G3_LightVector(GX_LIGHTID_0, 2888, -307, 2888);
-		//{1108.46, -3784.16, 1108.46}
-		//G3_LightVector(GX_LIGHTID_0, -1108, -3784, -1108);
-		//{2047.86, -2896.5, 2047.86}
 		G3_LightVector(GX_LIGHTID_0, -2048, -2897, -2048);
 		G3_LightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
-		G3_MaterialColorDiffAmb(GX_RGB(21,21,21), /*GX_RGB(25,25,25)*/GX_RGB(15,15,15), FALSE);
+		G3_MaterialColorDiffAmb(GX_RGB(21,21,21), GX_RGB(15,15,15), FALSE);
 		G3_MaterialColorSpecEmi(GX_RGB(0,0,0), GX_RGB(0,0,0), FALSE);
 
 		G3_Translate(-8 * FX32_ONE, 0, -8 * FX32_ONE);
@@ -234,6 +230,95 @@ void Game::Render()
 			trackpiece_render(&sDummyPieces[i], mTerrainManager);
 		}
 	}
+	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);*/
+	G3X_Reset();
+	G3X_ResetMtxStack();
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096, 40960);
+//#define TOP_VIEW
+#ifndef TOP_VIEW
+	VecFx32 pos;
+	pos.x = 3 * FX32_ONE;
+	pos.y = 2.25 * FX32_ONE;
+	pos.z = -0.75 * FX32_ONE;
+	VecFx32 up;
+	up.x = 0;
+	up.y = FX32_ONE;
+	up.z = 0;
+	VecFx32 dst;
+	dst.x = 0 * FX32_ONE;
+	dst.y = 0;
+	dst.z = -2 * FX32_ONE;
+#else
+	VecFx32 pos;
+	pos.x = -0.5 * FX32_ONE;
+	pos.y = 5 * FX32_ONE;
+	pos.z = -2.5 * FX32_ONE;
+	VecFx32 up;
+	up.x = 0;
+	up.y = 0;
+	up.z = FX32_ONE;
+	VecFx32 dst;
+	dst.x = -0.5 * FX32_ONE;
+	dst.y = 0;
+	dst.z = -2.5 * FX32_ONE;
+#endif
+	NNS_G3dGlbLookAt(&pos, &up, &dst);
+	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
+	NNS_G3dGlbLightVector(GX_LIGHTID_0, -2048, -2897, -2048);
+	NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
+	NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(21,21,21), GX_RGB(15,15,15), FALSE);
+	NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0,0,0), GX_RGB(0,0,0), FALSE);
+	NNS_G3dGlbFlushP();
+	G3_Translate(-8 * FX32_ONE, 0, -8 * FX32_ONE);
+	G3_PushMtx();
+	{
+		for(int y = 0; y < 16; y++)
+		{
+			G3_PushMtx();
+			{
+				for(int x = 0; x < 16; x++)
+				{
+					tile_render(&sDummyMap[y][x], mTerrainManager);
+					G3_Translate(FX32_ONE, 0, 0);
+				}
+			}
+			G3_PopMtx(1);
+			G3_Translate(0, 0, FX32_ONE);
+		}
+	}
+	G3_PopMtx(1);
+	for(int i = 0; i < 8; i++)
+	{
+		trackpiece_render(&sDummyPieces[i], mTerrainManager);
+	}
+	NNS_G3dGePushMtx();
+	{
+		VecFx32 pos;
+		VecFx32 dir;
+		mPathWorker->Proceed(FX32_ONE >> 4, &pos, &dir);
+		pos.x += FX32_HALF;
+		pos.z += FX32_HALF;
+		NNS_G3dGeTranslateVec(&pos);
+		//calculate rotation matrix
+		VecFx32 up = {0, FX32_ONE, 0};
+		VecFx32 cam = {0,0,0};
+		dir.z = -dir.z;
+
+		MtxFx43 rot2;
+		MTX_LookAt(&cam, &up, &dir, &rot2);
+		NNS_G3dGeMultMtx43(&rot2);
+
+		//NNS_G3dGeTranslate(7 * FX32_ONE + FX32_HALF, 0, 7 * FX32_ONE + FX32_HALF);
+		//MtxFx33 rot;
+		//MTX_RotY33(&rot, FX32_SIN90, FX32_COS90);
+		//NNS_G3dGeMultMtx33(&rot);
+		NNS_G3dGeMtxMode(GX_MTXMODE_POSITION);
+		NNS_G3dGeScale(FX32_ONE / 6, FX32_ONE / 6, FX32_ONE / 6);
+		NNS_G3dGeMtxMode(GX_MTXMODE_POSITION_VECTOR);
+		NNS_G3dDraw(&mLocRenderObj);
+		NNS_G3dGePopMtx(1);
+	}
+	NNS_G3dGeFlushBuffer();
 	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 }
 

@@ -36,14 +36,16 @@ typedef struct
 #define TRACKPIECE_ROT_180						2	// <-
 #define TRACKPIECE_ROT_270						3	// V
 
-typedef struct
+struct trackpiece_t
 {
 	uint8_t kind : 6;
 	uint8_t rot : 2;
 	uint16_t x;
 	uint16_t y;
 	uint16_t z;
-} trackpiece_t;
+	trackpiece_t* prev[4];
+	trackpiece_t* next[4];
+};
 
 class TerrainManager;
 
