@@ -49,7 +49,7 @@
     <ClCompile Include="src\engine\PathWorker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\TrackPiece.cpp">
+    <ClCompile Include="src\menu\Depot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -81,7 +81,7 @@
     <ClInclude Include="src\engine\PathWorker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\engine\TrackPiece.h">
+    <ClInclude Include="src\menu\Depot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

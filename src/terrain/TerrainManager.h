@@ -6,9 +6,11 @@ class TerrainManager
 {
 private:
 	texture_t* mTerrainTextures[2];
+	texture_t mTrackTexture;
 public:
 	TerrainManager();
 	texture_t* GetTerrainTexture(int terrainId);
+	texture_t* GetTrackTexture() { return &mTrackTexture; }
 };
 
 #endif

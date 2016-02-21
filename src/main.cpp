@@ -4,6 +4,7 @@
 #include "core.h"
 #include "terrain/TerrainManager.h"
 #include "menu/TitleMenu.h"
+#include "menu/Depot.h"
 #include "menu/Game.h"
 
 #define	DEFAULT_DMA_NUMBER		MI_DMA_MAX_NUM
@@ -73,8 +74,8 @@ void NitroMain ()
     GX_DispOn();
     GXS_DispOn();
 
-	Menu* menu = new TitleMenu();//Game();
-	menu->Initialize(TITLEMENU_ARG_PLAY_INTRO);///*0);//*/TITLEMENU_ARG_DONT_PLAY_INTRO);
+	Menu* menu = new Game();//TitleMenu();//Game();
+	menu->Initialize(0);////TITLEMENU_ARG_PLAY_INTRO);///*0);//*/TITLEMENU_ARG_DONT_PLAY_INTRO);
 	while(1)
 	{
 		menu->Render();
