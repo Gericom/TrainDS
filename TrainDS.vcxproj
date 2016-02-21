@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\engine\PathWorker.cpp" />
+    <ClCompile Include="src\menu\Depot.cpp" />
     <ClCompile Include="src\terrain\Map.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -70,6 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\engine\PathWorker.h" />
+    <ClInclude Include="src\menu\Depot.h" />
     <ClInclude Include="src\terrain\Map.h" />
     <ClInclude Include="src\core.h" />
     <ClInclude Include="src\menu\Game.h" />

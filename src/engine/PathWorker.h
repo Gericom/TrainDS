@@ -9,11 +9,16 @@ private:
 	VecFx32 mCurPoint;
 	VecFx32 mCurDirection;
 
-	fx32 mPrevDistance;
-	VecFx32 mPrevDirection;
+	VecFx32 mCurPiecePoint;
+	//VecFx32 mPrevPiecePoint;
+	VecFx32 mNextPiecePoint;
+
+	//fx32 mPrevDistance;
+	//VecFx32 mPrevDirection;
 	fx32 mNextDistance;
 	VecFx32 mNextDirection;
 
+	void SetupPoint();
 	void CalculatePoint();
 public:
 	PathWorker(trackpiece_t* curPiece, fx32 curDistance);

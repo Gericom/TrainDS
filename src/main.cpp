@@ -4,6 +4,7 @@
 #include "core.h"
 #include "terrain/TerrainManager.h"
 #include "menu/TitleMenu.h"
+#include "menu/Depot.h"
 #include "menu/Game.h"
 
 #define	DEFAULT_DMA_NUMBER		MI_DMA_MAX_NUM

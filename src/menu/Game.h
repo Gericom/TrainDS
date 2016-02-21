@@ -20,4 +20,4 @@ public:
 	void Finalize();
 };
 
-#endif __GAME_H__
+#endif

@@ -159,81 +159,28 @@ void Game::Render()
 {
 	G3X_Reset();
 	G3X_ResetMtxStack();
-	/*G3_MtxMode(GX_MTXMODE_PROJECTION);
-	{
-		G3_Identity();
-		G3_PerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096, 40960, NULL);
-		G3_StoreMtx(0);
-	}
-	G3_MtxMode(GX_MTXMODE_TEXTURE);
-	{
-		G3_Identity();
-	}
-	G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
-	{
-		G3_Identity();
-
-		VecFx32 pos;
-		//pos.x = 2 * FX32_ONE;
-		//pos.y = 1.5 * FX32_ONE;
-		//pos.z = -0.5 * FX32_ONE;
-		pos.x = 3 * FX32_ONE;
-		pos.y = 2.25 * FX32_ONE;
-		pos.z = -0.75 * FX32_ONE;
-		//pos.x = -0.5 * FX32_ONE;
-		//pos.y = 5 * FX32_ONE;
-		//pos.z = -2.5 * FX32_ONE;
-		VecFx32 up;
-		up.x = 0;
-		up.y = FX32_ONE;
-		up.z = 0;
-		//up.x = 0;
-		//up.y = 0;
-		//up.z = FX32_ONE;
-		VecFx32 dst;
-		dst.x = 0 * FX32_ONE;
-		dst.y = 0;
-		dst.z = -2 * FX32_ONE;
-		//dst.x = -0.5 * FX32_ONE;
-		//dst.y = 0;
-		//dst.z = -2.5 * FX32_ONE;
-
-		G3_LookAt(&pos, &up, &dst, NULL);
-
-		G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
-		G3_LightVector(GX_LIGHTID_0, -2048, -2897, -2048);
-		G3_LightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
-		G3_MaterialColorDiffAmb(GX_RGB(21,21,21), GX_RGB(15,15,15), FALSE);
-		G3_MaterialColorSpecEmi(GX_RGB(0,0,0), GX_RGB(0,0,0), FALSE);
-
-		G3_Translate(-8 * FX32_ONE, 0, -8 * FX32_ONE);
-
-		G3_PushMtx();
-		{
-			for(int y = 0; y < 16; y++)
-			{
-				G3_PushMtx();
-				{
-					for(int x = 0; x < 16; x++)
-					{
-						tile_render(&sDummyMap[y][x], mTerrainManager);
-						G3_Translate(FX32_ONE, 0, 0);
-					}
-				}
-				G3_PopMtx(1);
-				G3_Translate(0, 0, FX32_ONE);
-			}
-		}
-		G3_PopMtx(1);
-		for(int i = 0; i < 8; i++)
-		{
-			trackpiece_render(&sDummyPieces[i], mTerrainManager);
-		}
-	}
-	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);*/
-	G3X_Reset();
-	G3X_ResetMtxStack();
 	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096, 40960);
+	VecFx32 tpos;
+	VecFx32 dir;
+	u16 keyData = PAD_Read();
+	if (keyData & PAD_BUTTON_A)
+		mPathWorker->Proceed(FX32_ONE / 24, &tpos, &dir);
+	else mPathWorker->Proceed(0, &tpos, &dir);
+//#define FIRST_PERSON
+#ifdef FIRST_PERSON
+	VecFx32 pos;
+	pos.x = tpos.x - 8 * FX32_ONE;// + 0.4 * dir.x;
+	pos.y = tpos.y + FX32_HALF + (FX32_HALF >> 1);// + 0.4 * dir.y;
+	pos.z = tpos.z - 8 * FX32_ONE;// + 0.4 * dir.z;
+	VecFx32 up;
+	up.x = 0;
+	up.y = FX32_ONE;
+	up.z = 0;
+	VecFx32 dst;
+	dst.x = tpos.x - 8 * FX32_ONE + 4 * dir.x;
+	dst.y = tpos.y + FX32_HALF + 4 * dir.y;// + 1 * FX32_ONE;
+	dst.z = tpos.z - 8 * FX32_ONE + 4 * dir.z;
+#else
 //#define TOP_VIEW
 #ifndef TOP_VIEW
 	VecFx32 pos;
@@ -261,6 +208,7 @@ void Game::Render()
 	dst.x = -0.5 * FX32_ONE;
 	dst.y = 0;
 	dst.z = -2.5 * FX32_ONE;
+#endif
 #endif
 	NNS_G3dGlbLookAt(&pos, &up, &dst);
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
@@ -293,12 +241,10 @@ void Game::Render()
 	}
 	NNS_G3dGePushMtx();
 	{
-		VecFx32 pos;
+		/*VecFx32 pos;
 		VecFx32 dir;
-		mPathWorker->Proceed(FX32_ONE >> 4, &pos, &dir);
-		pos.x += FX32_HALF;
-		pos.z += FX32_HALF;
-		NNS_G3dGeTranslateVec(&pos);
+		mPathWorker->Proceed(FX32_ONE / 24, &pos, &dir);*/
+		NNS_G3dGeTranslateVec(&tpos);
 		//calculate rotation matrix
 		VecFx32 up = {0, FX32_ONE, 0};
 		VecFx32 cam = {0,0,0};
@@ -307,17 +253,17 @@ void Game::Render()
 		MtxFx43 rot2;
 		MTX_LookAt(&cam, &up, &dir, &rot2);
 		NNS_G3dGeMultMtx43(&rot2);
-
+		//NNS_G3dGeTranslate(0, 0, -(FX32_HALF >> 1));
 		//NNS_G3dGeTranslate(7 * FX32_ONE + FX32_HALF, 0, 7 * FX32_ONE + FX32_HALF);
 		//MtxFx33 rot;
 		//MTX_RotY33(&rot, FX32_SIN90, FX32_COS90);
 		//NNS_G3dGeMultMtx33(&rot);
 		NNS_G3dGeMtxMode(GX_MTXMODE_POSITION);
-		NNS_G3dGeScale(FX32_ONE / 6, FX32_ONE / 6, FX32_ONE / 6);
+		NNS_G3dGeScale(FX32_ONE / 7, FX32_ONE / 7, FX32_ONE / 7);
 		NNS_G3dGeMtxMode(GX_MTXMODE_POSITION_VECTOR);
 		NNS_G3dDraw(&mLocRenderObj);
-		NNS_G3dGePopMtx(1);
 	}
+	NNS_G3dGePopMtx(1);
 	NNS_G3dGeFlushBuffer();
 	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 }
