@@ -1,6 +1,7 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 #include "Menu.h"
+#include "../vehicles/train.h"
 
 class PathWorker;
 
@@ -10,9 +11,14 @@ private:
 	TerrainManager* mTerrainManager;
 
 	NNSG3dResFileHeader* mLocModel;
-	NNSG3dRenderObj mLocRenderObj;
+	train_t mTrain;
+	train_part_t mTrainPart;
 
-	PathWorker* mPathWorker;
+	int mLastTouchState;
+	BOOL mPicking;
+	BOOL mProcessPicking;
+	TPData mPickingPoint;
+	BOOL mPickingOK;
 public:
 	void Initialize(int arg);
 	void Render();

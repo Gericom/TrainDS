@@ -1,6 +1,8 @@
 #ifndef __PATH_WORKER_H__
 #define __PATH_WORKER_H__
 
+typedef struct trackpiece_t;
+
 class PathWorker
 {
 private:

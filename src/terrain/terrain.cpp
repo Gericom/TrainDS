@@ -235,7 +235,7 @@ void trackpiece_render(trackpiece_t* piece, TerrainManager* terrainManager)
 				G3_End();
 				break;
 			}
-		case TRACKPIECE_KIND_FLAT_SMALL_CURVED:
+		case TRACKPIECE_KIND_FLAT_SMALL_CURVED_LEFT:
 			{
 				switch(piece->rot)
 				{

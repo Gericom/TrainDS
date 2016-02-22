@@ -1,3 +1,7 @@
+#define WAVE_TRAIN	0
+#define BANK_TRAIN	0
+#define PLAYER_SFX	0
+#define SEQ_TRAIN	0
 #define PLAYER_STRM	0
 #define STRM_INTRO	0
 #define STRM_TITLE	1

@@ -68,6 +68,7 @@
     <ClCompile Include="src\terrain\terrain.cpp" />
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
     <ClCompile Include="src\util.cpp" />
+    <ClCompile Include="src\vehicles\train.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\engine\PathWorker.h" />
@@ -80,6 +81,7 @@
     <ClInclude Include="src\terrain\terrain.h" />
     <ClInclude Include="src\terrain\TerrainManager.h" />
     <ClInclude Include="src\util.h" />
+    <ClInclude Include="src\vehicles\train.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

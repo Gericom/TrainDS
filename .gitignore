@@ -1,4 +1,4 @@
-TrainDS.nlf
+*.nlf
 build/
 Debug/
 obj/

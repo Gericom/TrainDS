@@ -3,17 +3,20 @@
 
 @WAVEARC
  @PATH "swar"
+WAVE_TRAIN 	: AUTO, "train.swls"
 	
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Bank
 
 @BANK
  @PATH "bnk" 
+BANK_TRAIN     : TEXT, "train.bnk",   WAVE_TRAIN
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Player
 
 @PLAYER
+PLAYER_SFX : 8
  
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Sequence
@@ -26,6 +29,7 @@
 
 @SEQARC
  @PATH "mus"
+SEQ_TRAIN  : TEXT, "train.mus"
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Stream Player

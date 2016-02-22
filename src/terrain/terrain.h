@@ -29,7 +29,7 @@ typedef struct
 } tile_t;
 
 #define TRACKPIECE_KIND_FLAT					0
-#define TRACKPIECE_KIND_FLAT_SMALL_CURVED		1	//	_/	2x2
+#define TRACKPIECE_KIND_FLAT_SMALL_CURVED_LEFT	1	//	_/	2x2
 
 #define TRACKPIECE_ROT_0						0	// ->
 #define TRACKPIECE_ROT_90						1	// ^

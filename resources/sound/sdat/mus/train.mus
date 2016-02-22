@@ -1,0 +1,13 @@
+#include <sound_data.sbdl>
+@SEQ_TABLE
+
+TRAIN_TRACK:		track, BANK_TRAIN, 127, 96, 64, PLAYER_SFX
+
+@SEQ_DATA
+
+track:
+	prg 0
+	cn4 127, 0
+track_loop:
+	jump track_loop
+	fin

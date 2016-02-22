@@ -1,0 +1,4 @@
+@PATH "../aif"
+
+@INSTLIST
+	0 : PCM16, "SNDTR1.wav", cn4, 127, 127, 127, DISABLE

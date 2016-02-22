@@ -31,10 +31,14 @@ static void VBlankIntr(void)
 
 static void Init()
 {
+	TPCalibrateParam calibrate;
 	//Done in NitroStartup
 	//OS_Init();
 	OS_InitTick();
 	OS_InitThread();
+	TP_Init();
+	TP_GetUserInfo(&calibrate);
+	TP_SetCalibrateParam(&calibrate);
 	GX_Init();
 
 	GX_DispOff();
