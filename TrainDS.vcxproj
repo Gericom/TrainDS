@@ -67,6 +67,8 @@
     <ClCompile Include="src\menu\TitleMenu.cpp" />
     <ClCompile Include="src\terrain\terrain.cpp" />
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
+    <ClCompile Include="src\ui\game\TrackBuildUISlice.cpp" />
+    <ClCompile Include="src\ui\UIManager.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\vehicles\train.cpp" />
   </ItemGroup>
@@ -80,6 +82,9 @@
     <ClInclude Include="src\menu\TitleMenu.h" />
     <ClInclude Include="src\terrain\terrain.h" />
     <ClInclude Include="src\terrain\TerrainManager.h" />
+    <ClInclude Include="src\ui\game\TrackBuildUISlice.h" />
+    <ClInclude Include="src\ui\UIManager.h" />
+    <ClInclude Include="src\ui\UISlice.h" />
     <ClInclude Include="src\util.h" />
     <ClInclude Include="src\vehicles\train.h" />
   </ItemGroup>

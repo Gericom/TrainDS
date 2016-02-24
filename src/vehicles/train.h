@@ -1,5 +1,6 @@
 #ifndef __TRAIN_H__
 #define __TRAIN_H__
+#include <nnsys/g3d.h>
 
 class PathWorker;
 
