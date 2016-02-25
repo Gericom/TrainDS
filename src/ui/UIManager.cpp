@@ -55,10 +55,10 @@ void UIManager::ProcessInput()
 		UISlice* slice = NULL;
 		while ((slice = (UISlice*)NNS_FndGetNextListObject(&mSliceList, slice)) != NULL)
 		{
-			if(slice->OnPenUp(mContext, disp_point.x, disp_point.y)) break;
+			if(slice->OnPenUp(mContext, mLastTouchState.x, mLastTouchState.y)) break;
 		}
 		if(slice == NULL && mOnPenUpFunc != NULL) //no slice has done anything, let's pass the event through
-			mOnPenUpFunc(mContext, disp_point.x, disp_point.y);
+			mOnPenUpFunc(mContext, mLastTouchState.x, mLastTouchState.y);
 	}
 	mLastTouchState = disp_point;
 }

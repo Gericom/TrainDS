@@ -3,7 +3,7 @@
 #include "core.h"
 #include "util.h"
 
-void* Util_LoadFileToBuffer(char* path, uint32_t* size)
+void* Util_LoadFileToBuffer(char* path, uint32_t* size, BOOL tempoarly)
 {
 	FSFile file;
 	FS_InitFile(&file);
@@ -33,4 +33,15 @@ void Util_LoadPaletteWithKey(NNSGfdPlttKey key, void* data)
 		GX_LoadTexPltt(data, NNS_GfdGetPlttKeyAddr(key), NNS_GfdGetPlttKeySize(key));
 	}
 	GX_EndLoadTexPltt();
+}
+
+static void Util_FreeAllToExpHeapByGroupIdForMBlock(void* memBlock, NNSFndHeapHandle heap, u32 userParam)
+{
+	if(NNS_FndGetGroupIDForMBlockExpHeap(memBlock) == userParam)
+		NNS_FndFreeToExpHeap(heap, memBlock);
+}
+
+void Util_FreeAllToExpHeapByGroupId(NNSFndHeapHandle heap, int groupId)
+{
+	NNS_FndVisitAllocatedForExpHeap(heap, Util_FreeAllToExpHeapByGroupIdForMBlock, groupId);
 }

@@ -7,22 +7,33 @@
 class TerrainManager;
 class UIManager;
 class TrackBuildUISlice;
+class LookAtCamera;
 
 class Game : public Menu
 {
 	friend class TrackBuildUISlice;
 private:
+	typedef void (Game::*PickingCallbackFunc)(u16 result);
+
 	TerrainManager* mTerrainManager;
 
 	NNSG3dResFileHeader* mLocModel;
 	train_t mTrain;
 	train_part_t mTrainPart;
 
+	LookAtCamera* mCamera;
+
 	BOOL mPicking;
 	BOOL mProcessPicking;
 	int mPickingPointX;
 	int mPickingPointY;
 	BOOL mPickingOK;
+	OSTick mPenDownTime;
+	OSTick mPenUpTime;
+	PickingCallbackFunc mPickingCallback;
+	u16 mPenDownResult;
+	int mPenDownPointX;
+	int mPenDownPointY;
 
 	void* mTrackBuildCellData;
 	NNSG2dCellDataBank* mTrackBuildCellDataBank;
@@ -38,9 +49,11 @@ private:
 	TrackBuildUISlice* mTrackBuildUISlice;
 
 	texture_t mShadowTex;
+
+	void Pick(int x, int y, PickingCallbackFunc callback);
 public:
 	void Initialize(int arg);
-	
+
 	static void OnPenDown(Menu* context, int x, int y)
 	{
 		((Game*)context)->OnPenDown(x, y);
@@ -55,6 +68,9 @@ public:
 	{
 		((Game*)context)->OnPenUp(x, y);
 	}
+
+	void OnPenDownPickingCallback(u16 result);
+	void OnPenUpPickingCallback(u16 result);
 
 	void OnPenDown(int x, int y);
 	void OnPenMove(int x, int y);

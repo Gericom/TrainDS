@@ -107,22 +107,22 @@ void TitleMenu::Initialize(int arg)
 	NNS_G2dInitOamManagerModule();
 	NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_MAIN);
 
-	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL);
+	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL, FALSE);
 	MI_CpuClear8(&mFont, sizeof(mFont));
 	NNS_G2dFontInitAuto(&mFont, mFontData);
 
-	mCellDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCER", NULL);
+	mCellDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCER", NULL, FALSE);
 	NNS_G2dGetUnpackedCellBank(mCellDataSub, &mCellDataSubBank);
 
 	NNSG2dCharacterData* mCharDataSubUnpacked;
-	void* mCharDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCGR", NULL);
+	void* mCharDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCGR", NULL, TRUE);
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
 	NNS_G2dInitImageProxy(&mImageProxy);
 	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImageProxy);
 	NNS_FndFreeToExpHeap(mHeapHandle, mCharDataSub);
 
 	NNSG2dPaletteData* mPalDataSubUnpacked;
-	void* mPalDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCLR", NULL);
+	void* mPalDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCLR", NULL, TRUE);
     NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
 	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
 	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxy);
@@ -153,9 +153,9 @@ void TitleMenu::Initialize(int arg)
 	mKeyTimeout = 0;
 
 	//Load the 3d models
-	mBGModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/menu/title/title.nsbmd", NULL);
+	mBGModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/menu/title/title.nsbmd", NULL, FALSE);
 	NNS_G3dResDefaultSetup(mBGModel);
-	NNSG3dResFileHeader* mBGTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/menu/title/title.nsbtx", NULL);
+	NNSG3dResFileHeader* mBGTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/menu/title/title.nsbtx", NULL, TRUE);
 	NNS_G3dResDefaultSetup(mBGTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mBGModel), 0);
 	NNS_G3dMdlSetMdlLightEnableFlagAll(model, 0);
@@ -366,9 +366,7 @@ void TitleMenu::VBlank()
 
 void TitleMenu::Finalize()
 {
-	NNS_FndFreeToExpHeap(mHeapHandle, mFontData);
-	NNS_FndFreeToExpHeap(mHeapHandle, mCellDataSub);
-	NNS_FndFreeToExpHeap(mHeapHandle, mBGModel);
+	//We don't have to free resources here, because that's done by using the group id
 }
 
 static void TitleMenu_VBlankIntr()

@@ -17,10 +17,13 @@ class TrackBuildUISlice : public UISlice
 private:
 	int mDownButton;
 
+	int mDirectionSelection;
+	int mSlopeSelection;
+
 	int FindButtonByPoint(int x, int y);
 public:
 	TrackBuildUISlice()
-		: UISlice(), mDownButton(TRACKBUILD_BUTTON_INVALID)
+		: UISlice(), mDownButton(TRACKBUILD_BUTTON_INVALID), mDirectionSelection(TRACKBUILD_BUTTON_DIR_STRAIGHT), mSlopeSelection(TRACKBUILD_BUTTON_SLOPE_NONE)
 	{ }
 
 	BOOL OnPenDown(Menu* context, int x, int y);

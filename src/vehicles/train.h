@@ -3,6 +3,7 @@
 #include <nnsys/g3d.h>
 
 class PathWorker;
+class LookAtCamera;
 
 struct train_part_t
 {
@@ -18,10 +19,11 @@ typedef struct
 {
 	train_part_t* firstPart;
 	BOOL isDriving;
+	BOOL isDrivingBackwards;
 	NNSSndHandle trackSoundHandle;
 } train_t;
 
 void Train_UpdatePos(train_t* train);
-void Train_UpdateSound(train_t* train, VecFx32* CamPos, VecFx32* CamDst, VecFx32* CamUp);
+void Train_UpdateSound(train_t* train, LookAtCamera* camera);//VecFx32* CamPos, VecFx32* CamDst, VecFx32* CamUp);
 
 #endif

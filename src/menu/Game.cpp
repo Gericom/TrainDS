@@ -1,5 +1,6 @@
 #include <nitro.h>
 #include <nnsys/g3d.h>
+#include <stdlib.h>
 #include "core.h"
 #include "util.h"
 #include "Menu.h"
@@ -9,6 +10,8 @@
 #include "vehicles/train.h"
 #include "ui/UIManager.h"
 #include "ui/game/TrackBuildUISlice.h"
+#include "engine/Camera.h"
+#include "engine/LookAtCamera.h"
 #include "Game.h"
 
 static tile_t sDummyMap[16][16];
@@ -31,6 +34,10 @@ static const GXRgb sAmbSelectionColorTable[8] =
 	GX_RGB(11, 14, 15),
 	0, 0, 0, 0, 0, 0, 0
 };
+
+//Camera tempoarly
+//#define FIRST_PERSON
+//#define TOP_VIEW
 
 void Game::Initialize(int arg)
 {
@@ -171,9 +178,9 @@ void Game::Initialize(int arg)
 	mTrain.firstPart->pathWorker2 = new PathWorker(&sDummyPieces[0], FX32_ONE);
 	mTrain.firstPart->next = NULL;
 
-	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL);
+	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL, FALSE);
 	NNS_G3dResDefaultSetup(mLocModel);
-	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL);
+	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL, TRUE);
 	NNS_G3dResDefaultSetup(mLocTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mLocModel), 0);
 	NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);
@@ -188,14 +195,14 @@ void Game::Initialize(int arg)
 
 	{
 		uint32_t size;
-		void* buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntft", &size);
+		void* buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntft", &size, TRUE);
 		DC_FlushRange(buffer, size);
 
 		NNSGfdTexKey texKey = NNS_GfdAllocTexVram(size, FALSE, 0);
 		Util_LoadTextureWithKey(texKey, buffer);
 		NNS_FndFreeToExpHeap(mHeapHandle, buffer);
 
-		buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntfp", &size);
+		buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntfp", &size, TRUE);
 		DC_FlushRange(buffer, size);
 
 		NNSGfdPlttKey plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
@@ -209,22 +216,22 @@ void Game::Initialize(int arg)
 		mShadowTex.nitroFormat = GX_TEXFMT_A5I3;
 	}
 
-	mFontData = Util_LoadFileToBuffer("/data/fonts/roboto_medium_11pt_4bpp.NFTR", NULL);
+	mFontData = Util_LoadFileToBuffer("/data/fonts/roboto_medium_11pt_4bpp.NFTR", NULL, FALSE);
 	MI_CpuClear8(&mFont, sizeof(mFont));
 	NNS_G2dFontInitAuto(&mFont, mFontData);
 
-	mTrackBuildCellData = Util_LoadFileToBuffer("/data/game/game_trackbuild.ncer", NULL);
+	mTrackBuildCellData = Util_LoadFileToBuffer("/data/game/game_trackbuild.ncer", NULL, FALSE);
 	NNS_G2dGetUnpackedCellBank(mTrackBuildCellData, &mTrackBuildCellDataBank);
 
 	NNSG2dCharacterData* mCharDataSubUnpacked;
-	void* mCharDataSub = Util_LoadFileToBuffer("/data/game/game_trackbuild.ncgr", NULL);
+	void* mCharDataSub = Util_LoadFileToBuffer("/data/game/game_trackbuild.ncgr", NULL, TRUE);
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
 	NNS_G2dInitImageProxy(&mImageProxy);
 	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImageProxy);
 	NNS_FndFreeToExpHeap(mHeapHandle, mCharDataSub);
 
 	NNSG2dPaletteData* mPalDataSubUnpacked;
-	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/game_trackbuild.nclr", NULL);
+	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/game_trackbuild.nclr", NULL, TRUE);
     NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
 	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
 	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxy);
@@ -254,18 +261,63 @@ void Game::Initialize(int arg)
 	mPicking = FALSE;
 	mPickingOK = FALSE;
 	mProcessPicking = FALSE;
+	mPickingCallback = NULL;
+
+	mCamera = new LookAtCamera();
+#ifdef FIRST_PERSON
+	mCamera->mUp.x = 0;
+	mCamera->mUp.y = FX32_ONE;
+	mCamera->mUp.z = 0;
+#else
+#ifndef TOP_VIEW
+	mCamera->mPosition.x = 3 * FX32_ONE;
+	mCamera->mPosition.y = 2.25 * FX32_ONE;
+	mCamera->mPosition.z = -0.75 * FX32_ONE;
+	mCamera->mUp.x = 0;
+	mCamera->mUp.y = FX32_ONE;
+	mCamera->mUp.z = 0;
+	mCamera->mDestination.x = 0 * FX32_ONE;
+	mCamera->mDestination.y = 0;
+	mCamera->mDestination.z = -2 * FX32_ONE;
+#else
+	mCamera->mPosition.x = -0.5 * FX32_ONE;
+	mCamera->mPosition.y = 5 * FX32_ONE;
+	mCamera->mPosition.z = -2.5 * FX32_ONE;
+	mCamera->mUp.x = 0;
+	mCamera->mUp.y = 0;
+	mCamera->mUp.z = FX32_ONE;
+	mCamera->mDestination.x = -0.5 * FX32_ONE;
+	mCamera->mDestination.y = 0;
+	mCamera->mDestination.z = -2.5 * FX32_ONE;
+#endif
+#endif
+
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096, 40960);
 }
 
-void Game::OnPenDown(int x, int y)
+void Game::Pick(int x, int y, PickingCallbackFunc callback)
 {
-	//we should do picking
 	mPicking = TRUE;
 	mPickingPointX = x;
 	mPickingPointY = y;
+	mPickingCallback = callback;
 	reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT & ~REG_G3X_DISP3DCNT_TME_MASK;
 	G3X_SetClearColor(0, 31, 0x7fff, 0, FALSE);
 	G3X_EdgeMarking(FALSE);
 	G3X_AntiAlias(FALSE);
+}
+
+void Game::OnPenDownPickingCallback(u16 result)
+{
+	mPenDownResult = result;
+}
+
+void Game::OnPenDown(int x, int y)
+{
+	mPenDownTime = OS_GetTick();
+	mPenDownPointX = x;
+	mPenDownPointY = y;
+	Pick(x, y, &Game::OnPenDownPickingCallback);
 }
 
 void Game::OnPenMove(int x, int y)
@@ -273,9 +325,19 @@ void Game::OnPenMove(int x, int y)
 
 }
 
+void Game::OnPenUpPickingCallback(u16 result)
+{
+	if(result == mPenDownResult)
+		mPickingOK = (result & 0x7FFF) == 1;
+}
+
 void Game::OnPenUp(int x, int y)
 {
-
+	mPenUpTime = OS_GetTick();
+	if(abs(mPenDownPointX - x) < 16 && abs(mPenDownPointY - y) < 16)
+	{
+		Pick(x, y, &Game::OnPenUpPickingCallback);
+	}
 }
 
 void Game::Render()
@@ -285,18 +347,27 @@ void Game::Render()
 		mProcessPicking = TRUE;
 		mPicking = FALSE;
 	}
-	if(mProcessPicking)//process picking result
+	else if(mProcessPicking)//process picking result
 	{
-		uint16_t val = ((uint16_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256];
-		mPickingOK = (val & 0x7FFF) == 1;
+		if(mPickingCallback) (this->*mPickingCallback)(((uint16_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256]);
+		mPickingCallback = NULL;
+		mProcessPicking = FALSE;
 	}
-	G3X_Reset();
-	G3X_ResetMtxStack();
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096, 40960);
 	mUIManager->ProcessInput();
 	u16 keyData = PAD_Read();
-	if (keyData & PAD_BUTTON_A) mTrain.isDriving = TRUE;
+	if (keyData & PAD_BUTTON_A)
+	{
+		mTrain.isDriving = TRUE;
+		mTrain.isDrivingBackwards = FALSE;
+	}
+	else if (keyData & PAD_BUTTON_B) 
+	{
+		mTrain.isDriving = TRUE;
+		mTrain.isDrivingBackwards = TRUE;
+	}
 	else mTrain.isDriving = FALSE;
+	G3X_Reset();
+	G3X_ResetMtxStack();
 	if(!mPicking)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
@@ -305,53 +376,17 @@ void Game::Render()
 		G3X_AntiAlias(TRUE);
 	}
 	Train_UpdatePos(&mTrain);
-//#define FIRST_PERSON
 #ifdef FIRST_PERSON
-	VecFx32 pos;
-	pos.x = tpos.x - 8 * FX32_ONE;// + 0.4 * dir.x;
-	pos.y = tpos.y + FX32_HALF + (FX32_HALF >> 1);// + 0.4 * dir.y;
-	pos.z = tpos.z - 8 * FX32_ONE;// + 0.4 * dir.z;
-	VecFx32 up;
-	up.x = 0;
-	up.y = FX32_ONE;
-	up.z = 0;
-	VecFx32 dst;
-	dst.x = tpos.x - 8 * FX32_ONE + 4 * dir.x;
-	dst.y = tpos.y + FX32_HALF + 4 * dir.y;// + 1 * FX32_ONE;
-	dst.z = tpos.z - 8 * FX32_ONE + 4 * dir.z;
-#else
-//#define TOP_VIEW
-#ifndef TOP_VIEW
-	VecFx32 pos;
-	pos.x = 3 * FX32_ONE;
-	pos.y = 2.25 * FX32_ONE;
-	pos.z = -0.75 * FX32_ONE;
-	VecFx32 up;
-	up.x = 0;
-	up.y = FX32_ONE;
-	up.z = 0;
-	VecFx32 dst;
-	dst.x = 0 * FX32_ONE;
-	dst.y = 0;
-	dst.z = -2 * FX32_ONE;
-#else
-	VecFx32 pos;
-	pos.x = -0.5 * FX32_ONE;
-	pos.y = 5 * FX32_ONE;
-	pos.z = -2.5 * FX32_ONE;
-	VecFx32 up;
-	up.x = 0;
-	up.y = 0;
-	up.z = FX32_ONE;
-	VecFx32 dst;
-	dst.x = -0.5 * FX32_ONE;
-	dst.y = 0;
-	dst.z = -2.5 * FX32_ONE;
+	mCamera->mPosition.x = tpos.x - 8 * FX32_ONE;// + 0.4 * dir.x;
+	mCamera->mPosition.y = tpos.y + FX32_HALF + (FX32_HALF >> 1);// + 0.4 * dir.y;
+	mCamera->mPosition.z = tpos.z - 8 * FX32_ONE;// + 0.4 * dir.z;
+	mCamera->mDestination.x = tpos.x - 8 * FX32_ONE + 4 * dir.x;
+	mCamera->mDestination.y = tpos.y + FX32_HALF + 4 * dir.y;// + 1 * FX32_ONE;
+	mCamera->mDestination.z = tpos.z - 8 * FX32_ONE + 4 * dir.z;
 #endif
-#endif
-	NNS_G3dGlbLookAt(&pos, &up, &dst);
+	mCamera->Apply();
 
-	Train_UpdateSound(&mTrain, &pos, &dst, &up);
+	Train_UpdateSound(&mTrain, mCamera);
 
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
 	NNS_G3dGlbLightVector(GX_LIGHTID_0, -2048, -2897, -2048);
@@ -367,6 +402,7 @@ void Game::Render()
 		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0,0,0), GX_RGB(0,0,0), FALSE);
 	}
 	NNS_G3dGlbFlushP();
+	NNS_G3dGeFlushBuffer();
 	G3_PushMtx();
 	{
 		G3_Translate(-8 * FX32_ONE, 0, -8 * FX32_ONE);
@@ -389,6 +425,7 @@ void Game::Render()
 		G3_PopMtx(1);
 		for(int i = 0; i < 8; i++)
 		{
+			if(mPicking) G3_MaterialColorSpecEmi(0, (1 << 12) | i, FALSE);
 			trackpiece_render(&sDummyPieces[i], mTerrainManager);
 		}
 		NNS_G3dGePushMtx();
@@ -459,8 +496,5 @@ void Game::VBlank()
 
 void Game::Finalize()
 {
-	delete mTrain.firstPart->pathWorker1;
-	delete mTrain.firstPart->pathWorker2;
-	delete mTerrainManager;
-	delete mLocModel;
+	//We don't have to free resources here, because that's done by using the group id
 }

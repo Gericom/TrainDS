@@ -57,7 +57,9 @@
     <None Include="build.ps1" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\engine\LookAtCamera.cpp" />
     <ClCompile Include="src\engine\PathWorker.cpp" />
+    <ClCompile Include="src\engine\ThirdPersonCamera.cpp" />
     <ClCompile Include="src\menu\Depot.cpp" />
     <ClCompile Include="src\terrain\Map.cpp" />
     <ClCompile Include="src\core.cpp" />
@@ -73,7 +75,10 @@
     <ClCompile Include="src\vehicles\train.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\engine\Camera.h" />
+    <ClInclude Include="src\engine\LookAtCamera.h" />
     <ClInclude Include="src\engine\PathWorker.h" />
+    <ClInclude Include="src\engine\ThirdPersonCamera.h" />
     <ClInclude Include="src\menu\Depot.h" />
     <ClInclude Include="src\terrain\Map.h" />
     <ClInclude Include="src\core.h" />

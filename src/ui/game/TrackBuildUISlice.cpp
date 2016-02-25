@@ -9,32 +9,45 @@
 
 int TrackBuildUISlice::FindButtonByPoint(int x, int y)
 {
+	if(x >= 212 && x < (212 + 24) && y >= 17 && y < (17 + 24)) return TRACKBUILD_BUTTON_DIR_STRAIGHT;
+	if(x >= 196 && x < (196 + 24) && y >= 45 && y < (45 + 24)) return TRACKBUILD_BUTTON_DIR_LEFT_BIG;
+	if(x >= 228 && x < (228 + 24) && y >= 45 && y < (45 + 24)) return TRACKBUILD_BUTTON_DIR_RIGHT_BIG;
+	if(x >= 196 && x < (196 + 24) && y >= 73 && y < (73 + 24)) return TRACKBUILD_BUTTON_DIR_LEFT_SMALL;
+	if(x >= 228 && x < (228 + 24) && y >= 73 && y < (73 + 24)) return TRACKBUILD_BUTTON_DIR_RIGHT_SMALL;
+	if(x >= 212 && x < (212 + 24) && y >= 118 && y < (118 + 24)) return TRACKBUILD_BUTTON_SLOPE_NONE;
+	if(x >= 196 && x < (196 + 24) && y >= 146 && y < (146 + 24)) return TRACKBUILD_BUTTON_SLOPE_DOWN;
+	if(x >= 228 && x < (228 + 24) && y >= 146 && y < (146 + 24)) return TRACKBUILD_BUTTON_SLOPE_UP;
 	return TRACKBUILD_BUTTON_INVALID;
 }
 
 BOOL TrackBuildUISlice::OnPenDown(Menu* context, int x, int y)
 {
-	if(!(x > (mX + 192) && x < (mX + 256) && y > mY && y < (mY + 192))) return FALSE;
+	x -= mX;
+	y -= mY;
+	if(!(x >= 192 && x < 256 && y >= 0 && y < 192)) return FALSE;
 	mDownButton = FindButtonByPoint(x, y);
 	return TRUE;
 }
 
 BOOL TrackBuildUISlice::OnPenMove(Menu* context, int x, int y)
 {
-	if(!(x > (mX + 192) && x < (mX + 256) && y > mY && y < (mY + 192))) return FALSE;
+	x -= mX;
+	y -= mY;
+	if(!(x >= 192 && x < 256 && y >= 0 && y < 192)) return FALSE;
 	return TRUE;
 }
 
 BOOL TrackBuildUISlice::OnPenUp(Menu* context, int x, int y)
 {
-	if(!(x > (mX + 192) && x < (mX + 256) && y > mY && y < (mY + 192))) return FALSE;
+	x -= mX;
+	y -= mY;
+	if(!(x >= 192 && x < 256 && y >= 0 && y < 192)) return FALSE;
 	int button = FindButtonByPoint(x, y);
 	if(button == mDownButton && button != TRACKBUILD_BUTTON_INVALID)//handle a click
 	{
-		switch(button)
-		{
-
-		}
+		if(button >= TRACKBUILD_BUTTON_SLOPE_NONE)
+			mSlopeSelection = button;
+		else mDirectionSelection = button;
 	}
 	return TRUE;
 }
@@ -55,42 +68,42 @@ void TrackBuildUISlice::Render(Menu* context, NNSG2dOamManagerInstance* oamManag
 	//Straight
 	trans.x = 216 * FX32_ONE + mX * FX32_ONE;
 	trans.y = 13 * FX32_ONE + mY * FX32_ONE;
-	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 10);
+	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 9 + ((mDirectionSelection == TRACKBUILD_BUTTON_DIR_STRAIGHT) ? 1 : 0));
 	numOamDrawn += NNS_G2dMakeCellToOams(&gOamTmpBuffer[numOamDrawn], 128 - numOamDrawn, pData, NULL, &trans, -1, FALSE);
 	//Big Left
 	trans.x = 200 * FX32_ONE + mX * FX32_ONE;
 	trans.y = 41 * FX32_ONE + mY * FX32_ONE;
-	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 1);
+	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 1 + ((mDirectionSelection == TRACKBUILD_BUTTON_DIR_LEFT_BIG) ? 1 : 0));
 	numOamDrawn += NNS_G2dMakeCellToOams(&gOamTmpBuffer[numOamDrawn], 128 - numOamDrawn, pData, NULL, &trans, -1, FALSE);
 	//Big Right
 	trans.x = 232 * FX32_ONE + mX * FX32_ONE;
 	trans.y = 41 * FX32_ONE + mY * FX32_ONE;
-	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 3);
+	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 3 + ((mDirectionSelection == TRACKBUILD_BUTTON_DIR_RIGHT_BIG) ? 1 : 0));
 	numOamDrawn += NNS_G2dMakeCellToOams(&gOamTmpBuffer[numOamDrawn], 128 - numOamDrawn, pData, NULL, &trans, -1, FALSE);
 	//Small Left
 	trans.x = 200 * FX32_ONE + mX * FX32_ONE;
 	trans.y = 77 * FX32_ONE + mY * FX32_ONE;
-	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 5);
+	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 5 + ((mDirectionSelection == TRACKBUILD_BUTTON_DIR_LEFT_SMALL) ? 1 : 0));
 	numOamDrawn += NNS_G2dMakeCellToOams(&gOamTmpBuffer[numOamDrawn], 128 - numOamDrawn, pData, NULL, &trans, -1, FALSE);
 	//Small Right
 	trans.x = 232 * FX32_ONE + mX * FX32_ONE;
 	trans.y = 77 * FX32_ONE + mY * FX32_ONE;
-	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 7);
+	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 7 + ((mDirectionSelection == TRACKBUILD_BUTTON_DIR_RIGHT_SMALL) ? 1 : 0));
 	numOamDrawn += NNS_G2dMakeCellToOams(&gOamTmpBuffer[numOamDrawn], 128 - numOamDrawn, pData, NULL, &trans, -1, FALSE);
 	//No Slope
 	trans.x = 208 * FX32_ONE + mX * FX32_ONE;
 	trans.y = 122 * FX32_ONE + mY * FX32_ONE;
-	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 16);
+	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 15 + ((mSlopeSelection == TRACKBUILD_BUTTON_SLOPE_NONE) ? 1 : 0));
 	numOamDrawn += NNS_G2dMakeCellToOams(&gOamTmpBuffer[numOamDrawn], 128 - numOamDrawn, pData, NULL, &trans, -1, FALSE);
 	//Slope Down
 	trans.x = 200 * FX32_ONE + mX * FX32_ONE;
 	trans.y = 150 * FX32_ONE + mY * FX32_ONE;
-	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 11);
+	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 11 + ((mSlopeSelection == TRACKBUILD_BUTTON_SLOPE_DOWN) ? 1 : 0));
 	numOamDrawn += NNS_G2dMakeCellToOams(&gOamTmpBuffer[numOamDrawn], 128 - numOamDrawn, pData, NULL, &trans, -1, FALSE);
 	//Slope Up
 	trans.x = 232 * FX32_ONE + mX * FX32_ONE;
 	trans.y = 149 * FX32_ONE + mY * FX32_ONE;
-	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 13);
+	pData = NNS_G2dGetCellDataByIdx(mGame->mTrackBuildCellDataBank, 13 + ((mSlopeSelection == TRACKBUILD_BUTTON_SLOPE_UP) ? 1 : 0));
 	numOamDrawn += NNS_G2dMakeCellToOams(&gOamTmpBuffer[numOamDrawn], 128 - numOamDrawn, pData, NULL, &trans, -1, FALSE);
 	//Add
 	trans.x = 193 * FX32_ONE + mX * FX32_ONE;
@@ -121,7 +134,6 @@ void TrackBuildUISlice::Render(Menu* context, NNSG2dOamManagerInstance* oamManag
 		}
 		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
 		{
-			//G3_Identity();
 			G3_TexImageParam(
 				(GXTexFmt)mGame->mShadowTex.nitroFormat,
 				GX_TEXGEN_TEXCOORD,
