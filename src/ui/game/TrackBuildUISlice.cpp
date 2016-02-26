@@ -128,6 +128,11 @@ void TrackBuildUISlice::Render(Menu* context, NNSG2dOamManagerInstance* oamManag
 
 	if(!mGame->mPicking)
 	{
+		G3_MtxMode(GX_MTXMODE_PROJECTION);
+		{
+			G3_Identity();
+			G3_OrthoW(0, 192 * FX32_ONE, 0, 256 * FX32_ONE, 0 * FX32_ONE, 256 * FX32_ONE, 1 * FX32_ONE, NULL);
+		}
 		G3_MtxMode(GX_MTXMODE_TEXTURE);
 		{
 			G3_Identity();
@@ -145,34 +150,33 @@ void TrackBuildUISlice::Render(Menu* context, NNSG2dOamManagerInstance* oamManag
 				NNS_GfdGetTexKeyAddr(mGame->mShadowTex.texKey)
 			);
 			G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(mGame->mShadowTex.plttKey), (GXTexFmt)mGame->mShadowTex.nitroFormat);
-			VecFx32 near1, near2, near3, near4;
-			NNS_G3dScrPosToWorldLine(192 - 8, 0, &near1, NULL);
-			NNS_G3dScrPosToWorldLine(192 - 8, 192, &near2, NULL);
-			NNS_G3dScrPosToWorldLine(192, 192, &near3, NULL);
-			NNS_G3dScrPosToWorldLine(192, 0, &near4, NULL);
-			VEC_Subtract(&near2, &near1, &near2);
-			VEC_Subtract(&near3, &near1, &near3);
-			VEC_Subtract(&near4, &near1, &near4);
 
 			G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
 			G3_PushMtx();
 			{
-				G3_Translate(near1.x, near1.y, near1.z);
+				G3_Identity();
+				G3_Translate(((mX + 192 - 8) << FX32_SHIFT) + ((8 >> 1) << FX32_SHIFT), (mY << FX32_SHIFT) + ((192 >> 1) << FX32_SHIFT), 0 << FX32_SHIFT);
+				G3_Scale(8 << FX32_SHIFT, 192 << FX32_SHIFT, FX32_ONE);
+
 				G3_Color(GX_RGB(31, 31, 31));
 				G3_Begin(GX_BEGIN_QUADS);
 				{
 					G3_TexCoord(0, 0);
-					G3_Vtx(0, 0, 0);
+					G3_Vtx(-FX32_HALF, -FX32_HALF, 0);
 					G3_TexCoord(0, (8 << mGame->mShadowTex.nitroHeight) * FX32_ONE);
-					G3_Vtx(near2.x, near2.y, near2.z);
+					G3_Vtx(-FX32_HALF, FX32_HALF, 0);
 					G3_TexCoord((8 << mGame->mShadowTex.nitroWidth) * FX32_ONE, (8 << mGame->mShadowTex.nitroHeight) * FX32_ONE);
-					G3_Vtx(near3.x, near3.y, near3.z);
+					G3_Vtx(FX32_HALF, FX32_HALF,  0);
 					G3_TexCoord((8 << mGame->mShadowTex.nitroWidth) * FX32_ONE, 0);
-					G3_Vtx(near4.x, near4.y, near4.z);
+					G3_Vtx(FX32_HALF, -FX32_HALF,  0);
 				}
 				G3_End();
 			}
 			G3_PopMtx(1);
+		}
+		G3_MtxMode(GX_MTXMODE_PROJECTION);
+		{
+			G3_RestoreMtx(0);
 		}
 	}
 }

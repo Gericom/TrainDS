@@ -8,6 +8,7 @@ class TerrainManager;
 class UIManager;
 class TrackBuildUISlice;
 class LookAtCamera;
+class ThirdPersonCamera;
 
 class Game : public Menu
 {
@@ -21,7 +22,7 @@ private:
 	train_t mTrain;
 	train_part_t mTrainPart;
 
-	LookAtCamera* mCamera;
+	/*LookAtCamera*/ThirdPersonCamera* mCamera;
 
 	BOOL mPicking;
 	BOOL mProcessPicking;

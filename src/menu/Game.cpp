@@ -12,6 +12,7 @@
 #include "ui/game/TrackBuildUISlice.h"
 #include "engine/Camera.h"
 #include "engine/LookAtCamera.h"
+#include "engine/ThirdPersonCamera.h"
 #include "Game.h"
 
 static tile_t sDummyMap[16][16];
@@ -263,8 +264,9 @@ void Game::Initialize(int arg)
 	mProcessPicking = FALSE;
 	mPickingCallback = NULL;
 
-	mCamera = new LookAtCamera();
-#ifdef FIRST_PERSON
+	mCamera = new ThirdPersonCamera();//LookAtCamera();
+	mCamera->mTrain = &mTrain;
+/*#ifdef FIRST_PERSON
 	mCamera->mUp.x = 0;
 	mCamera->mUp.y = FX32_ONE;
 	mCamera->mUp.z = 0;
@@ -290,9 +292,9 @@ void Game::Initialize(int arg)
 	mCamera->mDestination.y = 0;
 	mCamera->mDestination.z = -2.5 * FX32_ONE;
 #endif
-#endif
+#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096, 40960);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, 64 * 4096, 40960);
 }
 
 void Game::Pick(int x, int y, PickingCallbackFunc callback)
@@ -366,6 +368,18 @@ void Game::Render()
 		mTrain.isDrivingBackwards = TRUE;
 	}
 	else mTrain.isDriving = FALSE;
+	if (keyData & PAD_KEY_LEFT)
+		mCamera->mTheta -= FX32_ONE;
+	else if(keyData & PAD_KEY_RIGHT)
+		mCamera->mTheta += FX32_ONE;
+	if (keyData & PAD_KEY_UP)
+		mCamera->mPhi += FX32_ONE >> 1;
+	else if(keyData & PAD_KEY_DOWN)
+		mCamera->mPhi -= FX32_ONE >> 1;
+	if (keyData & PAD_BUTTON_L && mCamera->mRadius < 4 * FX32_ONE)
+		mCamera->mRadius += FX32_ONE >> 5;
+	else if (keyData & PAD_BUTTON_R && mCamera->mRadius > FX32_HALF)
+		mCamera->mRadius -= FX32_ONE >> 5;
 	G3X_Reset();
 	G3X_ResetMtxStack();
 	if(!mPicking)

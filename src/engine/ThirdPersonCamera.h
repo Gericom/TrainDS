@@ -1,17 +1,20 @@
 #ifndef __THIRDPERSONCAMERA_H__
 #define __THIRDPERSONCAMERA_H__
-
-typedef struct train_t;
+#include "LookAtCamera.h"
+#include "vehicles/train.h"
 
 //A camera that looks at the locomotive of a train
-//The camera can be seen as a point on a sphere with radius r
-//that looks at the center of the sphere
-//x = r sin(mTheta) cos(mPhi)
-//y = r sin(mTheta) sin(mPhi)
-//z = r cos(mTheta)
-class ThirdPersonCamera : public Camera
+class ThirdPersonCamera : public LookAtCamera
 {
 public:
+	ThirdPersonCamera()
+		: mRadius(2.5 * FX32_ONE), mTheta(0), mPhi(0), mTrain(NULL)
+	{
+		mUp.x = 0;
+		mUp.y = FX32_ONE;
+		mUp.z = 0;
+	}
+
 	train_t* mTrain;
 	fx32 mRadius;
 	fx32 mTheta;//inclination
