@@ -10,25 +10,9 @@ static void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
 	result->z = a->z + FX_Mul(b->z - a->z, t);
 }
 
-static fx32 PieceRotSin[] =
-{
-	FX32_SIN0, FX32_SIN90, FX32_SIN180, FX32_SIN270
-};
-
-static fx32 PieceRotCos[] =
-{
-	FX32_COS0, FX32_COS90, FX32_COS180, FX32_COS270
-};
-
 void PathWorker::CalculatePoint()
 {
 	mCurPoint.x = mCurPoint.y = mCurPoint.z = 0;
-	if(mCurDistance == 0)
-	{
-		mCurPoint = mCurPiecePoint;
-		mCurDirection = mNextDirection;//?
-		return;
-	}
 	if(mCurPiece->kind == TRACKPIECE_KIND_FLAT)//Linear Interpolation
 	{
 		if(mNextDistance < 0) return;
@@ -144,17 +128,13 @@ void PathWorker::Proceed(fx32 distance, VecFx32* point, VecFx32* direction)
 			mCurPiece = mCurPiece->next[0];
 			SetupPoint();
 		}
-		/*while(mCurDistance < 0 && mPrevDistance >= 0 && -mCurDistance > mPrevDistance)
+		while(mCurDistance < 0 && mCurPiece->prev[0] != NULL)
 		{
-			mCurDistance += mPrevDistance;
 			mCurPiece = mCurPiece->prev[0];
-			if(mCurPiece->next[0] != NULL)
-				mNextDistance = getPieceDistance(mCurPiece, mCurPiece->next[0], &mNextDirection);
-			else mNextDistance = -FX32_ONE;
-			if(mCurPiece->prev[0] != NULL)
-				mPrevDistance = getPieceDistance(mCurPiece, mCurPiece->prev[0], &mPrevDirection);
-			else mPrevDistance = -FX32_ONE;
-		}*/
+			SetupPoint();
+			if(mNextDistance < 0) break;
+			mCurDistance = mNextDistance + mCurDistance;
+		}
 		CalculatePoint();
 	}
 	*point = mCurPoint;

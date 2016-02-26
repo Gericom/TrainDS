@@ -20,12 +20,14 @@
 # label                     number fileID vol pri ply                          size name
   STRM_INTRO                     0      3 127  64   0                        696412 strm/STRM_INTRO.adpcm.strm
   STRM_TITLE                     1      4 127  64   0                       5085700 strm/STRM_TITLE.adpcm.strm
+  STRM_CREDITS                   2      5 127  64   0                       4199296 strm/STRM_CREDITS.adpcm.strm
 
 # FAT:
 # fileID     offset       size name
-       0 0x00000260         56 mus/train.ssar
-       1 0x000002a0         76 bnk/train.sbnk
-       2 0x00000300      94332 swar/train.swar
-       3 0x00017380     696412 strm/STRM_INTRO.adpcm.strm
-       4 0x000c13e0    5085700 strm/STRM_TITLE.adpcm.strm
+       0 0x000002a0         56 mus/train.ssar
+       1 0x000002e0         76 bnk/train.sbnk
+       2 0x00000340      94332 swar/train.swar
+       3 0x000173c0     696412 strm/STRM_INTRO.adpcm.strm
+       4 0x000c1420    5085700 strm/STRM_TITLE.adpcm.strm
+       5 0x0059ae40    4199296 strm/STRM_CREDITS.adpcm.strm
 

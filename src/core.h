@@ -16,6 +16,8 @@ typedef s32 int32_t;
 
 #define NOCASH_Break() asm("mov r11, r11")
 
+extern GXOamAttr gOamTmpBuffer[128];
+
 extern NNSFndHeapHandle mHeapHandle;
 
 void Core_PreInit();

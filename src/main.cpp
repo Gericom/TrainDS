@@ -2,6 +2,7 @@
 #include <nnsys/g3d.h>
 #include <nnsys/gfd.h>
 #include "core.h"
+#include "util.h"
 #include "terrain/TerrainManager.h"
 #include "menu/TitleMenu.h"
 #include "menu/Depot.h"
@@ -75,16 +76,46 @@ void NitroMain ()
 
 	OS_WaitVBlankIntr();
 
+	GX_SetMasterBrightness(-16);
+	GXS_SetMasterBrightness(-16);
     GX_DispOn();
     GXS_DispOn();
 
-	Menu* menu = new Game();//TitleMenu();//Game();
-	menu->Initialize(0);////TITLEMENU_ARG_PLAY_INTRO);///*0);//*/TITLEMENU_ARG_DONT_PLAY_INTRO);
+	NNS_FndSetGroupIDForExpHeap(mHeapHandle, 0x5A);//This is to be able to simply free all resources used by the menu after it is closed
+	//Game loop
+	//Should handle switching menu's and deallocating the shit they didn't (and don't have to) clean up
 	while(1)
 	{
-		menu->Render();
-		NNS_SndMain();
-		OS_WaitVBlankIntr();
-		menu->VBlank();
+		Menu* menu = new Game();
+		menu->Initialize(0);////TITLEMENU_ARG_PLAY_INTRO);///*0);//*/TITLEMENU_ARG_DONT_PLAY_INTRO);
+		//Fade in
+		for(int i = -16; i <= 0; i++)
+		{
+			menu->Render();
+			NNS_SndMain();
+			OS_WaitVBlankIntr();
+			menu->VBlank();
+			GX_SetMasterBrightness(i);
+			GXS_SetMasterBrightness(i);
+		}
+		while(1)
+		{
+			menu->Render();
+			NNS_SndMain();
+			OS_WaitVBlankIntr();
+			menu->VBlank();
+		}
+		//Fade out
+		for(int i = 0; i >= -16; i--)
+		{
+			menu->Render();
+			NNS_SndMain();
+			OS_WaitVBlankIntr();
+			menu->VBlank();
+			GX_SetMasterBrightness(i);
+			GXS_SetMasterBrightness(i);
+		}
+		menu->Finalize();
+		Util_FreeAllToExpHeapByGroupId(mHeapHandle, 0x5A);//Release everything allocated by the menu
 	}
 }

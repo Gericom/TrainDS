@@ -4,6 +4,8 @@
 #include <nnsys/snd.h>
 #include "core.h"
 
+GXOamAttr gOamTmpBuffer[128];
+
 NNSFndHeapHandle mHeapHandle;
 
 #define SYSTEM_HEAP_SIZE        64*1024
@@ -69,7 +71,7 @@ void Core_Init()
 	//Should I do this different?
 	uint32_t szWork = NNS_GfdGetLnkTexVramManagerWorkSize( 4096 );
     void* pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);
-    NNS_GfdInitLnkTexVramManager(256 * 1024, /*0*/128 * 1024, pMgrWork, szWork, TRUE);
+    NNS_GfdInitLnkTexVramManager(256 * 1024, 128 * 1024, pMgrWork, szWork, TRUE);
 	
 	szWork = NNS_GfdGetLnkPlttVramManagerWorkSize( 4096 );
     pMgrWork = NNS_FndAllocFromExpHeapEx(mHeapHandle, szWork, 16);

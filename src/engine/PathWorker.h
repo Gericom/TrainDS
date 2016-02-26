@@ -12,11 +12,8 @@ private:
 	VecFx32 mCurDirection;
 
 	VecFx32 mCurPiecePoint;
-	//VecFx32 mPrevPiecePoint;
 	VecFx32 mNextPiecePoint;
 
-	//fx32 mPrevDistance;
-	//VecFx32 mPrevDirection;
 	fx32 mNextDistance;
 	VecFx32 mNextDirection;
 

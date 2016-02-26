@@ -5,7 +5,7 @@
 class TerrainManager
 {
 private:
-	texture_t* mTerrainTextures[2];
+	texture_t* mTerrainTextures[1];
 	texture_t mTrackTexture;
 public:
 	TerrainManager();

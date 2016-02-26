@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE letter-list SYSTEM "letter-list.dtd">
+
+<letter-list version="1.0">
+	<head>
+		<create user="hatamoto_minoru" date="2005-02-18T10:51:13" />
+		<title>xllt Sample</title>
+		<comment>Sample of a text filter file</comment>
+	</head>
+
+	<body>
+		<letter>
+			abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+		</letter>
+	</body>
+
+</letter-list>

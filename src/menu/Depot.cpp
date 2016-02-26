@@ -85,9 +85,9 @@ void Depot::Initialize(int arg)
 	NNS_GfdResetLnkTexVramState();
 	NNS_GfdResetLnkPlttVramState();
 
-	mEnvModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL);
+	mEnvModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL, FALSE);
 	NNS_G3dResDefaultSetup(mEnvModel);
-	NNSG3dResFileHeader* mEnvTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL);
+	NNSG3dResFileHeader* mEnvTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL, TRUE);
 	NNS_G3dResDefaultSetup(mEnvTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mEnvModel), 0);
 	NNSG3dResTex* tex = NNS_G3dGetTex(mEnvTextures);
@@ -142,5 +142,5 @@ void Depot::VBlank()
 
 void Depot::Finalize()
 {
-	
+	//We don't have to free resources here, because that's done by using the group id
 }

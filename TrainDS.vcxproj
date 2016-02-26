@@ -57,7 +57,9 @@
     <None Include="build.ps1" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\engine\LookAtCamera.cpp" />
     <ClCompile Include="src\engine\PathWorker.cpp" />
+    <ClCompile Include="src\engine\ThirdPersonCamera.cpp" />
     <ClCompile Include="src\menu\Depot.cpp" />
     <ClCompile Include="src\terrain\Map.cpp" />
     <ClCompile Include="src\core.cpp" />
@@ -67,11 +69,16 @@
     <ClCompile Include="src\menu\TitleMenu.cpp" />
     <ClCompile Include="src\terrain\terrain.cpp" />
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
+    <ClCompile Include="src\ui\game\TrackBuildUISlice.cpp" />
+    <ClCompile Include="src\ui\UIManager.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\vehicles\train.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\engine\Camera.h" />
+    <ClInclude Include="src\engine\LookAtCamera.h" />
     <ClInclude Include="src\engine\PathWorker.h" />
+    <ClInclude Include="src\engine\ThirdPersonCamera.h" />
     <ClInclude Include="src\menu\Depot.h" />
     <ClInclude Include="src\terrain\Map.h" />
     <ClInclude Include="src\core.h" />
@@ -80,6 +87,9 @@
     <ClInclude Include="src\menu\TitleMenu.h" />
     <ClInclude Include="src\terrain\terrain.h" />
     <ClInclude Include="src\terrain\TerrainManager.h" />
+    <ClInclude Include="src\ui\game\TrackBuildUISlice.h" />
+    <ClInclude Include="src\ui\UIManager.h" />
+    <ClInclude Include="src\ui\UISlice.h" />
     <ClInclude Include="src\util.h" />
     <ClInclude Include="src\vehicles\train.h" />
   </ItemGroup>

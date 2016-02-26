@@ -5,3 +5,4 @@
 #define PLAYER_STRM	0
 #define STRM_INTRO	0
 #define STRM_TITLE	1
+#define STRM_CREDITS	2
