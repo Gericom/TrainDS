@@ -1,6 +1,7 @@
 #include <nitro.h>
 #include "core.h"
 #include "terrain\terrain.h"
+#include "terrain\track\TrackPiece.h"
 #include "PathWorker.h"
 
 static void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
@@ -13,15 +14,15 @@ static void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
 void PathWorker::CalculatePoint()
 {
 	mCurPoint.x = mCurPoint.y = mCurPoint.z = 0;
-	if(mCurPiece->kind == TRACKPIECE_KIND_FLAT)//Linear Interpolation
+	if (mNextDistance < 0) return;
+	mCurPiece->CalculatePoint(&mCurPiecePoint, &mNextPiecePoint, &mNextDirection, FX_Div(mCurDistance, mNextDistance), &mCurPoint, &mCurDirection);
+	/*if(mCurPiece->kind == TRACKPIECE_KIND_FLAT)//Linear Interpolation
 	{
-		if(mNextDistance < 0) return;
 		FX_Lerp(&mCurPiecePoint, &mNextPiecePoint, FX_Div(mCurDistance, mNextDistance), &mCurPoint);
 		mCurDirection = mNextDirection;
 	}
 	else if(mCurPiece->kind == TRACKPIECE_KIND_FLAT_SMALL_CURVED_LEFT)//Quarter Circle
 	{
-		if(mNextDistance < 0) return;
 		fx32 frac = FX_Div(mCurDistance, mNextDistance);
 		u16 idx = FX_DEG_TO_IDX(frac * 90);
 		fx32 sin, cos;
@@ -65,13 +66,13 @@ void PathWorker::CalculatePoint()
 			mCurDirection.z = cos;
 		}
 		VEC_Normalize(&mCurDirection, &mCurDirection);
-	}
+	}*/
 }
 
 void PathWorker::SetupPoint()
 {
 	fx32 xa = 0, za = 0;
-	trackpiece_t* a = mCurPiece;
+	TrackPiece* a = mCurPiece;
 	if(a->rot == TRACKPIECE_ROT_0) za = FX32_HALF;
 	else if(a->rot == TRACKPIECE_ROT_90) { xa = FX32_HALF; za = FX32_ONE; }
 	else if(a->rot == TRACKPIECE_ROT_180) { xa = FX32_ONE; za = FX32_HALF; }
@@ -96,20 +97,12 @@ void PathWorker::SetupPoint()
 		VEC_Subtract(&mNextPiecePoint, &mCurPiecePoint, &diff);
 		VEC_Normalize(&diff, &mNextDirection);
 		fx32 linDist = VEC_Mag(&diff);
-		if(mCurPiece->kind == TRACKPIECE_KIND_FLAT)//Linear Interpolation
-			mNextDistance = linDist;
-		else if(mCurPiece->kind == TRACKPIECE_KIND_FLAT_SMALL_CURVED_LEFT)//Quarter Circle
-		{
-			//Calculate the arc length
-			//r = linDist sqrt(0.5)
-			fx32 r = FX_Mul(linDist, FX32_SQRT1_2);
-			mNextDistance = FX_Mul32x64c(r, FX64C_PI_2);
-		}
+		mNextDistance = mCurPiece->GetNextDistance(linDist);
 	}
 	else mNextDistance = -FX32_ONE;
 }
 
-PathWorker::PathWorker(trackpiece_t* curPiece, fx32 curDistance)
+PathWorker::PathWorker(TrackPiece* curPiece, fx32 curDistance)
 {
 	mCurPiece = curPiece;
 	mCurDistance = curDistance;

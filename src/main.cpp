@@ -46,16 +46,16 @@ static void Init()
 	GXS_DispOff();
 
 	OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIntr);
-	(void)OS_EnableIrqMask(OS_IE_V_BLANK);
-	(void)OS_EnableIrq();
+	OS_EnableIrqMask(OS_IE_V_BLANK);
+	OS_EnableIrq();
 
 	FS_Init(DEFAULT_DMA_NUMBER);
 
-	(void)GX_VBlankIntr(TRUE);         // to generate V-Blank interrupt request
+	GX_VBlankIntr(TRUE);         // to generate V-Blank interrupt request
 
 	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
 	MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
-	(void)GX_DisableBankForLCDC();
+	GX_DisableBankForLCDC();
 
 	MI_CpuFillFast((void *)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
 	MI_CpuClearFast((void *)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette

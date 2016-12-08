@@ -45,3 +45,10 @@ void Util_FreeAllToExpHeapByGroupId(NNSFndHeapHandle heap, int groupId)
 {
 	NNS_FndVisitAllocatedForExpHeap(heap, Util_FreeAllToExpHeapByGroupIdForMBlock, groupId);
 }
+
+void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
+{
+	result->x = a->x + FX_Mul(b->x - a->x, t);
+	result->y = a->y + FX_Mul(b->y - a->y, t);
+	result->z = a->z + FX_Mul(b->z - a->z, t);
+}

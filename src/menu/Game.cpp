@@ -6,6 +6,9 @@
 #include "Menu.h"
 #include "terrain/terrain.h"
 #include "terrain/TerrainManager.h"
+#include "terrain/track/TrackPiece.h"
+#include "terrain/track/TrackPieceQuarterCircle2x2.h"
+#include "terrain/track/TrackPieceStraight1x1.h"
 #include "engine/PathWorker.h"
 #include "vehicles/train.h"
 #include "ui/UIManager.h"
@@ -16,7 +19,8 @@
 #include "Game.h"
 
 static tile_t sDummyMap[16][16];
-static trackpiece_t sDummyPieces[8];
+//static trackpiece_t sDummyPieces[8];
+static TrackPiece* sDummyPieces[10];
 
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
@@ -124,7 +128,17 @@ void Game::Initialize(int arg)
 	sDummyMap[4][6].rbCorner = TILE_CORNER_UP;
 	sDummyMap[5][6].rtCorner = TILE_CORNER_UP;
 	sDummyMap[5][6].rbCorner = TILE_CORNER_UP;
-	sDummyPieces[0].kind = TRACKPIECE_KIND_FLAT;
+	sDummyPieces[0] = new TrackPieceStraight1x1(7, 0, 7, TRACKPIECE_ROT_0);
+	sDummyPieces[1] = new TrackPieceQuarterCircle2x2(8, 0, 7, TRACKPIECE_ROT_0);
+	sDummyPieces[2] = new TrackPieceStraight1x1(9, 0, 5, TRACKPIECE_ROT_90);
+	sDummyPieces[3] = new TrackPieceStraight1x1(9, 0, 4, TRACKPIECE_ROT_90);
+	sDummyPieces[4] = new TrackPieceQuarterCircle2x2(9, 0, 3, TRACKPIECE_ROT_90);
+	sDummyPieces[5] = new TrackPieceStraight1x1(7, 0, 2, TRACKPIECE_ROT_180);
+	sDummyPieces[6] = new TrackPieceQuarterCircle2x2(6, 0, 2, TRACKPIECE_ROT_180);
+	sDummyPieces[7] = new TrackPieceStraight1x1(5, 0, 4, TRACKPIECE_ROT_270);
+	sDummyPieces[8] = new TrackPieceStraight1x1(5, 0, 5, TRACKPIECE_ROT_270);
+	sDummyPieces[9] = new TrackPieceQuarterCircle2x2(5, 0, 6, TRACKPIECE_ROT_270);
+	/*sDummyPieces[0].kind = TRACKPIECE_KIND_FLAT;
 	sDummyPieces[0].rot = TRACKPIECE_ROT_0;
 	sDummyPieces[0].x = 7;
 	sDummyPieces[0].y = 0;
@@ -163,20 +177,20 @@ void Game::Initialize(int arg)
 	sDummyPieces[7].rot = TRACKPIECE_ROT_270;
 	sDummyPieces[7].x = 5;
 	sDummyPieces[7].y = 0;
-	sDummyPieces[7].z = 6;
+	sDummyPieces[7].z = 6;*/
 
-	for(int i = 0; i < 8; i++)
+	for(int i = 0; i < 10; i++)
 	{
-		sDummyPieces[i].prev[0] = &sDummyPieces[(i == 0) ? 7 : (i - 1)];
-		sDummyPieces[i].prev[1] = sDummyPieces[i].prev[2] = sDummyPieces[i].prev[3] = NULL;
-		sDummyPieces[i].next[0] = &sDummyPieces[(i == 7) ? 0 : (i + 1)];
-		sDummyPieces[i].next[1] = sDummyPieces[i].next[2] = sDummyPieces[i].next[3] = NULL;
+		sDummyPieces[i]->prev[0] = sDummyPieces[(i == 0) ? 9 : (i - 1)];
+		sDummyPieces[i]->prev[1] = sDummyPieces[i]->prev[2] = sDummyPieces[i]->prev[3] = NULL;
+		sDummyPieces[i]->next[0] = sDummyPieces[(i == 9) ? 0 : (i + 1)];
+		sDummyPieces[i]->next[1] = sDummyPieces[i]->next[2] = sDummyPieces[i]->next[3] = NULL;
 	}
 
 	mTrain.firstPart = &mTrainPart;
 	mTrain.isDriving = FALSE;
-	mTrain.firstPart->pathWorker1 = new PathWorker(&sDummyPieces[0], 0);
-	mTrain.firstPart->pathWorker2 = new PathWorker(&sDummyPieces[0], FX32_ONE);
+	mTrain.firstPart->pathWorker1 = new PathWorker(sDummyPieces[0], 0);
+	mTrain.firstPart->pathWorker2 = new PathWorker(sDummyPieces[0], FX32_ONE);
 	mTrain.firstPart->next = NULL;
 
 	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL, FALSE);
@@ -251,8 +265,8 @@ void Game::Initialize(int arg)
 	NNS_G2dInitOamManagerModule();
 
 	mUIManager = new UIManager(this, UIMANAGER_SCREEN_MAIN);
-	mTrackBuildUISlice = new TrackBuildUISlice();
-	mUIManager->AddSlice(mTrackBuildUISlice);
+	//mTrackBuildUISlice = new TrackBuildUISlice();
+	//mUIManager->AddSlice(mTrackBuildUISlice);
 	mUIManager->RegisterPenCallbacks(Game::OnPenDown, Game::OnPenMove, Game::OnPenUp);
 
 	NNS_SndArcLoadSeqArc(SEQ_TRAIN, mSndHeapHandle);
@@ -373,13 +387,20 @@ void Game::Render()
 	else if(keyData & PAD_KEY_RIGHT)
 		mCamera->mTheta += FX32_ONE;
 	if (keyData & PAD_KEY_UP)
-		mCamera->mPhi += FX32_ONE >> 1;
+		mCamera->mPhi += FX32_ONE >> 5;
 	else if(keyData & PAD_KEY_DOWN)
-		mCamera->mPhi -= FX32_ONE >> 1;
+		mCamera->mPhi -= FX32_ONE >> 5;
+	mCamera->mTheta %= 360 * FX32_ONE;
+	if(mCamera->mPhi < 0) 
+		mCamera->mPhi = 0;
+	else if(mCamera->mPhi > 10 * FX32_ONE) 
+		mCamera->mPhi = 10 * FX32_ONE;
 	if (keyData & PAD_BUTTON_L && mCamera->mRadius < 4 * FX32_ONE)
 		mCamera->mRadius += FX32_ONE >> 5;
 	else if (keyData & PAD_BUTTON_R && mCamera->mRadius > FX32_HALF)
 		mCamera->mRadius -= FX32_ONE >> 5;
+	if(mCamera->mRadius < FX32_ONE + FX32_HALF)
+		mCamera->mRadius = FX32_ONE + FX32_HALF;
 	G3X_Reset();
 	G3X_ResetMtxStack();
 	if(!mPicking)
@@ -437,10 +458,11 @@ void Game::Render()
 			}
 		}
 		G3_PopMtx(1);
-		for(int i = 0; i < 8; i++)
+		for(int i = 0; i < 10; i++)
 		{
 			if(mPicking) G3_MaterialColorSpecEmi(0, (1 << 12) | i, FALSE);
-			trackpiece_render(&sDummyPieces[i], mTerrainManager);
+			sDummyPieces[i]->Render(mTerrainManager);
+			//trackpiece_render(&sDummyPieces[i], mTerrainManager);
 		}
 		NNS_G3dGePushMtx();
 		{

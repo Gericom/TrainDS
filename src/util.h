@@ -6,5 +6,6 @@ void* Util_LoadFileToBuffer(char* path, uint32_t* size, BOOL tempoarly);
 void Util_LoadTextureWithKey(NNSGfdTexKey key, void* data);
 void Util_LoadPaletteWithKey(NNSGfdPlttKey key, void* data);
 void Util_FreeAllToExpHeapByGroupId(NNSFndHeapHandle heap, int groupId);
+void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result);
 
 #endif
