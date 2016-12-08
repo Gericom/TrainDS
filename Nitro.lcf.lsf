@@ -3,7 +3,9 @@
 Static	main
 {
 	Address		0x02000000
-	Object		GROUP(ROOT)
+	Object		$(OBJS_STATIC)
+	Library		$(LLIBS)
+	#Object		GROUP(ROOT)
 	StackSize	0	1024
 }
 
@@ -25,4 +27,3 @@ Property
 	OverlayTable	%_table
 	Surffix			.sbin
 }
-
