@@ -9,6 +9,12 @@ public:
 	VecFx32 mUp;
 
 	void Apply();
+
+	virtual void GetLookDirection(VecFx32* lookDirection)
+	{
+		VEC_Subtract(&mDestination, &mPosition, lookDirection);
+		VEC_Normalize(lookDirection, lookDirection);
+	}
 };
 
 #endif

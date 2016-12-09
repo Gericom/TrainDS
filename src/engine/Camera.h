@@ -5,6 +5,7 @@ class Camera
 {
 public:
 	virtual void Apply() = 0;
+	virtual void GetLookDirection(VecFx32* lookDirection) = 0;
 };
 
 #endif

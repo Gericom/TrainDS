@@ -1,6 +1,5 @@
 #ifndef __UISLICE_H__
 #define __UISLICE_H__
-#include <nnsys/fnd.h>
 
 class UIManager;
 
@@ -13,10 +12,15 @@ protected:
 	int mX;
 	int mY;
 public:
-	UISlice() 
-		: mX(0), mY(0) 
-	{ 
-	
+	UISlice()
+		: mX(0), mY(0)
+	{
+
+	}
+
+	virtual ~UISlice()
+	{
+
 	}
 	//Sets the position of the slice. Not all slices use this as their absolute position,
 	//because sometimes this is only used for an animation
@@ -25,12 +29,15 @@ public:
 		mX = x;
 		mY = y;
 	}
+	void GetPosition(int &x, int &y) { x = mX; y = mY; }
 
-	virtual BOOL OnPenDown(Menu* context, int x, int y) = 0;
-	virtual BOOL OnPenMove(Menu* context, int x, int y) = 0;
-	virtual BOOL OnPenUp(Menu* context, int x, int y) = 0;
+	virtual int OnPenDown(void* context, int x, int y) = 0;
+	virtual int OnPenMove(void* context, int x, int y) = 0;
+	virtual int OnPenUp(void* context, int x, int y) = 0;
 
-	virtual void Render(Menu* context, NNSG2dOamManagerInstance* oamManager) = 0;
+	virtual void Render(void* context) = 0;
+
+	virtual void CleanupVRAM() = 0;
 };
 
 #endif

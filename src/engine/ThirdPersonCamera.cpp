@@ -53,12 +53,12 @@ void ThirdPersonCamera::Apply()
 	//mRotation.MultiplyByVector(&tmp, &tmp);
 	//MTX_MultVec43(&tmp, &rot2, &tmp);
 	tmp.y += mPhi;
-	mPosition.x = tmp.x + mTrain->firstPart->position.x - 8 * FX32_ONE;
+	mPosition.x = tmp.x + mTrain->firstPart->position.x - 32 * FX32_ONE;
 	mPosition.y = tmp.y + mTrain->firstPart->position.y + (FX32_ONE / 3);
-	mPosition.z = tmp.z + mTrain->firstPart->position.z - 8 * FX32_ONE;
-	mDestination.x = mTrain->firstPart->position.x - 8 * FX32_ONE;// +mTrain->firstPart->direction.x;
+	mPosition.z = tmp.z + mTrain->firstPart->position.z - 32 * FX32_ONE;
+	mDestination.x = mTrain->firstPart->position.x - 32 * FX32_ONE;// +mTrain->firstPart->direction.x;
 	mDestination.y = mTrain->firstPart->position.y + (FX32_ONE / 3);// +mTrain->firstPart->direction.y;
-	mDestination.z = mTrain->firstPart->position.z - 8 * FX32_ONE;// +mTrain->firstPart->direction.z;
+	mDestination.z = mTrain->firstPart->position.z - 32 * FX32_ONE;// +mTrain->firstPart->direction.z;
 	//mUp.x = 0;
 	//mUp.y = (FX_CosIdx(FX_DEG_TO_IDX(mPhi)) < 0) ? -FX32_ONE : FX32_ONE;
 	//mUp.z = 0;

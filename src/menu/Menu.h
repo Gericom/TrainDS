@@ -1,15 +1,19 @@
 #ifndef __MENU_H__
 #define __MENU_H__
 
+#define MENU_PRIVATE_HEAP_GROUP_ID	0x5A
+
 class Menu
 {
 public:
-	virtual void Initialize(int arg) = 0;
-	virtual void Render() = 0;
-	virtual void VBlank() = 0;
-	virtual void Finalize() = 0;
+	virtual void Run(int arg) = 0;
 };
 
 extern Menu* gRunningMenu;
+extern int gNextMenuArg;
+
+typedef Menu* (*OnMenuCreate)();
+
+extern OnMenuCreate gNextMenuCreateFunc;
 
 #endif

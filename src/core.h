@@ -2,6 +2,7 @@
 #define __CORE_H__
 #include <nnsys/fnd.h>
 #include <nnsys/snd.h>
+#include <nnsys/g2d.h>
 #include "../resources/sound/sdat/sound_data.sadl"
 #include "print.h"
 
@@ -19,18 +20,26 @@ typedef s32 int32_t;
 
 extern GXOamAttr gOamTmpBuffer[128];
 
-extern NNSFndHeapHandle mHeapHandle;
+extern NNSFndHeapHandle gHeapHandle;
 
 void Core_PreInit();
+
+#ifdef __cplusplus
 
 void* operator new(std::size_t blocksize);
 void* operator new[](std::size_t blocksize);
 void operator delete(void *block) throw();
 void operator delete[](void *block) throw();
 
-extern NNSSndArc mSndArc;
-extern NNSSndHeapHandle mSndHeapHandle;
+#endif
+
+
+extern NNSSndArc gSndArc;
+extern NNSSndHeapHandle gSndHeapHandle;
 
 void Core_Init();
+
+extern uint16_t gKeys;
+void Core_ReadInput();
 
 #endif

@@ -12,15 +12,14 @@
 #include "engine/PathWorker.h"
 #include "vehicles/train.h"
 #include "ui/UIManager.h"
-#include "ui/game/TrackBuildUISlice.h"
 #include "engine/Camera.h"
 #include "engine/LookAtCamera.h"
 #include "engine/ThirdPersonCamera.h"
 #include "Game.h"
 
-static tile_t sDummyMap[16][16];
+static tile_t sDummyMap[64][64];
 //static trackpiece_t sDummyPieces[8];
-static TrackPiece* sDummyPieces[10];
+static TrackPiece* sDummyPieces[60];//10];
 
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
@@ -93,24 +92,24 @@ void Game::Initialize(int arg)
 
 	MI_CpuClearFast(&sDummyMap[0][0], sizeof(sDummyMap));
 
-	for(int y = 0; y < 16; y++)
+	for(int y = 0; y < 64; y++)
 	{
-		for(int x = 0; x < 16; x++)
+		for(int x = 0; x < 64; x++)
 		{
-			if(y == 5 && x > 6 && x < 8)
+			if(y == 32 - 3 && x > 32 - 2 && x < 32)
 			{
 				sDummyMap[y][x].groundType = 0;//1;
 				sDummyMap[y][x].y = 1;
 			}
-			else if(y == 5 && x > 6 && x > 8) sDummyMap[y][x].groundType = 0;//1;
-			else if(y == 6 && x > 6 && x < 8)
+			else if(y == 32 - 3 && x > 32 - 2 && x > 32) sDummyMap[y][x].groundType = 0;//1;
+			else if(y == 32 - 2 && x > 32 - 2 && x < 32)
 			{
 				sDummyMap[y][x].ltCorner = TILE_CORNER_UP;
 				sDummyMap[y][x].rtCorner = TILE_CORNER_UP;
 				sDummyMap[y][x].lbCorner = TILE_CORNER_FLAT;
 				sDummyMap[y][x].rbCorner = TILE_CORNER_FLAT;
 			}
-			else if(y == 4 && x > 6  && x < 8)
+			else if(y == 32 - 4 && x > 32 - 2  && x < 32)
 			{
 				sDummyMap[y][x].ltCorner = TILE_CORNER_FLAT;
 				sDummyMap[y][x].rtCorner = TILE_CORNER_FLAT;
@@ -119,71 +118,36 @@ void Game::Initialize(int arg)
 			}
 		}
 	}
-	sDummyMap[5][8].ltCorner = TILE_CORNER_UP;
-	sDummyMap[5][8].lbCorner = TILE_CORNER_UP;
-	sDummyMap[5][8].groundType = 0;//1;
-	sDummyMap[4][8].lbCorner = TILE_CORNER_UP;
-	sDummyMap[6][8].ltCorner = TILE_CORNER_UP;
-	sDummyMap[6][6].rtCorner = TILE_CORNER_UP;
-	sDummyMap[4][6].rbCorner = TILE_CORNER_UP;
-	sDummyMap[5][6].rtCorner = TILE_CORNER_UP;
-	sDummyMap[5][6].rbCorner = TILE_CORNER_UP;
-	sDummyPieces[0] = new TrackPieceStraight1x1(7, 0, 7, TRACKPIECE_ROT_0);
-	sDummyPieces[1] = new TrackPieceQuarterCircle2x2(8, 0, 7, TRACKPIECE_ROT_0);
-	sDummyPieces[2] = new TrackPieceStraight1x1(9, 0, 5, TRACKPIECE_ROT_90);
-	sDummyPieces[3] = new TrackPieceStraight1x1(9, 0, 4, TRACKPIECE_ROT_90);
-	sDummyPieces[4] = new TrackPieceQuarterCircle2x2(9, 0, 3, TRACKPIECE_ROT_90);
-	sDummyPieces[5] = new TrackPieceStraight1x1(7, 0, 2, TRACKPIECE_ROT_180);
-	sDummyPieces[6] = new TrackPieceQuarterCircle2x2(6, 0, 2, TRACKPIECE_ROT_180);
-	sDummyPieces[7] = new TrackPieceStraight1x1(5, 0, 4, TRACKPIECE_ROT_270);
-	sDummyPieces[8] = new TrackPieceStraight1x1(5, 0, 5, TRACKPIECE_ROT_270);
-	sDummyPieces[9] = new TrackPieceQuarterCircle2x2(5, 0, 6, TRACKPIECE_ROT_270);
-	/*sDummyPieces[0].kind = TRACKPIECE_KIND_FLAT;
-	sDummyPieces[0].rot = TRACKPIECE_ROT_0;
-	sDummyPieces[0].x = 7;
-	sDummyPieces[0].y = 0;
-	sDummyPieces[0].z = 7;
-	sDummyPieces[1].kind = TRACKPIECE_KIND_FLAT_SMALL_CURVED_LEFT;
-	sDummyPieces[1].rot = TRACKPIECE_ROT_0;
-	sDummyPieces[1].x = 8;
-	sDummyPieces[1].y = 0;
-	sDummyPieces[1].z = 7;
-	sDummyPieces[2].kind = TRACKPIECE_KIND_FLAT;
-	sDummyPieces[2].rot = TRACKPIECE_ROT_90;
-	sDummyPieces[2].x = 9;
-	sDummyPieces[2].y = 0;
-	sDummyPieces[2].z = 5;
-	sDummyPieces[3].kind = TRACKPIECE_KIND_FLAT_SMALL_CURVED_LEFT;
-	sDummyPieces[3].rot = TRACKPIECE_ROT_90;
-	sDummyPieces[3].x = 9;
-	sDummyPieces[3].y = 0;
-	sDummyPieces[3].z = 4;
-	sDummyPieces[4].kind = TRACKPIECE_KIND_FLAT;
-	sDummyPieces[4].rot = TRACKPIECE_ROT_180;
-	sDummyPieces[4].x = 7;
-	sDummyPieces[4].y = 0;
-	sDummyPieces[4].z = 3;
-	sDummyPieces[5].kind = TRACKPIECE_KIND_FLAT_SMALL_CURVED_LEFT;
-	sDummyPieces[5].rot = TRACKPIECE_ROT_180;
-	sDummyPieces[5].x = 6;
-	sDummyPieces[5].y = 0;
-	sDummyPieces[5].z = 3;
-	sDummyPieces[6].kind = TRACKPIECE_KIND_FLAT;
-	sDummyPieces[6].rot = TRACKPIECE_ROT_270;
-	sDummyPieces[6].x = 5;
-	sDummyPieces[6].y = 0;
-	sDummyPieces[6].z = 5;
-	sDummyPieces[7].kind = TRACKPIECE_KIND_FLAT_SMALL_CURVED_LEFT;
-	sDummyPieces[7].rot = TRACKPIECE_ROT_270;
-	sDummyPieces[7].x = 5;
-	sDummyPieces[7].y = 0;
-	sDummyPieces[7].z = 6;*/
+	sDummyMap[32 - 3][32].ltCorner = TILE_CORNER_UP;
+	sDummyMap[32 - 3][32].lbCorner = TILE_CORNER_UP;
+	sDummyMap[32 - 3][32].groundType = 0;//1;
+	sDummyMap[32 - 4][32].lbCorner = TILE_CORNER_UP;
+	sDummyMap[32 - 2][32].ltCorner = TILE_CORNER_UP;
+	sDummyMap[32 - 2][32 - 2].rtCorner = TILE_CORNER_UP;
+	sDummyMap[32 - 4][32 - 2].rbCorner = TILE_CORNER_UP;
+	sDummyMap[32 - 3][32 - 2].rtCorner = TILE_CORNER_UP;
+	sDummyMap[32 - 3][32 - 2].rbCorner = TILE_CORNER_UP;
+	/*sDummyPieces[0] = new TrackPieceStraight1x1(32 - 1, 0, 32 - 1, TRACKPIECE_ROT_0);
+	sDummyPieces[1] = new TrackPieceQuarterCircle2x2(32, 0, 32 - 1, TRACKPIECE_ROT_0);
+	sDummyPieces[2] = new TrackPieceStraight1x1(32 + 1, 0, 32 - 3, TRACKPIECE_ROT_90);
+	sDummyPieces[3] = new TrackPieceStraight1x1(32 + 1, 0, 32 - 4, TRACKPIECE_ROT_90);
+	sDummyPieces[4] = new TrackPieceQuarterCircle2x2(32 + 1, 0, 32 - 5, TRACKPIECE_ROT_90);
+	sDummyPieces[5] = new TrackPieceStraight1x1(32 - 1, 0, 32 - 6, TRACKPIECE_ROT_180);
+	sDummyPieces[6] = new TrackPieceQuarterCircle2x2(32 - 2, 0, 32 - 6, TRACKPIECE_ROT_180);
+	sDummyPieces[7] = new TrackPieceStraight1x1(32 - 3, 0, 32 - 4, TRACKPIECE_ROT_270);
+	sDummyPieces[8] = new TrackPieceStraight1x1(32 - 3, 0, 32 - 3, TRACKPIECE_ROT_270);
+	sDummyPieces[9] = new TrackPieceQuarterCircle2x2(32 - 3, 0, 32 - 2, TRACKPIECE_ROT_270);*/
 
-	for(int i = 0; i < 10; i++)
+	for (int i = 0; i < 60; i++)
 	{
-		sDummyPieces[i]->prev[0] = sDummyPieces[(i == 0) ? 9 : (i - 1)];
+		sDummyPieces[i] = new TrackPieceStraight1x1(2 + i, 0, 32, TRACKPIECE_ROT_0);
+	}
+
+	for(int i = 0; i < 60; i++)
+	{
+		sDummyPieces[i]->prev[0] = (i == 0) ? NULL : sDummyPieces[i - 1];
 		sDummyPieces[i]->prev[1] = sDummyPieces[i]->prev[2] = sDummyPieces[i]->prev[3] = NULL;
-		sDummyPieces[i]->next[0] = sDummyPieces[(i == 9) ? 0 : (i + 1)];
+		sDummyPieces[i]->next[0] = (i == 59) ? NULL : sDummyPieces[i + 1];
 		sDummyPieces[i]->next[1] = sDummyPieces[i]->next[2] = sDummyPieces[i]->next[3] = NULL;
 	}
 
@@ -203,10 +167,11 @@ void Game::Initialize(int arg)
 	NNS_G3dMdlSetMdlAmbAll(model, GX_RGB(15,15,15));
 	NNS_G3dMdlSetMdlSpecAll(model, GX_RGB(0,0,0));
 	NNS_G3dMdlSetMdlEmiAll(model, GX_RGB(0,0,0));
+	NNS_G3dMdlSetMdlFogEnableFlagAll(model, TRUE);
 	NNSG3dResTex* tex = NNS_G3dGetTex(mLocTextures);
 	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mLocModel), tex);
 	NNS_G3dRenderObjInit(&mTrain.firstPart->renderObj, model);
-	NNS_FndFreeToExpHeap(mHeapHandle, mLocTextures);
+	NNS_FndFreeToExpHeap(gHeapHandle, mLocTextures);
 
 	{
 		uint32_t size;
@@ -215,14 +180,14 @@ void Game::Initialize(int arg)
 
 		NNSGfdTexKey texKey = NNS_GfdAllocTexVram(size, FALSE, 0);
 		Util_LoadTextureWithKey(texKey, buffer);
-		NNS_FndFreeToExpHeap(mHeapHandle, buffer);
+		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 
 		buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntfp", &size, TRUE);
 		DC_FlushRange(buffer, size);
 
 		NNSGfdPlttKey plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
 		Util_LoadPaletteWithKey(plttKey, buffer);
-		NNS_FndFreeToExpHeap(mHeapHandle, buffer);
+		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 
 		mShadowTex.texKey = texKey;
 		mShadowTex.plttKey = plttKey;
@@ -243,14 +208,14 @@ void Game::Initialize(int arg)
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
 	NNS_G2dInitImageProxy(&mImageProxy);
 	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImageProxy);
-	NNS_FndFreeToExpHeap(mHeapHandle, mCharDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
 
 	NNSG2dPaletteData* mPalDataSubUnpacked;
 	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/game_trackbuild.nclr", NULL, TRUE);
     NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
 	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
 	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxy);
-	NNS_FndFreeToExpHeap(mHeapHandle, mPalDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
 
 	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, ((uint8_t*)G2_GetOBJCharPtr()) + (1024 * 8), 8, 2, NNS_G2D_CHARA_COLORMODE_16);
 	NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
@@ -264,13 +229,13 @@ void Game::Initialize(int arg)
 
 	NNS_G2dInitOamManagerModule();
 
-	mUIManager = new UIManager(this, UIMANAGER_SCREEN_MAIN);
+	mUIManager = new UIManager(this);
 	//mTrackBuildUISlice = new TrackBuildUISlice();
 	//mUIManager->AddSlice(mTrackBuildUISlice);
 	mUIManager->RegisterPenCallbacks(Game::OnPenDown, Game::OnPenMove, Game::OnPenUp);
 
-	NNS_SndArcLoadSeqArc(SEQ_TRAIN, mSndHeapHandle);
-	NNS_SndArcLoadBank(BANK_TRAIN, mSndHeapHandle);
+	NNS_SndArcLoadSeqArc(SEQ_TRAIN, gSndHeapHandle);
+	NNS_SndArcLoadBank(BANK_TRAIN, gSndHeapHandle);
 	NNS_SndArcPlayerStartSeqArc(&mTrain.trackSoundHandle, SEQ_TRAIN, TRAIN_TRACK);
 
 	mPicking = FALSE;
@@ -321,9 +286,10 @@ void Game::Pick(int x, int y, PickingCallbackFunc callback)
 	G3X_SetClearColor(0, 31, 0x7fff, 0, FALSE);
 	G3X_EdgeMarking(FALSE);
 	G3X_AntiAlias(FALSE);
+	G3X_SetFog(FALSE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0020, 0);
 }
 
-void Game::OnPenDownPickingCallback(u16 result)
+void Game::OnPenDownPickingCallback(picking_result_t result)
 {
 	mPenDownResult = result;
 }
@@ -341,10 +307,10 @@ void Game::OnPenMove(int x, int y)
 
 }
 
-void Game::OnPenUpPickingCallback(u16 result)
+void Game::OnPenUpPickingCallback(picking_result_t result)
 {
 	if(result == mPenDownResult)
-		mPickingOK = (result & 0x7FFF) == 1;
+		mPickingOK = result == PICKING_COLOR(PICKING_TYPE_TRAIN, 1);
 }
 
 void Game::OnPenUp(int x, int y)
@@ -365,7 +331,7 @@ void Game::Render()
 	}
 	else if(mProcessPicking)//process picking result
 	{
-		if(mPickingCallback) (this->*mPickingCallback)(((uint16_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256]);
+		if(mPickingCallback) (this->*mPickingCallback)(((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256]);
 		mPickingCallback = NULL;
 		mProcessPicking = FALSE;
 	}
@@ -406,9 +372,19 @@ void Game::Render()
 	if(!mPicking)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
-		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3),31, 0x7fff, 0, FALSE);
+		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, FALSE);
 		G3X_EdgeMarking(TRUE);
 		G3X_AntiAlias(TRUE);
+		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x280);
+		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31);
+		u32 fog_table[8];
+		for (int i = 0; i < 8; i++)
+		{
+			fog_table[i] =
+				(u32)(((i * 16) << 0) | ((i * 16 + 4) << 8) | ((i * 16 + 8) << 16) | ((i * 16 +
+					12) << 24));
+		}
+		G3X_SetFogTable(&fog_table[0]);
 	}
 	Train_UpdatePos(&mTrain);
 #ifdef FIRST_PERSON
@@ -422,8 +398,51 @@ void Game::Render()
 	mCamera->Apply();
 
 	Train_UpdateSound(&mTrain, mCamera);
+	
+	//which part to render
+	fx32 camx = mCamera->mPosition.x;
+	fx32 camz = mCamera->mPosition.z;
 
-	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_NONE);
+	//int camtilex = ((camx + FX32_HALF) >> FX32_SHIFT) + 8;
+	//int camtilez = ((camz + FX32_HALF) >> FX32_SHIFT) + 8;
+
+	VecFx32 camforward;
+	mCamera->GetLookDirection(&camforward);
+	camforward.y = 0;
+	VEC_Normalize(&camforward, &camforward);
+
+	VecFx32 camright = { camforward.z, camforward.y, -camforward.x };
+
+	//far
+	fx32 camfarx = camx + camforward.x * 20;
+	fx32 camfarz = camz + camforward.z * 20;
+
+	fx32 farleftx = camfarx - camright.x * 12;
+	fx32 farleftz = camfarz - camright.z * 12;
+
+	fx32 farrightx = camfarx + camright.x * 12;
+	fx32 farrightz = camfarz + camright.z * 12;
+
+	fx32 nearleftx = camx - camright.x * 12;
+	fx32 nearleftz = camz - camright.z * 12;
+
+	fx32 nearrightx = camx + camright.x * 12;
+	fx32 nearrightz = camz + camright.z * 12;
+
+
+	//far
+	int xstart = ((MATH_MIN(farleftx, MATH_MIN(farrightx, MATH_MIN(nearleftx, nearrightx))) + FX32_HALF) >> FX32_SHIFT) + 32;
+	int xend = ((MATH_MAX(farleftx, MATH_MAX(farrightx, MATH_MAX(nearleftx, nearrightx))) + FX32_HALF) >> FX32_SHIFT) + 32;
+
+	int zstart = ((MATH_MIN(farleftz, MATH_MIN(farrightz, MATH_MIN(nearleftz, nearrightz))) + FX32_HALF) >> FX32_SHIFT) + 32;
+	int zend = ((MATH_MAX(farleftz, MATH_MAX(farrightz, MATH_MAX(nearleftz, nearrightz))) + FX32_HALF) >> FX32_SHIFT) + 32;
+
+	NOCASH_Printf("camx: %d, camz: %d", camx, camz);
+
+	NOCASH_Printf("xstart: %d, xend: %d", xstart, xend);
+	NOCASH_Printf("zstart: %d, zend: %d", zstart, zend);
+
+	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
 	NNS_G3dGlbLightVector(GX_LIGHTID_0, -2048, -2897, -2048);
 	NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
 	if(mPicking)
@@ -440,29 +459,37 @@ void Game::Render()
 	NNS_G3dGeFlushBuffer();
 	G3_PushMtx();
 	{
-		G3_Translate(-8 * FX32_ONE, 0, -8 * FX32_ONE);
+		G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 		G3_PushMtx();
 		{
-			for(int y = 0; y < 16; y++)
+			for(int y = zstart; y < zend; y++)
 			{
-				G3_PushMtx();
+				if (y >= 0 && y < 64)
 				{
-					for(int x = 0; x < 16; x++)
+					for (int x = xstart; x < xend; x++)
 					{
-						tile_render(&sDummyMap[y][x], mTerrainManager);
-						G3_Translate(FX32_ONE, 0, 0);
+						if (x >= 0 && x < 64)
+						{
+							G3_PushMtx();
+							{
+								G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
+								tile_render(&sDummyMap[y][x], mTerrainManager);
+							}
+							G3_PopMtx(1);
+						}
 					}
 				}
-				G3_PopMtx(1);
-				G3_Translate(0, 0, FX32_ONE);
 			}
 		}
 		G3_PopMtx(1);
-		for(int i = 0; i < 10; i++)
+		for(int i = 0; i < 60; i++)
 		{
-			if(mPicking) G3_MaterialColorSpecEmi(0, (1 << 12) | i, FALSE);
-			sDummyPieces[i]->Render(mTerrainManager);
-			//trackpiece_render(&sDummyPieces[i], mTerrainManager);
+			if (sDummyPieces[i]->x >= xstart && sDummyPieces[i]->x < xend &&
+				sDummyPieces[i]->z >= zstart && sDummyPieces[i]->z < zend)
+			{
+				if (mPicking) G3_MaterialColorSpecEmi(0, (1 << 12) | i, FALSE);
+				sDummyPieces[i]->Render(mTerrainManager);
+			}
 		}
 		NNS_G3dGePushMtx();
 		{
@@ -486,7 +513,7 @@ void Game::Render()
 				NNS_G3dMdlSetMdlDiffAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0,0,0));
 				NNS_G3dMdlSetMdlAmbAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0,0,0));
 				NNS_G3dMdlSetMdlSpecAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0,0,0));
-				NNS_G3dMdlSetMdlEmiAll(mTrain.firstPart->renderObj.resMdl, 1);
+				NNS_G3dMdlSetMdlEmiAll(mTrain.firstPart->renderObj.resMdl, PICKING_COLOR(PICKING_TYPE_TRAIN, 1));
 			}
 			else
 			{
@@ -527,7 +554,7 @@ void Game::VBlank()
 		//capture to be able to react as fast as possible on a touch (we use this image the hide the picking)
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_C_0x00000, 16, 0);
 	}
-	mUIManager->VBlankProc();
+	//mUIManager->VBlankProc();
 }
 
 void Game::Finalize()

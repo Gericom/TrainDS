@@ -40,8 +40,10 @@
     <NMakeOutput>run.bat</NMakeOutput>
     <NMakeCleanCommandLine>clean</NMakeCleanCommandLine>
     <NMakeReBuildCommandLine>rebuild</NMakeReBuildCommandLine>
-    <NMakePreprocessorDefinitions>SDK_ARM9;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>SDK_ARM9;SDK_CODE_ARM;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <IncludePath>$(NITROSDK_ROOT)\include;$(ProjectDir)\src;$(NITROSYSTEM_ROOT)\include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C\MSL_Common\Include;$(IncludePath)</IncludePath>
+    <NMakeForcedIncludes>
+    </NMakeForcedIncludes>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <NMakeBuildCommandLine>build</NMakeBuildCommandLine>
@@ -72,7 +74,6 @@
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
     <ClCompile Include="src\terrain\track\TrackPieceQuarterCircle2x2.cpp" />
     <ClCompile Include="src\terrain\track\TrackPieceStraight1x1.cpp" />
-    <ClCompile Include="src\ui\game\TrackBuildUISlice.cpp" />
     <ClCompile Include="src\ui\UIManager.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\vehicles\train.cpp" />
@@ -84,6 +85,7 @@
     <ClInclude Include="src\engine\Quaternion.h" />
     <ClInclude Include="src\engine\ThirdPersonCamera.h" />
     <ClInclude Include="src\menu\Depot.h" />
+    <ClInclude Include="src\menu\SimpleMenu.h" />
     <ClInclude Include="src\print.h" />
     <ClInclude Include="src\terrain\Map.h" />
     <ClInclude Include="src\core.h" />
@@ -95,7 +97,6 @@
     <ClInclude Include="src\terrain\track\TrackPiece.h" />
     <ClInclude Include="src\terrain\track\TrackPieceQuarterCircle2x2.h" />
     <ClInclude Include="src\terrain\track\TrackPieceStraight1x1.h" />
-    <ClInclude Include="src\ui\game\TrackBuildUISlice.h" />
     <ClInclude Include="src\ui\UIManager.h" />
     <ClInclude Include="src\ui\UISlice.h" />
     <ClInclude Include="src\util.h" />

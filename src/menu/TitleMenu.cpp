@@ -7,51 +7,8 @@
 #include "Menu.h"
 #include "TitleMenu.h"
 
-#define STACK_SIZE     1024
-#define THREAD1_PRIO   (OS_THREAD_LAUNCHER_PRIORITY - 6)
-static void proc1(void *p1);
-OSThread thread1;
-u32 stack1[STACK_SIZE / sizeof(u32)];
-
-BOOL flip_flag = TRUE;// Flip switch flag
-BOOL swap = FALSE;
-
-static void TitleMenu_VBlankIntr();
-
-static GXOamAttr sOamBak[128];
-
-static void setupSubOAM()
-{
-    int     i;
-    int     x, y;
-    int     idx = 0;
-
-    GXS_SetOBJVRamModeBmp(GX_OBJVRAMMODE_BMP_2D_W256);
-
-    for (i = 0; i < 128; ++i)
-    {
-        sOamBak[i].attr01 = 0;
-        sOamBak[i].attr23 = 0;
-    }
-
-    for (y = 0; y < 192; y += 64)
-    {
-        for (x = 0; x < 256; x += 64, idx++)
-        {
-            G2_SetOBJAttr(&sOamBak[idx],
-                          x,
-                          y,
-                          0,
-                          GX_OAM_MODE_BITMAPOBJ,
-                          FALSE,
-                          GX_OAM_EFFECT_NONE,
-                          GX_OAM_SHAPE_64x64, GX_OAM_COLOR_16, (y / 8) * 32 + (x / 8), 15, 0);
-        }
-    }
-
-    DC_FlushRange(&sOamBak[0], sizeof(sOamBak));
-    GXS_LoadOAM(&sOamBak[0], 0, sizeof(sOamBak));
-}
+#define DOUBLE_3D_THREAD_PRIO   (OS_THREAD_LAUNCHER_PRIORITY - 6)
+static OSThread mDouble3DThread;
 
 void TitleMenu::Initialize(int arg)
 {
@@ -71,10 +28,10 @@ void TitleMenu::Initialize(int arg)
 	MI_CpuFillFast((void*)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
 	MI_CpuClearFast((void*)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
 
-	OS_SetIrqFunction(OS_IE_V_BLANK, TitleMenu_VBlankIntr);
+	OS_SetIrqFunction(OS_IE_V_BLANK, TitleMenu::VBlankIntr);
 
-	OS_CreateThread(&thread1, proc1, NULL, stack1 + STACK_SIZE / sizeof(u32), STACK_SIZE, THREAD1_PRIO);
-    OS_WakeupThreadDirect(&thread1);
+	OS_CreateThread(&mDouble3DThread, Double3DThread, this, mDouble3DThreadStack + DOUBLE_3D_THREAD_STACK_SIZE / sizeof(u32), DOUBLE_3D_THREAD_STACK_SIZE, DOUBLE_3D_THREAD_PRIO);
+    OS_WakeupThreadDirect(&mDouble3DThread);
 
 	G3X_Init();
 	G3X_InitMtxStack();
@@ -95,7 +52,7 @@ void TitleMenu::Initialize(int arg)
 	G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3),31, 0x7fff, 63, FALSE);
 	G3_ViewPort(0, 0, 255, 191);
 
-	setupSubOAM();
+	Util_SetupSubOAMForDouble3D();
 
 	GX_SetBankForOBJ(GX_VRAM_OBJ_16_F);
 
@@ -119,14 +76,14 @@ void TitleMenu::Initialize(int arg)
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
 	NNS_G2dInitImageProxy(&mImageProxy);
 	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImageProxy);
-	NNS_FndFreeToExpHeap(mHeapHandle, mCharDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
 
 	NNSG2dPaletteData* mPalDataSubUnpacked;
 	void* mPalDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCLR", NULL, TRUE);
     NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
 	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
 	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxy);
-	NNS_FndFreeToExpHeap(mHeapHandle, mPalDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
 
 	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, ((uint8_t*)G2_GetOBJCharPtr()) + 2048, 12, 2, NNS_G2D_CHARA_COLORMODE_16);
 	NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
@@ -163,18 +120,18 @@ void TitleMenu::Initialize(int arg)
 	NNSG3dResTex* tex = NNS_G3dGetTex(mBGTextures);
 	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mBGModel), tex);
 	NNS_G3dRenderObjInit(&mBGRenderObj, model);
-	NNS_FndFreeToExpHeap(mHeapHandle, mBGTextures);
+	NNS_FndFreeToExpHeap(gHeapHandle, mBGTextures);
 }
 
 void TitleMenu::HandleKeys()
 {
 	if(!mKeyTimeout)
 	{
-		u16 keyData = PAD_Read();
+		Core_ReadInput();
 		switch(mState)
 		{
 		case TITLEMENU_STATE_MENU_LOOP:
-			if(keyData & PAD_KEY_DOWN)
+			if(gKeys & PAD_KEY_DOWN)
 			{
 				if(mSelButton == 0 || mSelButton == 1) mSelButton++;
 				else if(mSelButton == 2) mSelButton = 0;
@@ -182,7 +139,7 @@ void TitleMenu::HandleKeys()
 				else break;
 				mKeyTimeout = 10;
 			}
-			else if(keyData & PAD_KEY_UP)
+			else if(gKeys & PAD_KEY_UP)
 			{
 				if(mSelButton == 1 || mSelButton == 2) mSelButton--;
 				else if(mSelButton == 0) mSelButton = 2;
@@ -190,7 +147,7 @@ void TitleMenu::HandleKeys()
 				else break;
 				mKeyTimeout = 10;
 			}
-			else if(keyData & PAD_KEY_LEFT || keyData & PAD_KEY_RIGHT)
+			else if(gKeys & PAD_KEY_LEFT || gKeys & PAD_KEY_RIGHT)
 			{
 				if(mSelButton == 2) mSelButton = 3;
 				else if(mSelButton == 3) mSelButton = 2;
@@ -203,11 +160,11 @@ void TitleMenu::HandleKeys()
 	else mKeyTimeout--;
 }
 
-static void SetSwapBuffersflag(void)
+void TitleMenu::SetSwapBuffersflag()
 {
     OSIntrMode old = OS_DisableInterrupts();    // interrupts disabled
     G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
-    swap = TRUE;
+	mSwap = TRUE;
     OS_RestoreInterrupts(old);
 }
 
@@ -328,13 +285,12 @@ void TitleMenu::Render()
 		break;
 	}
 	G3X_Reset();
-	G3X_ResetMtxStack();
 	//NNS_G3dGlbPerspective(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096);
 	//NNS_G3dGlbFrustum(2365, -2365, -3153, 3153, 1 * 4096, 512 * 4096);
 	//if(flip_flag)
 	//	NNS_G3dGlbFrustum(((-2365 * 2) * 614) >> 12, ((-2365 * 2) * 4710) >> 12, -3153, 3153, 1 * 4096, 512 * 4096);
 	//else NNS_G3dGlbFrustum(((2365 * 2) * 4710) >> 12, ((2365 * 2) * 614) >> 12, -3153, 3153, 1 * 4096, 512 * 4096);
-	if(!flip_flag)
+	if(!mFlipFlag)
 		NNS_G3dGlbFrustum(/*2365*/4730, /*-2365*/0, -3153, 3153, 1 * 4096, 512 * 4096);
 	else NNS_G3dGlbFrustum(/*-2365*/-788 * 2, /*-2365 * 3*/-4730 - 788 * 2, -3153, 3153, 1 * 4096, 512 * 4096);
 	//NNS_G3dGlbLightVector(GX_LIGHTID_0,  -FX16_SQRT1_3, -FX16_SQRT1_3, FX16_SQRT1_3);
@@ -367,15 +323,17 @@ void TitleMenu::VBlank()
 void TitleMenu::Finalize()
 {
 	//We don't have to free resources here, because that's done by using the group id
+	GX_VBlankIntr(FALSE);
+	OS_DestroyThread(&mDouble3DThread);
 }
 
-static void TitleMenu_VBlankIntr()
+void TitleMenu::VBlankIntr()
 {
 	OS_SetIrqCheckFlag(OS_IE_V_BLANK);
-	OS_WakeupThreadDirect(&thread1);
+	OS_WakeupThreadDirect(&mDouble3DThread);
 }
 
-static void setupFrame2N(void)
+void TitleMenu::SetupFrame2N()
 {
     GX_SetDispSelect(GX_DISP_SELECT_MAIN_SUB);
 
@@ -398,7 +356,7 @@ static void setupFrame2N(void)
     G2S_BG2Mosaic(FALSE);
 }
 
-static void setupFrame2N_1(void)
+void TitleMenu::SetupFrame2N_1()
 {
     GX_SetDispSelect(GX_DISP_SELECT_SUB_MAIN);
 
@@ -418,28 +376,21 @@ static void setupFrame2N_1(void)
 }
 
 //Thread for double 3d
-static void proc1(void *p1)
+void TitleMenu::Double3DThread()
 {
     while (1)
     {
 		if (GX_GetVCount() <= 193)
-		{
 			OS_SpinWait(784);
-		}
-		if (!G3X_IsGeometryBusy() && swap)
-		// If the rendering and swap operations are both finished, the upper and lower screens switch.
+		if (!G3X_IsGeometryBusy() && mSwap)// If the rendering and swap operations are both finished, the upper and lower screens switch.
 		{
-			if (flip_flag)                 // flip switch (operation to switch the upper and lower screens)
-			{
-				setupFrame2N_1();
-			}
-			else
-			{
-				setupFrame2N();
-			}
-			swap = FALSE;
-			flip_flag = !flip_flag;
+			if (mFlipFlag)// flip switch (operation to switch the upper and lower screens)
+				SetupFrame2N_1();
+			else 
+				SetupFrame2N();
+			mSwap = FALSE;
+			mFlipFlag = !mFlipFlag;
 		}
-		OS_SleepThread(NULL);   // Puts this thread to sleep. It will next wake when OS_WakeupThreadDirect() is called.
+		OS_SleepThread(NULL);
     }
 }

@@ -93,7 +93,7 @@ void Depot::Initialize(int arg)
 	NNSG3dResTex* tex = NNS_G3dGetTex(mEnvTextures);
 	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mEnvModel), tex);
 	NNS_G3dRenderObjInit(&mEnvRenderObj, model);
-	NNS_FndFreeToExpHeap(mHeapHandle, mEnvTextures);
+	NNS_FndFreeToExpHeap(gHeapHandle, mEnvTextures);
 	NNS_G3dRenderObjSetCallBack(&mEnvRenderObj, &rotEnvMap, NULL, NNS_G3D_SBC_ENVMAP, NNS_G3D_SBC_CALLBACK_TIMING_B);
 }
 

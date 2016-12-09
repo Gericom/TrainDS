@@ -1,6 +1,11 @@
 #ifndef __TRACKPIECE_H__
 #define __TRACKPIECE_H__
 
+#define TRACKPIECE_ROT_0						0	// ->
+#define TRACKPIECE_ROT_90						1	// ^
+#define TRACKPIECE_ROT_180						2	// <-
+#define TRACKPIECE_ROT_270						3	// V
+
 class TrackPiece
 {
 public:
