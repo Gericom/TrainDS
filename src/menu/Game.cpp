@@ -273,7 +273,7 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, 64 * 4096, 40960);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*/18 * 4096, 40960);
 }
 
 void Game::Pick(int x, int y, PickingCallbackFunc callback)
@@ -512,17 +512,6 @@ void Game::Render()
 	if (zend > 64)
 		zend = 64;
 
-	//find the missing point to convert the trapezoid to a triangle
-	fx32 denom = FX_Mul(calcpos3.x - calcpos.x, calcpos4.z - calcpos2.z) - FX_Mul(calcpos3.z - calcpos.z, calcpos4.x - calcpos2.x);
-	VecFx32 tritop;
-	tritop.x =
-		FX_Div(FX_Mul(FX_Mul(calcpos3.x, calcpos.z) - FX_Mul(calcpos3.z, calcpos.x), calcpos4.x - calcpos2.x) - FX_Mul(calcpos3.x - calcpos.x, FX_Mul(calcpos4.x, calcpos2.z) - FX_Mul(calcpos4.z, calcpos2.x)),
-			denom);
-	tritop.y = 0;
-	tritop.z =
-		FX_Div(FX_Mul(FX_Mul(calcpos3.x, calcpos.z) - FX_Mul(calcpos3.z, calcpos.x), calcpos4.z - calcpos2.z) - FX_Mul(calcpos3.z - calcpos.z, FX_Mul(calcpos4.x, calcpos2.z) - FX_Mul(calcpos4.z, calcpos2.x)),
-			denom);
-
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
 	NNS_G3dGlbLightVector(GX_LIGHTID_0, -2048, -2897, -2048);
 	NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31, 31, 31));
@@ -540,35 +529,6 @@ void Game::Render()
 	NNS_G3dGeFlushBuffer();
 	G3_PushMtx();
 	{
-		/*G3_Begin(GX_BEGIN_QUADS);
-		G3_PushMtx();
-		G3_Translate(calcpos3.x, FX32_ONE >> 8, calcpos3.z);
-		G3_Vtx(0, 0, 0);
-		G3_PopMtx(1);
-		G3_PushMtx();
-		G3_Translate(calcpos.x, FX32_ONE >> 8, calcpos.z);
-		G3_Vtx(0, 0, 0);
-		G3_PopMtx(1);
-		G3_PushMtx();
-		G3_Translate(calcpos2.x, FX32_ONE >> 8, calcpos2.z);
-		G3_Vtx(0, 0, 0);
-		G3_PopMtx(1);
-		G3_PushMtx();
-		G3_Translate(calcpos4.x, FX32_ONE >> 8, calcpos4.z);
-		G3_Vtx(0, 0, 0);
-		G3_PopMtx(1);
-		G3_End();*/
-
-		VecFx32 v0, v1, v2;
-		VEC_Subtract(&calcpos3, &tritop, &v0);
-		VEC_Subtract(&calcpos4, &tritop, &v1);
-
-		fx32 dot00 = VEC_DotProduct(&v0, &v0);
-		fx32 dot01 = VEC_DotProduct(&v0, &v1);
-		fx32 dot11 = VEC_DotProduct(&v1, &v1);
-
-		fx32 baseval = FX_Mul(dot00, dot11) - FX_Mul(dot01, dot01);
-
 		G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 		G3_PushMtx();
 		{
@@ -577,19 +537,13 @@ void Game::Render()
 			{
 				for (int x = xstart; x < xend; x++)
 				{
-					fx32 px = (x - 32) * FX32_ONE + FX32_HALF - tritop.x;
-					fx32 pz = (y - 32) * FX32_ONE + FX32_HALF - tritop.z;
-					fx32 u = FX_Mul(dot11 - dot01, FX_Mul(v0.x, px) + FX_Mul(v0.z, pz)) + FX_Mul(dot00 - dot01, FX_Mul(v1.x, px) + FX_Mul(v1.z, pz));
-					if (u < baseval)
+					G3_PushMtx();
 					{
-						G3_PushMtx();
-						{
-							G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
-							tile_render(&sDummyMap[y][x], mTerrainManager);
-						}
-						G3_PopMtx(1);
-						quads++;
+						G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
+						tile_render(&sDummyMap[y][x], mTerrainManager);
 					}
+					G3_PopMtx(1);
+					quads++;
 				}
 			}
 			NOCASH_Printf("Total quads: %d", quads);
@@ -600,14 +554,8 @@ void Game::Render()
 			if (sDummyPieces[i]->x >= xstart && sDummyPieces[i]->x < xend &&
 				sDummyPieces[i]->z >= zstart && sDummyPieces[i]->z < zend)
 			{
-				fx32 px = (sDummyPieces[i]->x - 32) * FX32_ONE + FX32_HALF - tritop.x;
-				fx32 pz = (sDummyPieces[i]->z - 32) * FX32_ONE + FX32_HALF - tritop.z;
-				fx32 u = FX_Mul(dot11 - dot01, FX_Mul(v0.x, px) + FX_Mul(v0.z, pz)) + FX_Mul(dot00 - dot01, FX_Mul(v1.x, px) + FX_Mul(v1.z, pz));
-				if (u < baseval)
-				{
-					if (mPicking) G3_MaterialColorSpecEmi(0, (1 << 12) | i, FALSE);
-					sDummyPieces[i]->Render(mTerrainManager);
-				}
+				if (mPicking) G3_MaterialColorSpecEmi(0, (1 << 12) | i, FALSE);
+				sDummyPieces[i]->Render(mTerrainManager);
 			}
 		}
 		NNS_G3dGePushMtx();
