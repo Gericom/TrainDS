@@ -42,6 +42,16 @@ static const GXRgb sAmbSelectionColorTable[8] =
 	0, 0, 0, 0, 0, 0
 };
 
+static const GXRgb sToonTable[32] =
+{
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0,
+	GX_RGB(31,31,31),
+	GX_RGB(4, 4, 4)
+};
+
 //Camera tempoarly
 //#define FIRST_PERSON
 //#define TOP_VIEW
@@ -73,9 +83,9 @@ void Game::Initialize(int arg)
 	G2_SetBG0Priority(3);
 	G2_SetBG3Priority(3);
 
-	G3X_SetShading(GX_SHADING_TOON);
+	G3X_SetShading(GX_SHADING_HIGHLIGHT);
 	G3X_AntiAlias(TRUE);
-	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
 
 	G3X_AlphaTest(FALSE, 0);                   // AlphaTest OFF
 	G3X_AlphaBlend(TRUE);                      // AlphaTest ON
@@ -176,7 +186,7 @@ void Game::Initialize(int arg)
 	NNS_G3dRenderObjInit(&mTrain.firstPart->renderObj, model);
 	NNS_FndFreeToExpHeap(gHeapHandle, mLocTextures);
 
-	{
+	/*{
 		uint32_t size;
 		void* buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntft", &size, TRUE);
 		DC_FlushRange(buffer, size);
@@ -197,9 +207,9 @@ void Game::Initialize(int arg)
 		mShadowTex.nitroWidth = GX_TEXSIZE_S8;
 		mShadowTex.nitroHeight = GX_TEXSIZE_T8;
 		mShadowTex.nitroFormat = GX_TEXFMT_A5I3;
-	}
+	}*/
 
-	mFontData = Util_LoadFileToBuffer("/data/fonts/roboto_medium_11pt_4bpp.NFTR", NULL, FALSE);
+	/*mFontData = Util_LoadFileToBuffer("/data/fonts/roboto_medium_11pt_4bpp.NFTR", NULL, FALSE);
 	MI_CpuClear8(&mFont, sizeof(mFont));
 	NNS_G2dFontInitAuto(&mFont, mFontData);
 
@@ -228,7 +238,7 @@ void Game::Initialize(int arg)
 
 	mCanvas.charBase = ((uint8_t*)G2_GetOBJCharPtr()) + (1024 * 9);
 	NNS_G2dTextCanvasDrawTextRect(
-		&mTextCanvas, 0, 0, 64, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Slope");
+		&mTextCanvas, 0, 0, 64, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Slope");*/
 
 	NNS_G2dInitOamManagerModule();
 
@@ -276,7 +286,7 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*/18 * 4096, 40960);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*/18 * 4096, 40960 * 4);
 	setup_normals();
 }
 
@@ -370,6 +380,21 @@ void Game::Render()
 		mTrain.isDrivingBackwards = TRUE;
 	}
 	else mTrain.isDriving = FALSE;
+	if (!mKeyTimer)
+	{
+		if (keyData & PAD_BUTTON_X)
+		{
+			mGridEnabled = !mGridEnabled;
+			mKeyTimer = 10;
+		}
+		if (keyData & PAD_BUTTON_Y)
+		{
+			mAntiAliasEnabled = !mAntiAliasEnabled;
+			mKeyTimer = 10;
+		}
+	}
+	else
+		mKeyTimer--;
 	if (keyData & PAD_KEY_LEFT)
 		mCamera->mTheta -= FX32_ONE;
 	else if (keyData & PAD_KEY_RIGHT)
@@ -394,9 +419,10 @@ void Game::Render()
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
 		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, FALSE);
+		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(TRUE);
-		G3X_AntiAlias(TRUE);
-		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0200, 0x240);
+		G3X_AntiAlias(mAntiAliasEnabled);
+		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0100, 0x8000 - 0x200);
 		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
@@ -406,6 +432,7 @@ void Game::Render()
 					12) << 24));
 		}
 		G3X_SetFogTable(&fog_table[0]);
+		G3X_SetToonTable(&sToonTable[0]);
 	}
 	Train_UpdatePos(&mTrain);
 #ifdef FIRST_PERSON
@@ -537,14 +564,18 @@ void Game::Render()
 						if (mPicking) G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
 						else if(mSelectedMapX == x && mSelectedMapZ == y)
 						{
-							G3_MaterialColorDiffAmb(sDiffSelectionColorTable[0], sAmbSelectionColorTable[0], FALSE);
-							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+							G3_MaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+							G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
+							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG);
 						}
+						else if(mGridEnabled)
+							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG);
 						G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
 						tile_render(&sDummyMap[y][x], mTerrainManager);
 						if (!mPicking && mSelectedMapX == x && mSelectedMapZ == y)
 						{
 							G3_MaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
+							G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0,0,0), FALSE);
 							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
 						}
 					}
@@ -606,7 +637,7 @@ void Game::Render()
 	}
 	G3_PopMtx(1);
 	mUIManager->Render();
-	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
 }
 
 void Game::VBlank()
@@ -624,7 +655,7 @@ void Game::VBlank()
 	{
 		GX_SetBankForLCDC(GX_VRAM_LCDC_C);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
-		//capture to be able to react as fast as possible on a touch (we use this image the hide the picking)
+		//capture to be able to react as fast as possible on a touch (we use this image to hide the picking)
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_C_0x00000, 16, 0);
 	}
 	//mUIManager->VBlankProc();

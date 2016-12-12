@@ -20,7 +20,7 @@ void TrackPieceQuarterCircle2x2::Render(TerrainManager* terrainManager)
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 	G3_PushMtx();
 	{
-		G3_Translate(x * FX32_ONE, y * TILE_HEIGHT + (FX32_ONE >> 4), z * FX32_ONE);
+		G3_Translate(x * FX32_ONE, y * TILE_HEIGHT + (FX32_ONE / 16)/* + (FX32_ONE >> 4)*/, z * FX32_ONE);
 		switch (rot)
 		{
 		case TRACKPIECE_ROT_0:

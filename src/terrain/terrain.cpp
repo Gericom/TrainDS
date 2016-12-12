@@ -139,8 +139,8 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 		VecFx32 vtx[4] =
 		{
 			{0, tile_corner_to_y[tile->ltCorner], 0},
-			{0, tile_corner_to_y[tile->lbCorner],  FX32_ONE},
-			{FX32_ONE, tile_corner_to_y[tile->rbCorner],  FX32_ONE},
+			{0, tile_corner_to_y[tile->lbCorner],  FX32_ONE },
+			{FX32_ONE, tile_corner_to_y[tile->rbCorner],  FX32_ONE },
 			{FX32_ONE, tile_corner_to_y[tile->rtCorner], 0}
 		};
 

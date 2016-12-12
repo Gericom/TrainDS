@@ -51,6 +51,11 @@ private:
 	int mPenDownPointX;
 	int mPenDownPointY;
 
+	BOOL mGridEnabled;
+	BOOL mAntiAliasEnabled;
+
+	int mKeyTimer;
+
 	void* mTrackBuildCellData;
 	NNSG2dCellDataBank* mTrackBuildCellDataBank;
 	NNSG2dImageProxy mImageProxy;
@@ -68,7 +73,7 @@ private:
 
 	void Pick(int x, int y, PickingCallbackFunc callback);
 public:
-	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1) { }
+	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mGridEnabled(FALSE), mAntiAliasEnabled(TRUE), mKeyTimer(0) { }
 
 	void Initialize(int arg);
 
