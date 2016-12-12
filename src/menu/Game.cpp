@@ -23,20 +23,23 @@ static TrackPiece* sDummyPieces[60];//10];
 
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
+	GX_RGB(31, 27, 12),
 	GX_RGB(12, 27, 31),
-	0, 0, 0, 0, 0, 0, 0
+	0, 0, 0, 0, 0, 0
 };
 
 static const GXRgb sDiffSelectionColorTable[8] =
 {
+	GX_RGB(21, 20, 16),
 	GX_RGB(16, 20, 21),
-	0, 0, 0, 0, 0, 0, 0
+	0, 0, 0, 0, 0, 0
 };
 
 static const GXRgb sAmbSelectionColorTable[8] =
 {
+	GX_RGB(15, 14, 11),
 	GX_RGB(11, 14, 15),
-	0, 0, 0, 0, 0, 0, 0
+	0, 0, 0, 0, 0, 0
 };
 
 //Camera tempoarly
@@ -274,6 +277,7 @@ void Game::Initialize(int arg)
 	#endif*/
 
 	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*/18 * 4096, 40960);
+	setup_normals();
 }
 
 void Game::Pick(int x, int y, PickingCallbackFunc callback)
@@ -310,7 +314,25 @@ void Game::OnPenMove(int x, int y)
 void Game::OnPenUpPickingCallback(picking_result_t result)
 {
 	if (result == mPenDownResult)
-		mPickingOK = result == PICKING_COLOR(PICKING_TYPE_TRAIN, 1);
+	{
+		mSelectedMapX = -1;
+		mSelectedMapZ = -1;
+		mSelectedTrain = -1;
+		if(PICKING_IDX(result) > 0)
+		{
+			if (PICKING_TYPE(result) == PICKING_TYPE_MAP)
+			{
+				int idx = PICKING_IDX(result) - 1;
+				mSelectedMapX = mPickingXStart + idx % (mPickingXEnd - mPickingXStart);
+				mSelectedMapZ = mPickingZStart + idx / (mPickingXEnd - mPickingXStart);
+				NOCASH_Printf("Picked (%d,%d)", mSelectedMapX, mSelectedMapZ);
+			}
+			else if (PICKING_TYPE(result) == PICKING_TYPE_TRAIN)
+			{
+				mSelectedTrain = PICKING_IDX(result) - 1;
+			}
+		}
+	}
 }
 
 void Game::OnPenUp(int x, int y)
@@ -320,39 +342,6 @@ void Game::OnPenUp(int x, int y)
 	{
 		Pick(x, y, &Game::OnPenUpPickingCallback);
 	}
-}
-
-/*static BOOL PointInTriangle(VecFx32* A, VecFx32* B, VecFx32* C, VecFx32* P)
-{
-	// Compute vectors        
-	VecFx32 v0, v1, v2;
-	VEC_Subtract(C, A, &v0);
-	VEC_Subtract(B, A, &v1);
-	VEC_Subtract(P, A, &v2);
-
-	// Compute dot products
-	fx32 dot00 = VEC_DotProduct(&v0, &v0);
-	fx32 dot01 = VEC_DotProduct(&v0, &v1);
-	fx32 dot02 = VEC_DotProduct(&v0, &v2);
-	fx32 dot11 = VEC_DotProduct(&v1, &v1);
-	fx32 dot12 = VEC_DotProduct(&v1, &v2);
-
-	// Compute barycentric coordinates
-	fx64c invDenom = FX_InvFx64c(FX_Mul(dot00, dot11) - FX_Mul(dot01, dot01));
-	fx32 u = FX_Mul32x64c(FX_Mul(dot11, dot02) - FX_Mul(dot01, dot12), invDenom);
-	fx32 v = FX_Mul32x64c(FX_Mul(dot00, dot12) - FX_Mul(dot01, dot02), invDenom);
-
-	// Check if point is in triangle
-	return (u >= 0) && (v >= 0) && (u + v < FX32_ONE);
-}*/
-
-static inline BOOL PointInTriangle(VecFx32* A, VecFx32* P, VecFx32* v0, VecFx32* v1, fx64c invDenom, fx32 dot00, fx32 dot01, fx32 dot11)
-{
-	fx32 dot02 = FX_Mul(v0->x, P->x - A->x) + FX_Mul(v0->z, P->z - A->z);
-	fx32 dot12 = FX_Mul(v1->x, P->x - A->x) + FX_Mul(v1->z, P->z - A->z);
-	fx32 u = FX_Mul32x64c(FX_Mul(dot11, dot02) - FX_Mul(dot01, dot12), invDenom);
-	fx32 v = FX_Mul32x64c(FX_Mul(dot00, dot12) - FX_Mul(dot01, dot02), invDenom);
-	return (u + v < FX32_ONE);//(u >= 0) && (v >= 0) && (u + v < FX32_ONE);
 }
 
 void Game::Render()
@@ -401,7 +390,6 @@ void Game::Render()
 	if (mCamera->mRadius < FX32_ONE + FX32_HALF)
 		mCamera->mRadius = FX32_ONE + FX32_HALF;
 	G3X_Reset();
-	G3X_ResetMtxStack();
 	if (!mPicking)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
@@ -512,6 +500,13 @@ void Game::Render()
 	if (zend > 64)
 		zend = 64;
 
+	if (mPicking)
+	{
+		mPickingXStart = xstart;
+		mPickingXEnd = xend;
+		mPickingZStart = zstart;
+	}
+
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
 	NNS_G3dGlbLightVector(GX_LIGHTID_0, -2048, -2897, -2048);
 	NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31, 31, 31));
@@ -532,21 +527,32 @@ void Game::Render()
 		G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 		G3_PushMtx();
 		{
-			int quads = 0;
+			int i = 0;
 			for (int y = zstart; y < zend; y++)
 			{
 				for (int x = xstart; x < xend; x++)
 				{
 					G3_PushMtx();
 					{
+						if (mPicking) G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
+						else if(mSelectedMapX == x && mSelectedMapZ == y)
+						{
+							G3_MaterialColorDiffAmb(sDiffSelectionColorTable[0], sAmbSelectionColorTable[0], FALSE);
+							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+						}
 						G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
 						tile_render(&sDummyMap[y][x], mTerrainManager);
+						if (!mPicking && mSelectedMapX == x && mSelectedMapZ == y)
+						{
+							G3_MaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
+							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
+						}
 					}
 					G3_PopMtx(1);
-					quads++;
+					i++;
 				}
 			}
-			NOCASH_Printf("Total quads: %d", quads);
+			//NOCASH_Printf("Total quads: %d", i);
 		}
 		G3_PopMtx(1);
 		for (int i = 0; i < 60; i++)
@@ -554,7 +560,7 @@ void Game::Render()
 			if (sDummyPieces[i]->x >= xstart && sDummyPieces[i]->x < xend &&
 				sDummyPieces[i]->z >= zstart && sDummyPieces[i]->z < zend)
 			{
-				if (mPicking) G3_MaterialColorSpecEmi(0, (1 << 12) | i, FALSE);
+				if (mPicking) G3_MaterialColorSpecEmi(0, 0, FALSE);
 				sDummyPieces[i]->Render(mTerrainManager);
 			}
 		}
@@ -580,17 +586,17 @@ void Game::Render()
 				NNS_G3dMdlSetMdlDiffAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0, 0, 0));
 				NNS_G3dMdlSetMdlAmbAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0, 0, 0));
 				NNS_G3dMdlSetMdlSpecAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0, 0, 0));
-				NNS_G3dMdlSetMdlEmiAll(mTrain.firstPart->renderObj.resMdl, PICKING_COLOR(PICKING_TYPE_TRAIN, 1));
+				NNS_G3dMdlSetMdlEmiAll(mTrain.firstPart->renderObj.resMdl, PICKING_COLOR(PICKING_TYPE_TRAIN, 0 + 1));
 			}
 			else
 			{
-				if (mPickingOK) NNS_G3dMdlSetMdlDiffAll(mTrain.firstPart->renderObj.resMdl, sDiffSelectionColorTable[0]);
+				if (mSelectedTrain == 0) NNS_G3dMdlSetMdlDiffAll(mTrain.firstPart->renderObj.resMdl, sDiffSelectionColorTable[1]);
 				else NNS_G3dMdlSetMdlDiffAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(21, 21, 21));
-				if (mPickingOK) NNS_G3dMdlSetMdlAmbAll(mTrain.firstPart->renderObj.resMdl, sAmbSelectionColorTable[0]);
+				if (mSelectedTrain == 0) NNS_G3dMdlSetMdlAmbAll(mTrain.firstPart->renderObj.resMdl, sAmbSelectionColorTable[1]);
 				else NNS_G3dMdlSetMdlAmbAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(15, 15, 15));
 				NNS_G3dMdlSetMdlSpecAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0, 0, 0));
 				NNS_G3dMdlSetMdlEmiAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0, 0, 0));
-				if (mPickingOK) NNS_G3dMdlSetMdlPolygonIDAll(mTrain.firstPart->renderObj.resMdl, 1);
+				if (mSelectedTrain == 0) NNS_G3dMdlSetMdlPolygonIDAll(mTrain.firstPart->renderObj.resMdl, 8);
 				else NNS_G3dMdlSetMdlPolygonIDAll(mTrain.firstPart->renderObj.resMdl, 0);
 			}
 			NNS_G3dDraw(&mTrain.firstPart->renderObj);

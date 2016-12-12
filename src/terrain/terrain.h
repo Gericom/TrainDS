@@ -21,15 +21,23 @@ typedef struct
 typedef struct
 {
 	uint16_t y;
-	uint8_t ltCorner : 2;
-	uint8_t rtCorner : 2;
-	uint8_t lbCorner : 2;
-	uint8_t rbCorner : 2;
+	union
+	{
+		struct
+		{
+			uint8_t ltCorner : 2;
+			uint8_t rtCorner : 2;
+			uint8_t lbCorner : 2;
+			uint8_t rbCorner : 2;
+		};
+		uint8_t corners;
+	};
 	uint8_t groundType;
 } tile_t;
 
 class TerrainManager;
 
+void setup_normals();
 void tile_render(tile_t* tile, TerrainManager* terrainManager);
 
 #endif

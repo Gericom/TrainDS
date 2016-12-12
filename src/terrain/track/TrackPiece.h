@@ -8,6 +8,9 @@
 
 class TrackPiece
 {
+	friend class Map;
+private:
+	NNSFndLink mLink;
 public:
 	uint16_t x;
 	uint16_t y;

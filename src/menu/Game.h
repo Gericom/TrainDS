@@ -37,6 +37,12 @@ private:
 	BOOL mProcessPicking;
 	int mPickingPointX;
 	int mPickingPointY;
+	int mPickingXStart;
+	int mPickingXEnd;
+	int mPickingZStart;
+	int mSelectedTrain;
+	int mSelectedMapX;
+	int mSelectedMapZ;
 	BOOL mPickingOK;
 	OSTick mPenDownTime;
 	OSTick mPenUpTime;
@@ -62,7 +68,7 @@ private:
 
 	void Pick(int x, int y, PickingCallbackFunc callback);
 public:
-	Game() : SimpleMenu(17, 17) { }
+	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1) { }
 
 	void Initialize(int arg);
 

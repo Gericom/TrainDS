@@ -8,9 +8,15 @@ class Map
 private:
 	TerrainManager* mTerrainManager;
 	tile_t mTiles[128][128];
+	NNSFndList mTrackList;
 public:
 	Map();
 	~Map();
+
+	void AddTrackPiece(TrackPiece* piece)
+	{
+		NNS_FndAppendListObject(&mTrackList, piece);
+	}
 };
 
 #endif
