@@ -85,7 +85,7 @@ void Game::Initialize(int arg)
 
 	G3X_SetShading(GX_SHADING_HIGHLIGHT);
 	G3X_AntiAlias(TRUE);
-	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
+	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 
 	G3X_AlphaTest(FALSE, 0);                   // AlphaTest OFF
 	G3X_AlphaBlend(TRUE);                      // AlphaTest ON
@@ -286,7 +286,7 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*/18 * 4096, 40960 * 4);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*/18 * 4096 * SCENE_SCALE, 40960);
 	setup_normals();
 }
 
@@ -400,20 +400,20 @@ void Game::Render()
 	else if (keyData & PAD_KEY_RIGHT)
 		mCamera->mTheta += FX32_ONE;
 	if (keyData & PAD_KEY_UP)
-		mCamera->mPhi += FX32_ONE >> 5;
+		mCamera->mPhi += (FX32_ONE * SCENE_SCALE) >> 5;
 	else if (keyData & PAD_KEY_DOWN)
-		mCamera->mPhi -= FX32_ONE >> 5;
+		mCamera->mPhi -= (FX32_ONE * SCENE_SCALE) >> 5;
 	mCamera->mTheta %= 360 * FX32_ONE;
 	if (mCamera->mPhi < 0)
 		mCamera->mPhi = 0;
-	else if (mCamera->mPhi > 10 * FX32_ONE)
-		mCamera->mPhi = 10 * FX32_ONE;
-	if (keyData & PAD_BUTTON_L && mCamera->mRadius < 4 * FX32_ONE)
-		mCamera->mRadius += FX32_ONE >> 5;
+	else if (mCamera->mPhi > 10 * SCENE_SCALE * FX32_ONE)
+		mCamera->mPhi = 10 * FX32_ONE * SCENE_SCALE;
+	if (keyData & PAD_BUTTON_L && mCamera->mRadius < 4 * FX32_ONE * SCENE_SCALE)
+		mCamera->mRadius += (FX32_ONE * SCENE_SCALE) >> 5;
 	else if (keyData & PAD_BUTTON_R && mCamera->mRadius > FX32_HALF)
-		mCamera->mRadius -= FX32_ONE >> 5;
-	if (mCamera->mRadius < FX32_ONE + FX32_HALF)
-		mCamera->mRadius = FX32_ONE + FX32_HALF;
+		mCamera->mRadius -= (FX32_ONE * SCENE_SCALE) >> 5;
+	if (mCamera->mRadius < (FX32_ONE + FX32_HALF) * SCENE_SCALE)
+		mCamera->mRadius = (FX32_ONE + FX32_HALF) * SCENE_SCALE;
 	G3X_Reset();
 	if (!mPicking)
 	{
@@ -422,7 +422,7 @@ void Game::Render()
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(TRUE);
 		G3X_AntiAlias(mAntiAliasEnabled);
-		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0100, 0x8000 - 0x200);
+		G3X_SetFog(FALSE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0100, 0x8000 - 0x200);
 		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
@@ -454,8 +454,8 @@ void Game::Render()
 	VEC_Normalize(&camforward, &camforward);
 
 	//far
-	fx32 camfarx = mCamera->mPosition.x + camforward.x * 18;//16;//20;
-	fx32 camfarz = mCamera->mPosition.z + camforward.z * 18;//16;//20;
+	fx32 camfarx = mCamera->mPosition.x + camforward.x * 18 * SCENE_SCALE;//16;//20;
+	fx32 camfarz = mCamera->mPosition.z + camforward.z * 18 * SCENE_SCALE;//16;//20;
 
 	int horizonx;
 	int horizony;
@@ -505,23 +505,23 @@ void Game::Render()
 	calcpos4.y = 0;
 	calcpos4.z = horizonrnear.z - FX_Mul(f, horizonrfar.z - horizonrnear.z);
 
-	int xstart = ((MATH_MIN(calcpos.x, MATH_MIN(calcpos2.x, MATH_MIN(calcpos3.x, calcpos4.x))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
+	int xstart = ((MATH_MIN(calcpos.x, MATH_MIN(calcpos2.x, MATH_MIN(calcpos3.x, calcpos4.x))) - (FX32_ONE * SCENE_SCALE) - FX32_HALF) >> FX32_SHIFT) / SCENE_SCALE + 32;
 	if (xstart < 0)
 		xstart = 0;
 	if (xstart > 64)
 		xstart = 64;
-	int xend = ((MATH_MAX(calcpos.x, MATH_MAX(calcpos2.x, MATH_MAX(calcpos3.x, calcpos4.x))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
+	int xend = ((MATH_MAX(calcpos.x, MATH_MAX(calcpos2.x, MATH_MAX(calcpos3.x, calcpos4.x))) + (FX32_ONE * SCENE_SCALE) + FX32_HALF) >> FX32_SHIFT) / SCENE_SCALE + 32;
 	if (xend < 0)
 		xend = 0;
 	if (xend > 64)
 		xend = 64;
 
-	int zstart = ((MATH_MIN(calcpos.z, MATH_MIN(calcpos2.z, MATH_MIN(calcpos3.z, calcpos4.z))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
+	int zstart = ((MATH_MIN(calcpos.z, MATH_MIN(calcpos2.z, MATH_MIN(calcpos3.z, calcpos4.z))) - (FX32_ONE * SCENE_SCALE) - FX32_HALF) >> FX32_SHIFT) / SCENE_SCALE + 32;
 	if (zstart < 0)
 		zstart = 0;
 	if (zstart > 64)
 		zstart = 64;
-	int zend = ((MATH_MAX(calcpos.z, MATH_MAX(calcpos2.z, MATH_MAX(calcpos3.z, calcpos4.z))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
+	int zend = ((MATH_MAX(calcpos.z, MATH_MAX(calcpos2.z, MATH_MAX(calcpos3.z, calcpos4.z))) + (FX32_ONE * SCENE_SCALE) + FX32_HALF) >> FX32_SHIFT) / SCENE_SCALE + 32;
 	if (zend < 0)
 		zend = 0;
 	if (zend > 64)
@@ -551,7 +551,7 @@ void Game::Render()
 	NNS_G3dGeFlushBuffer();
 	G3_PushMtx();
 	{
-		G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+		G3_Translate(-32 * FX32_ONE * SCENE_SCALE, 0, -32 * FX32_ONE * SCENE_SCALE);
 		G3_PushMtx();
 		{
 			int i = 0;
@@ -570,7 +570,7 @@ void Game::Render()
 						}
 						else if(mGridEnabled)
 							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG);
-						G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
+						G3_Translate(x * FX32_ONE * SCENE_SCALE, 0, y * FX32_ONE * SCENE_SCALE);
 						tile_render(&sDummyMap[y][x], mTerrainManager);
 						if (!mPicking && mSelectedMapX == x && mSelectedMapZ == y)
 						{
@@ -609,7 +609,7 @@ void Game::Render()
 			NNS_G3dGeMultMtx43(&rot2);
 
 			NNS_G3dGeMtxMode(GX_MTXMODE_POSITION);
-			NNS_G3dGeScale(FX32_ONE / 7, FX32_ONE / 7, FX32_ONE / 7);
+			NNS_G3dGeScale(FX32_ONE * SCENE_SCALE / 7, FX32_ONE * SCENE_SCALE / 7, FX32_ONE * SCENE_SCALE / 7);
 			NNS_G3dGeMtxMode(GX_MTXMODE_POSITION_VECTOR);
 
 			if (mPicking)
@@ -637,7 +637,7 @@ void Game::Render()
 	}
 	G3_PopMtx(1);
 	mUIManager->Render();
-	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
+	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 }
 
 void Game::VBlank()

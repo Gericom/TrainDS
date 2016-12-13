@@ -11,6 +11,8 @@ typedef struct
 	int nitroFormat;
 } texture_t;
 
+#define SCENE_SCALE		(1)
+
 #define TILE_CORNER_FLAT	0
 #define TILE_CORNER_UP		1
 #define TILE_CORNER_DOWN	2

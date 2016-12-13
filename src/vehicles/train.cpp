@@ -4,6 +4,7 @@
 #include "engine/PathWorker.h"
 #include "engine/Camera.h"
 #include "engine/LookAtCamera.h"
+#include "terrain/terrain.h"
 #include "train.h"
 
 void Train_UpdatePos(train_t* train)
@@ -15,13 +16,13 @@ void Train_UpdatePos(train_t* train)
 	VecFx32 dir2;
 	if (train->isDriving && !train->isDrivingBackwards)
 	{
-		train->firstPart->pathWorker1->Proceed(FX32_ONE / 24, &tpos1, &dir1);
-		train->firstPart->pathWorker2->Proceed(FX32_ONE / 24, &tpos2, &dir2);
+		train->firstPart->pathWorker1->Proceed(FX32_ONE * SCENE_SCALE / 24, &tpos1, &dir1);
+		train->firstPart->pathWorker2->Proceed(FX32_ONE * SCENE_SCALE / 24, &tpos2, &dir2);
 	}
 	else if (train->isDriving && train->isDrivingBackwards)
 	{
-		train->firstPart->pathWorker1->Proceed(-FX32_ONE / 24, &tpos1, &dir1);
-		train->firstPart->pathWorker2->Proceed(-FX32_ONE / 24, &tpos2, &dir2);
+		train->firstPart->pathWorker1->Proceed(-FX32_ONE * SCENE_SCALE / 24, &tpos1, &dir1);
+		train->firstPart->pathWorker2->Proceed(-FX32_ONE * SCENE_SCALE / 24, &tpos2, &dir2);
 	}
 	else
 	{

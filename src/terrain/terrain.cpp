@@ -134,8 +134,8 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 	}
 	G3_PushMtx();
 	{
-		G3_Translate(0, tile->y * TILE_HEIGHT, 0);
-
+		G3_Translate(0, tile->y * TILE_HEIGHT * SCENE_SCALE, 0);
+		G3_Scale(SCENE_SCALE * FX32_ONE, SCENE_SCALE * FX32_ONE, SCENE_SCALE * FX32_ONE);
 		VecFx32 vtx[4] =
 		{
 			{0, tile_corner_to_y[tile->ltCorner], 0},

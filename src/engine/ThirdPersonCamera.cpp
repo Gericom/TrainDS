@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "LookAtCamera.h"
 #include "ThirdPersonCamera.h"
+#include "terrain/terrain.h"
 #include "Quaternion.h"
 
 void ThirdPersonCamera::Apply()
@@ -53,12 +54,12 @@ void ThirdPersonCamera::Apply()
 	//mRotation.MultiplyByVector(&tmp, &tmp);
 	//MTX_MultVec43(&tmp, &rot2, &tmp);
 	tmp.y += mPhi;
-	mPosition.x = tmp.x + mTrain->firstPart->position.x - 32 * FX32_ONE;
-	mPosition.y = tmp.y + mTrain->firstPart->position.y + (FX32_ONE / 3);
-	mPosition.z = tmp.z + mTrain->firstPart->position.z - 32 * FX32_ONE;
-	mDestination.x = mTrain->firstPart->position.x - 32 * FX32_ONE;// +mTrain->firstPart->direction.x;
-	mDestination.y = mTrain->firstPart->position.y + (FX32_ONE / 3);// +mTrain->firstPart->direction.y;
-	mDestination.z = mTrain->firstPart->position.z - 32 * FX32_ONE;// +mTrain->firstPart->direction.z;
+	mPosition.x = tmp.x + mTrain->firstPart->position.x - 32 * FX32_ONE * SCENE_SCALE;
+	mPosition.y = tmp.y + mTrain->firstPart->position.y + (FX32_ONE / 3) * SCENE_SCALE;
+	mPosition.z = tmp.z + mTrain->firstPart->position.z - 32 * FX32_ONE * SCENE_SCALE;
+	mDestination.x = mTrain->firstPart->position.x - 32 * FX32_ONE * SCENE_SCALE;// +mTrain->firstPart->direction.x;
+	mDestination.y = mTrain->firstPart->position.y + (FX32_ONE / 3) * SCENE_SCALE;// +mTrain->firstPart->direction.y;
+	mDestination.z = mTrain->firstPart->position.z - 32 * FX32_ONE * SCENE_SCALE;// +mTrain->firstPart->direction.z;
 	//mUp.x = 0;
 	//mUp.y = (FX_CosIdx(FX_DEG_TO_IDX(mPhi)) < 0) ? -FX32_ONE : FX32_ONE;
 	//mUp.z = 0;

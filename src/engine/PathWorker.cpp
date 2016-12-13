@@ -73,25 +73,25 @@ void PathWorker::SetupPoint()
 {
 	fx32 xa = 0, za = 0;
 	TrackPiece* a = mCurPiece;
-	if(a->rot == TRACKPIECE_ROT_0) za = FX32_HALF;
-	else if(a->rot == TRACKPIECE_ROT_90) { xa = FX32_HALF; za = FX32_ONE; }
-	else if(a->rot == TRACKPIECE_ROT_180) { xa = FX32_ONE; za = FX32_HALF; }
-	else if(a->rot == TRACKPIECE_ROT_270) xa = FX32_HALF;
-	mCurPiecePoint.x = a->x * FX32_ONE + xa;
-	mCurPiecePoint.y = a->y * TILE_HEIGHT;
-	mCurPiecePoint.z = a->z * FX32_ONE + za;
+	if(a->rot == TRACKPIECE_ROT_0) za = FX32_HALF * SCENE_SCALE;
+	else if(a->rot == TRACKPIECE_ROT_90) { xa = FX32_HALF * SCENE_SCALE; za = FX32_ONE * SCENE_SCALE; }
+	else if(a->rot == TRACKPIECE_ROT_180) { xa = FX32_ONE * SCENE_SCALE; za = FX32_HALF * SCENE_SCALE; }
+	else if(a->rot == TRACKPIECE_ROT_270) xa = FX32_HALF * SCENE_SCALE;
+	mCurPiecePoint.x = a->x * FX32_ONE * SCENE_SCALE + xa;
+	mCurPiecePoint.y = a->y * TILE_HEIGHT * SCENE_SCALE;
+	mCurPiecePoint.z = a->z * FX32_ONE * SCENE_SCALE + za;
 	if(mCurPiece->next[0] != NULL)
 	{
 		a = mCurPiece->next[0];
 		xa = 0;
 		za = 0;
-		if(a->rot == TRACKPIECE_ROT_0) za = FX32_HALF;
-		else if(a->rot == TRACKPIECE_ROT_90) { xa = FX32_HALF; za = FX32_ONE; }
-		else if(a->rot == TRACKPIECE_ROT_180) { xa = FX32_ONE; za = FX32_HALF; }
-		else if(a->rot == TRACKPIECE_ROT_270) xa = FX32_HALF;
-		mNextPiecePoint.x = a->x * FX32_ONE + xa;
-		mNextPiecePoint.y = a->y * TILE_HEIGHT;
-		mNextPiecePoint.z = a->z * FX32_ONE + za;
+		if(a->rot == TRACKPIECE_ROT_0) za = FX32_HALF * SCENE_SCALE;
+		else if(a->rot == TRACKPIECE_ROT_90) { xa = FX32_HALF * SCENE_SCALE; za = FX32_ONE * SCENE_SCALE; }
+		else if(a->rot == TRACKPIECE_ROT_180) { xa = FX32_ONE * SCENE_SCALE; za = FX32_HALF * SCENE_SCALE; }
+		else if(a->rot == TRACKPIECE_ROT_270) xa = FX32_HALF * SCENE_SCALE;
+		mNextPiecePoint.x = a->x * FX32_ONE * SCENE_SCALE + xa;
+		mNextPiecePoint.y = a->y * TILE_HEIGHT * SCENE_SCALE;
+		mNextPiecePoint.z = a->z * FX32_ONE * SCENE_SCALE + za;
 
 		VecFx32 diff;
 		VEC_Subtract(&mNextPiecePoint, &mCurPiecePoint, &diff);

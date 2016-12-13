@@ -3,13 +3,14 @@
 #include "LookAtCamera.h"
 #include "Quaternion.h"
 #include "vehicles/train.h"
+#include "terrain/terrain.h"
 
 //A camera that looks at the locomotive of a train
 class ThirdPersonCamera : public LookAtCamera
 {
 public:
 	ThirdPersonCamera()
-		: mRadius(2.5 * FX32_ONE), mTheta(0), mPhi(0), mTrain(NULL)
+		: mRadius(2.5 * FX32_ONE * SCENE_SCALE), mTheta(0), mPhi(0), mTrain(NULL)
 	{
 		mUp.x = 0;
 		mUp.y = FX32_ONE;
