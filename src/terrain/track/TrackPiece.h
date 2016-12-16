@@ -1,6 +1,9 @@
 #ifndef __TRACKPIECE_H__
 #define __TRACKPIECE_H__
 
+#include <nnsys/fnd.h>
+#include "terrain\Map.h"
+
 #define TRACKPIECE_ROT_0						0	// ->
 #define TRACKPIECE_ROT_90						1	// ^
 #define TRACKPIECE_ROT_180						2	// <-
@@ -12,26 +15,28 @@ class TrackPiece
 private:
 	NNSFndLink mLink;
 public:
-	uint16_t x;
-	uint16_t y;
-	uint16_t z;
+	mapcoord_t mPosition;
 	union
 	{
-		uint16_t flags;
+		uint16_t mFlags;
 		struct
 		{
-			uint16_t rot : 2;
-			uint16_t reserved_flags : 14;
+			uint16_t mRot : 2;
+			uint16_t : 14;
 		};
 	};
 
-	TrackPiece* prev[4];
-	TrackPiece* next[4];
+	TrackPiece* mPrev[4];
+	TrackPiece* mNext[4];
 
 public:
-	TrackPiece(uint16_t x, uint16_t y, uint16_t z, int rot)
-		: x(x), y(y), z(z), rot(rot)
-	{ }
+	TrackPiece(uint16_t x, uint8_t y, uint16_t z, int rot)
+		: mRot(rot)
+	{ 
+		mPosition.x = x;
+		mPosition.y = y;
+		mPosition.z = z;
+	}
 
 	virtual void Render(TerrainManager* terrainManager) = 0;
 	virtual fx32 GetNextDistance(fx32 linDist) = 0;

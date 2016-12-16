@@ -20,7 +20,8 @@ typedef struct
 
 typedef struct
 {
-	uint16_t y;
+	uint8_t y;
+	uint8_t waterY;
 	union
 	{
 		struct

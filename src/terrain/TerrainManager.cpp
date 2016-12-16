@@ -17,6 +17,11 @@ TerrainManager::TerrainManager()
 	mTrackTexture.nitroWidth = GX_TEXSIZE_S64;
 	mTrackTexture.nitroHeight = GX_TEXSIZE_T64;
 	mTrackTexture.nitroFormat = GX_TEXFMT_A3I5;
+
+	Util_LoadTexture4x4FromCard("/data/map/scenery/RCT2A.ntft", "/data/map/scenery/RCT2A.ntfi", "/data/map/scenery/RCT2A.ntfp", mRCT2TreeTexture.texKey, mRCT2TreeTexture.plttKey);
+	mRCT2TreeTexture.nitroWidth = GX_TEXSIZE_S64;
+	mRCT2TreeTexture.nitroHeight = GX_TEXSIZE_T256;
+	mRCT2TreeTexture.nitroFormat = GX_TEXFMT_COMP4x4;
 }
 
 texture_t* TerrainManager::GetTerrainTexture(int terrainId)

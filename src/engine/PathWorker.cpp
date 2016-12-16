@@ -16,82 +16,31 @@ void PathWorker::CalculatePoint()
 	mCurPoint.x = mCurPoint.y = mCurPoint.z = 0;
 	if (mNextDistance < 0) return;
 	mCurPiece->CalculatePoint(&mCurPiecePoint, &mNextPiecePoint, &mNextDirection, FX_Div(mCurDistance, mNextDistance), &mCurPoint, &mCurDirection);
-	/*if(mCurPiece->kind == TRACKPIECE_KIND_FLAT)//Linear Interpolation
-	{
-		FX_Lerp(&mCurPiecePoint, &mNextPiecePoint, FX_Div(mCurDistance, mNextDistance), &mCurPoint);
-		mCurDirection = mNextDirection;
-	}
-	else if(mCurPiece->kind == TRACKPIECE_KIND_FLAT_SMALL_CURVED_LEFT)//Quarter Circle
-	{
-		fx32 frac = FX_Div(mCurDistance, mNextDistance);
-		u16 idx = FX_DEG_TO_IDX(frac * 90);
-		fx32 sin, cos;
-		fx32 sinfix, cosfix;
-		if(mCurPiece->rot == TRACKPIECE_ROT_0 || mCurPiece->rot == TRACKPIECE_ROT_180)
-		{
-			cos = FX_SinIdx(idx);
-			sin = FX_CosIdx(idx);
-			sinfix = FX32_ONE - sin;
-			cosfix = cos;
-		}
-		else
-		{
-			cos = FX_CosIdx(idx);
-			sin = FX_SinIdx(idx);
-			sinfix = sin;
-			cosfix = FX32_ONE - cos;
-		}
-		mCurPoint.x = mCurPiecePoint.x + FX_Mul(mNextPiecePoint.x - mCurPiecePoint.x, cosfix);
-		mCurPoint.y = mCurPiecePoint.y + FX_Mul(mNextPiecePoint.y - mCurPiecePoint.y, frac);
-		mCurPoint.z = mCurPiecePoint.z + FX_Mul(mNextPiecePoint.z - mCurPiecePoint.z, sinfix);
-		mCurDirection.y = mNextDirection.y;
-		if(mCurPiece->rot == TRACKPIECE_ROT_0)//ai - b
-		{
-			mCurDirection.x = sin;
-			mCurDirection.z = -cos;
-		}
-		else if(mCurPiece->rot == TRACKPIECE_ROT_90)//-a - bi
-		{
-			mCurDirection.x = -sin;
-			mCurDirection.z = -cos;
-		}
-		else if(mCurPiece->rot == TRACKPIECE_ROT_180)//-ai + b
-		{
-			mCurDirection.x = -sin;
-			mCurDirection.z = cos;
-		}
-		else if(mCurPiece->rot == TRACKPIECE_ROT_270)//a + bi
-		{
-			mCurDirection.x = sin;
-			mCurDirection.z = cos;
-		}
-		VEC_Normalize(&mCurDirection, &mCurDirection);
-	}*/
 }
 
 void PathWorker::SetupPoint()
 {
 	fx32 xa = 0, za = 0;
 	TrackPiece* a = mCurPiece;
-	if(a->rot == TRACKPIECE_ROT_0) za = FX32_HALF;
-	else if(a->rot == TRACKPIECE_ROT_90) { xa = FX32_HALF; za = FX32_ONE; }
-	else if(a->rot == TRACKPIECE_ROT_180) { xa = FX32_ONE; za = FX32_HALF; }
-	else if(a->rot == TRACKPIECE_ROT_270) xa = FX32_HALF;
-	mCurPiecePoint.x = a->x * FX32_ONE + xa;
-	mCurPiecePoint.y = a->y * TILE_HEIGHT;
-	mCurPiecePoint.z = a->z * FX32_ONE + za;
-	if(mCurPiece->next[0] != NULL)
+	if(a->mRot == TRACKPIECE_ROT_0) za = FX32_HALF;
+	else if(a->mRot == TRACKPIECE_ROT_90) { xa = FX32_HALF; za = FX32_ONE; }
+	else if(a->mRot == TRACKPIECE_ROT_180) { xa = FX32_ONE; za = FX32_HALF; }
+	else if(a->mRot == TRACKPIECE_ROT_270) xa = FX32_HALF;
+	mCurPiecePoint.x = a->mPosition.x * FX32_ONE + xa;
+	mCurPiecePoint.y = a->mPosition.y * TILE_HEIGHT;
+	mCurPiecePoint.z = a->mPosition.z * FX32_ONE + za;
+	if(mCurPiece->mNext[0] != NULL)
 	{
-		a = mCurPiece->next[0];
+		a = mCurPiece->mNext[0];
 		xa = 0;
 		za = 0;
-		if(a->rot == TRACKPIECE_ROT_0) za = FX32_HALF;
-		else if(a->rot == TRACKPIECE_ROT_90) { xa = FX32_HALF; za = FX32_ONE; }
-		else if(a->rot == TRACKPIECE_ROT_180) { xa = FX32_ONE; za = FX32_HALF; }
-		else if(a->rot == TRACKPIECE_ROT_270) xa = FX32_HALF;
-		mNextPiecePoint.x = a->x * FX32_ONE + xa;
-		mNextPiecePoint.y = a->y * TILE_HEIGHT;
-		mNextPiecePoint.z = a->z * FX32_ONE + za;
+		if(a->mRot == TRACKPIECE_ROT_0) za = FX32_HALF;
+		else if(a->mRot == TRACKPIECE_ROT_90) { xa = FX32_HALF; za = FX32_ONE; }
+		else if(a->mRot == TRACKPIECE_ROT_180) { xa = FX32_ONE; za = FX32_HALF; }
+		else if(a->mRot == TRACKPIECE_ROT_270) xa = FX32_HALF;
+		mNextPiecePoint.x = a->mPosition.x * FX32_ONE + xa;
+		mNextPiecePoint.y = a->mPosition.y * TILE_HEIGHT;
+		mNextPiecePoint.z = a->mPosition.z * FX32_ONE + za;
 
 		VecFx32 diff;
 		VEC_Subtract(&mNextPiecePoint, &mCurPiecePoint, &diff);
@@ -118,12 +67,12 @@ void PathWorker::Proceed(fx32 distance, VecFx32* point, VecFx32* direction)
 		while(mCurDistance > 0 && mNextDistance >= 0 && mCurDistance > mNextDistance)
 		{
 			mCurDistance -= mNextDistance;
-			mCurPiece = mCurPiece->next[0];
+			mCurPiece = mCurPiece->mNext[0];
 			SetupPoint();
 		}
-		while(mCurDistance < 0 && mCurPiece->prev[0] != NULL)
+		while(mCurDistance < 0 && mCurPiece->mPrev[0] != NULL)
 		{
-			mCurPiece = mCurPiece->prev[0];
+			mCurPiece = mCurPiece->mPrev[0];
 			SetupPoint();
 			if(mNextDistance < 0) break;
 			mCurDistance = mNextDistance + mCurDistance;

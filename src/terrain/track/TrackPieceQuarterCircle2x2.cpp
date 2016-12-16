@@ -20,8 +20,8 @@ void TrackPieceQuarterCircle2x2::Render(TerrainManager* terrainManager)
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 	G3_PushMtx();
 	{
-		G3_Translate(x * FX32_ONE, y * TILE_HEIGHT + (FX32_ONE / 16)/* + (FX32_ONE >> 4)*/, z * FX32_ONE);
-		switch (rot)
+		G3_Translate(mPosition.x * FX32_ONE, mPosition.y * TILE_HEIGHT + (FX32_ONE / 16)/* + (FX32_ONE >> 4)*/, mPosition.z * FX32_ONE);
+		switch (mRot)
 		{
 		case TRACKPIECE_ROT_0:
 			break;
@@ -81,7 +81,7 @@ void TrackPieceQuarterCircle2x2::CalculatePoint(VecFx32* pStartPos, VecFx32* pEn
 	u16 idx = FX_DEG_TO_IDX(progress * 90);
 	fx32 sin, cos;
 	fx32 sinfix, cosfix;
-	if (rot == TRACKPIECE_ROT_0 || rot == TRACKPIECE_ROT_180)
+	if (mRot == TRACKPIECE_ROT_0 || mRot == TRACKPIECE_ROT_180)
 	{
 		cos = FX_SinIdx(idx);
 		sin = FX_CosIdx(idx);
@@ -99,22 +99,22 @@ void TrackPieceQuarterCircle2x2::CalculatePoint(VecFx32* pStartPos, VecFx32* pEn
 	pPos->y = pStartPos->y + FX_Mul(pEndPos->y - pStartPos->y, progress);
 	pPos->z = pStartPos->z + FX_Mul(pEndPos->z - pStartPos->z, sinfix);
 	pDir->y = pNextDir->y;
-	if (rot == TRACKPIECE_ROT_0)//ai - b
+	if (mRot == TRACKPIECE_ROT_0)//ai - b
 	{
 		pDir->x = sin;
 		pDir->z = -cos;
 	}
-	else if (rot == TRACKPIECE_ROT_90)//-a - bi
+	else if (mRot == TRACKPIECE_ROT_90)//-a - bi
 	{
 		pDir->x = -sin;
 		pDir->z = -cos;
 	}
-	else if (rot == TRACKPIECE_ROT_180)//-ai + b
+	else if (mRot == TRACKPIECE_ROT_180)//-ai + b
 	{
 		pDir->x = -sin;
 		pDir->z = cos;
 	}
-	else if (rot == TRACKPIECE_ROT_270)//a + bi
+	else if (mRot == TRACKPIECE_ROT_270)//a + bi
 	{
 		pDir->x = sin;
 		pDir->z = cos;

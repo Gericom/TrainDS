@@ -166,3 +166,60 @@ void Util_SetupSubOAMForDouble3D()
 	NNS_FndFreeToExpHeap(gHeapHandle, sOamBak);
 }
 #include <nitro/codereset.h>
+
+void Util_SetupBillboardYMatrix()
+{
+	MtxFx44 m;
+	static u32 bbcmd1[] =
+	{
+		((G3OP_MTX_POP << 0) |
+		(G3OP_MTX_MODE << 8) |
+			(G3OP_MTX_LOAD_4x3 << 16) |
+			(G3OP_MTX_SCALE << 24)),
+		1,
+		GX_MTXMODE_POSITION_VECTOR,
+		FX32_ONE, 0, 0, // This is subject to change  (4x3Mtx)
+		0, FX32_ONE, 0,
+		0, 0, FX32_ONE,
+		0, 0, 0,
+		0, 0, 0    // This is subject to change  (Scale)
+	};
+	VecFx32* trans = (VecFx32*)&bbcmd1[12];
+	VecFx32* scale = (VecFx32*)&bbcmd1[15];
+	MtxFx43* mtx = (MtxFx43*)&bbcmd1[3];
+	reg_G3X_GXFIFO = ((G3OP_MTX_MODE << 0) |
+		(G3OP_MTX_PUSH << 8) |
+		(G3OP_MTX_IDENTITY << 16));
+	reg_G3X_GXFIFO = (u32)GX_MTXMODE_PROJECTION;
+	reg_G3X_GXFIFO = 0; // 2004/08/26 geometry fifo glitch
+
+						// Wait further for the geometry engine to stop
+						// get the current matrix (clip matrix)
+	while (G3X_GetClipMtx(&m));
+	trans->x = m._30;
+	trans->y = m._31;
+	trans->z = m._32;
+
+	// 2: approximate the scale with the size of the vector on each line
+	scale->x = VEC_Mag((VecFx32*)&m._00);
+	scale->y = VEC_Mag((VecFx32*)&m._10);
+	scale->z = VEC_Mag((VecFx32*)&m._20);
+
+	// 3: the rotation  matrix will be the rotation matrix for the X-axis as a the result, so
+	//    set an appropriate value
+	if (m._11 != 0 || m._12 != 0)
+	{
+		VEC_Normalize((VecFx32*)&m._10, (VecFx32*)&mtx->_10);
+
+		mtx->_21 = -mtx->_12;
+		mtx->_22 = mtx->_11;
+	}
+	else
+	{
+		VEC_Normalize((VecFx32*)&m._20, (VecFx32*)&mtx->_20);
+
+		mtx->_12 = -mtx->_21;
+		mtx->_11 = mtx->_22;
+	}
+	MI_CpuSend32(&bbcmd1[0], &reg_G3X_GXFIFO, 18 * sizeof(u32));
+}

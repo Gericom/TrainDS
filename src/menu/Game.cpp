@@ -5,10 +5,12 @@
 #include "util.h"
 #include "Menu.h"
 #include "terrain/terrain.h"
+#include "terrain/Map.h"
 #include "terrain/TerrainManager.h"
 #include "terrain/track/TrackPiece.h"
 #include "terrain/track/TrackPieceQuarterCircle2x2.h"
 #include "terrain/track/TrackPieceStraight1x1.h"
+#include "terrain/scenery/RCT2Tree1.h"
 #include "engine/PathWorker.h"
 #include "vehicles/train.h"
 #include "ui/UIManager.h"
@@ -17,7 +19,7 @@
 #include "engine/ThirdPersonCamera.h"
 #include "Game.h"
 
-static tile_t sDummyMap[64][64];
+//static tile_t sDummyMap[64][64];
 //static trackpiece_t sDummyPieces[8];
 static TrackPiece* sDummyPieces[60];//10];
 
@@ -101,9 +103,10 @@ void Game::Initialize(int arg)
 	NNS_GfdResetLnkTexVramState();
 	NNS_GfdResetLnkPlttVramState();
 
-	mTerrainManager = new TerrainManager();
+	//mTerrainManager = new TerrainManager();
+	mMap = new Map();
 
-	MI_CpuClearFast(&sDummyMap[0][0], sizeof(sDummyMap));
+	//MI_CpuClearFast(&sDummyMap[0][0], sizeof(sDummyMap));
 
 	for (int y = 0; y < 64; y++)
 	{
@@ -111,35 +114,35 @@ void Game::Initialize(int arg)
 		{
 			if (y == 32 - 3 && x > 32 - 2 && x < 32)
 			{
-				sDummyMap[y][x].groundType = 0;//1;
-				sDummyMap[y][x].y = 1;
+				mMap->mTiles[y][x].groundType = 0;//1;
+				mMap->mTiles[y][x].y = 1;
 			}
-			else if (y == 32 - 3 && x > 32 - 2 && x > 32) sDummyMap[y][x].groundType = 0;//1;
+			else if (y == 32 - 3 && x > 32 - 2 && x > 32) mMap->mTiles[y][x].groundType = 0;//1;
 			else if (y == 32 - 2 && x > 32 - 2 && x < 32)
 			{
-				sDummyMap[y][x].ltCorner = TILE_CORNER_UP;
-				sDummyMap[y][x].rtCorner = TILE_CORNER_UP;
-				sDummyMap[y][x].lbCorner = TILE_CORNER_FLAT;
-				sDummyMap[y][x].rbCorner = TILE_CORNER_FLAT;
+				mMap->mTiles[y][x].ltCorner = TILE_CORNER_UP;
+				mMap->mTiles[y][x].rtCorner = TILE_CORNER_UP;
+				mMap->mTiles[y][x].lbCorner = TILE_CORNER_FLAT;
+				mMap->mTiles[y][x].rbCorner = TILE_CORNER_FLAT;
 			}
 			else if (y == 32 - 4 && x > 32 - 2 && x < 32)
 			{
-				sDummyMap[y][x].ltCorner = TILE_CORNER_FLAT;
-				sDummyMap[y][x].rtCorner = TILE_CORNER_FLAT;
-				sDummyMap[y][x].lbCorner = TILE_CORNER_UP;
-				sDummyMap[y][x].rbCorner = TILE_CORNER_UP;
+				mMap->mTiles[y][x].ltCorner = TILE_CORNER_FLAT;
+				mMap->mTiles[y][x].rtCorner = TILE_CORNER_FLAT;
+				mMap->mTiles[y][x].lbCorner = TILE_CORNER_UP;
+				mMap->mTiles[y][x].rbCorner = TILE_CORNER_UP;
 			}
 		}
 	}
-	sDummyMap[32 - 3][32].ltCorner = TILE_CORNER_UP;
-	sDummyMap[32 - 3][32].lbCorner = TILE_CORNER_UP;
-	sDummyMap[32 - 3][32].groundType = 0;//1;
-	sDummyMap[32 - 4][32].lbCorner = TILE_CORNER_UP;
-	sDummyMap[32 - 2][32].ltCorner = TILE_CORNER_UP;
-	sDummyMap[32 - 2][32 - 2].rtCorner = TILE_CORNER_UP;
-	sDummyMap[32 - 4][32 - 2].rbCorner = TILE_CORNER_UP;
-	sDummyMap[32 - 3][32 - 2].rtCorner = TILE_CORNER_UP;
-	sDummyMap[32 - 3][32 - 2].rbCorner = TILE_CORNER_UP;
+	mMap->mTiles[32 - 3][32].ltCorner = TILE_CORNER_UP;
+	mMap->mTiles[32 - 3][32].lbCorner = TILE_CORNER_UP;
+	mMap->mTiles[32 - 3][32].groundType = 0;//1;
+	mMap->mTiles[32 - 4][32].lbCorner = TILE_CORNER_UP;
+	mMap->mTiles[32 - 2][32].ltCorner = TILE_CORNER_UP;
+	mMap->mTiles[32 - 2][32 - 2].rtCorner = TILE_CORNER_UP;
+	mMap->mTiles[32 - 4][32 - 2].rbCorner = TILE_CORNER_UP;
+	mMap->mTiles[32 - 3][32 - 2].rtCorner = TILE_CORNER_UP;
+	mMap->mTiles[32 - 3][32 - 2].rbCorner = TILE_CORNER_UP;
 	/*sDummyPieces[0] = new TrackPieceStraight1x1(32 - 1, 0, 32 - 1, TRACKPIECE_ROT_0);
 	sDummyPieces[1] = new TrackPieceQuarterCircle2x2(32, 0, 32 - 1, TRACKPIECE_ROT_0);
 	sDummyPieces[2] = new TrackPieceStraight1x1(32 + 1, 0, 32 - 3, TRACKPIECE_ROT_90);
@@ -158,11 +161,18 @@ void Game::Initialize(int arg)
 
 	for (int i = 0; i < 60; i++)
 	{
-		sDummyPieces[i]->prev[0] = (i == 0) ? NULL : sDummyPieces[i - 1];
-		sDummyPieces[i]->prev[1] = sDummyPieces[i]->prev[2] = sDummyPieces[i]->prev[3] = NULL;
-		sDummyPieces[i]->next[0] = (i == 59) ? NULL : sDummyPieces[i + 1];
-		sDummyPieces[i]->next[1] = sDummyPieces[i]->next[2] = sDummyPieces[i]->next[3] = NULL;
+		sDummyPieces[i]->mPrev[0] = (i == 0) ? NULL : sDummyPieces[i - 1];
+		sDummyPieces[i]->mPrev[1] = sDummyPieces[i]->mPrev[2] = sDummyPieces[i]->mPrev[3] = NULL;
+		sDummyPieces[i]->mNext[0] = (i == 59) ? NULL : sDummyPieces[i + 1];
+		sDummyPieces[i]->mNext[1] = sDummyPieces[i]->mNext[2] = sDummyPieces[i]->mNext[3] = NULL;
 	}
+
+	for (int i = 0; i < 60; i++)
+	{
+		mMap->AddTrackPiece(sDummyPieces[i]);
+	}
+
+	mMap->AddSceneryObject(new RCT2Tree1(32 - 1, 1, 32 - 3, 0));
 
 	mTrain.firstPart = &mTrainPart;
 	mTrain.isDriving = FALSE;
@@ -384,7 +394,7 @@ void Game::Render()
 	{
 		if (keyData & PAD_BUTTON_X)
 		{
-			mGridEnabled = !mGridEnabled;
+			mMap->SetGridEnabled(!mMap->GetGridEnabled());// mGridEnabled = !mGridEnabled;
 			mKeyTimer = 10;
 		}
 		if (keyData & PAD_BUTTON_Y)
@@ -551,7 +561,8 @@ void Game::Render()
 	NNS_G3dGeFlushBuffer();
 	G3_PushMtx();
 	{
-		G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+		mMap->Render(xstart, xend, zstart, zend, mPicking, mSelectedMapX, mSelectedMapZ);
+		/*G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 		G3_PushMtx();
 		{
 			int i = 0;
@@ -588,13 +599,14 @@ void Game::Render()
 		G3_PopMtx(1);
 		for (int i = 0; i < 60; i++)
 		{
-			if (sDummyPieces[i]->x >= xstart && sDummyPieces[i]->x < xend &&
-				sDummyPieces[i]->z >= zstart && sDummyPieces[i]->z < zend)
+			if (sDummyPieces[i]->mPosition.x >= xstart && sDummyPieces[i]->mPosition.x < xend &&
+				sDummyPieces[i]->mPosition.z >= zstart && sDummyPieces[i]->mPosition.z < zend)
 			{
 				if (mPicking) G3_MaterialColorSpecEmi(0, 0, FALSE);
 				sDummyPieces[i]->Render(mTerrainManager);
 			}
-		}
+		}*/
+
 		NNS_G3dGePushMtx();
 		{
 			NNS_G3dGeTranslateVec(&mTrain.firstPart->position);

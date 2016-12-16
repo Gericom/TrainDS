@@ -15,5 +15,6 @@ void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result);
 
 void Util_OBJ1DToTex(uint8_t* pOBJData, int objWidth, int objHeight, uint8_t* pTexData, int texWidth, int texHeight);
 void Util_SetupSubOAMForDouble3D();
+void Util_SetupBillboardYMatrix();
 
 #endif

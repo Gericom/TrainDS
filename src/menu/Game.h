@@ -3,6 +3,7 @@
 #include "SimpleMenu.h"
 #include "vehicles/train.h"
 #include "terrain/terrain.h"
+#include "terrain/Map.h"
 
 class TerrainManager;
 class UIManager;
@@ -10,28 +11,19 @@ class TrackBuildUISlice;
 class LookAtCamera;
 class ThirdPersonCamera;
 
-typedef uint16_t picking_result_t;
-
-#define PICKING_TYPE_MAP	0
-#define PICKING_TYPE_TRAIN	1
-
-#define PICKING_COLOR(type,idx) ((picking_result_t)(0x8000 | ((type) & 7) << 12) | ((idx) & 0xFFF))
-#define PICKING_TYPE(result) (((result) >> 12) & 7)
-#define PICKING_IDX(result) ((result) & 0xFFF)
-
 class Game : public SimpleMenu
 {
 	friend class TrackBuildUISlice;
 private:
 	typedef void (Game::*PickingCallbackFunc)(picking_result_t result);
 
-	TerrainManager* mTerrainManager;
-
 	NNSG3dResFileHeader* mLocModel;
 	train_t mTrain;
 	train_part_t mTrainPart;
 
 	/*LookAtCamera*/ThirdPersonCamera* mCamera;
+
+	Map* mMap;
 
 	BOOL mPicking;
 	BOOL mProcessPicking;
@@ -51,7 +43,6 @@ private:
 	int mPenDownPointX;
 	int mPenDownPointY;
 
-	BOOL mGridEnabled;
 	BOOL mAntiAliasEnabled;
 
 	int mKeyTimer;
@@ -73,7 +64,7 @@ private:
 
 	void Pick(int x, int y, PickingCallbackFunc callback);
 public:
-	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mGridEnabled(FALSE), mAntiAliasEnabled(TRUE), mKeyTimer(0) { }
+	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mAntiAliasEnabled(TRUE), mKeyTimer(0) { }
 
 	void Initialize(int arg);
 
