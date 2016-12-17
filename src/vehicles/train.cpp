@@ -45,9 +45,9 @@ void Train_UpdateSound(train_t* train, LookAtCamera* camera)//, VecFx32* CamPos,
 	if(train->isDriving)
 	{
 		VecFx32 traintocam;
-		traintocam.x = (train->firstPart->position.x - 8 * FX32_ONE) - camera->mPosition.x;
+		traintocam.x = (train->firstPart->position.x - 32 * FX32_ONE) - camera->mPosition.x;
 		traintocam.y = train->firstPart->position.y - camera->mPosition.y;
-		traintocam.z = (train->firstPart->position.z - 8 * FX32_ONE) - camera->mPosition.z;
+		traintocam.z = (train->firstPart->position.z - 32 * FX32_ONE) - camera->mPosition.z;
 		fx32 dist = VEC_Mag(&traintocam);
 		//traintocam.y = 0;
 		VEC_Normalize(&traintocam, &traintocam);
