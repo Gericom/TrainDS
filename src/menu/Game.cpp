@@ -105,10 +105,12 @@ void Game::Initialize(int arg)
 
 	//mTerrainManager = new TerrainManager();
 	mMap = new Map();
+	mMap->GenerateLandscape();
+	mMap->GenerateTrees();
 
 	//MI_CpuClearFast(&sDummyMap[0][0], sizeof(sDummyMap));
 
-	for (int y = 0; y < 64; y++)
+	/*for (int y = 0; y < 64; y++)
 	{
 		for (int x = 0; x < 64; x++)
 		{
@@ -142,7 +144,7 @@ void Game::Initialize(int arg)
 	mMap->mTiles[32 - 2][32 - 2].rtCorner = TILE_CORNER_UP;
 	mMap->mTiles[32 - 4][32 - 2].rbCorner = TILE_CORNER_UP;
 	mMap->mTiles[32 - 3][32 - 2].rtCorner = TILE_CORNER_UP;
-	mMap->mTiles[32 - 3][32 - 2].rbCorner = TILE_CORNER_UP;
+	mMap->mTiles[32 - 3][32 - 2].rbCorner = TILE_CORNER_UP;*/
 	/*sDummyPieces[0] = new TrackPieceStraight1x1(32 - 1, 0, 32 - 1, TRACKPIECE_ROT_0);
 	sDummyPieces[1] = new TrackPieceQuarterCircle2x2(32, 0, 32 - 1, TRACKPIECE_ROT_0);
 	sDummyPieces[2] = new TrackPieceStraight1x1(32 + 1, 0, 32 - 3, TRACKPIECE_ROT_90);
@@ -172,7 +174,7 @@ void Game::Initialize(int arg)
 		mMap->AddTrackPiece(sDummyPieces[i]);
 	}
 
-	mMap->AddSceneryObject(new RCT2Tree1(32 - 1, 1, 32 - 3, 0));
+	//mMap->AddSceneryObject(new RCT2Tree1(32 - 1, 1, 32 - 3, 0));
 
 	mTrain.firstPart = &mTrainPart;
 	mTrain.isDriving = FALSE;
@@ -218,39 +220,25 @@ void Game::Initialize(int arg)
 		mShadowTex.nitroHeight = GX_TEXSIZE_T8;
 		mShadowTex.nitroFormat = GX_TEXFMT_A5I3;
 	}*/
+	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
-	/*mFontData = Util_LoadFileToBuffer("/data/fonts/roboto_medium_11pt_4bpp.NFTR", NULL, FALSE);
+	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL, FALSE);
 	MI_CpuClear8(&mFont, sizeof(mFont));
 	NNS_G2dFontInitAuto(&mFont, mFontData);
 
-	mTrackBuildCellData = Util_LoadFileToBuffer("/data/game/game_trackbuild.ncer", NULL, FALSE);
-	NNS_G2dGetUnpackedCellBank(mTrackBuildCellData, &mTrackBuildCellDataBank);
-
-	NNSG2dCharacterData* mCharDataSubUnpacked;
-	void* mCharDataSub = Util_LoadFileToBuffer("/data/game/game_trackbuild.ncgr", NULL, TRUE);
-	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
-	NNS_G2dInitImageProxy(&mImageProxy);
-	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImageProxy);
-	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
-
-	NNSG2dPaletteData* mPalDataSubUnpacked;
-	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/game_trackbuild.nclr", NULL, TRUE);
-	NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
-	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
-	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxy);
-	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
-
-	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, ((uint8_t*)G2_GetOBJCharPtr()) + (1024 * 8), 8, 2, NNS_G2D_CHARA_COLORMODE_16);
+	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, (uint8_t*)G2_GetOBJCharPtr(), 8, 4, NNS_G2D_CHARA_COLORMODE_16);
 	NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
 	NNS_G2dCharCanvasClear(&mCanvas, 0);
 	NNS_G2dTextCanvasDrawTextRect(
-		&mTextCanvas, 0, 0, 64, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Direction");
-
-	mCanvas.charBase = ((uint8_t*)G2_GetOBJCharPtr()) + (1024 * 9);
-	NNS_G2dTextCanvasDrawTextRect(
-		&mTextCanvas, 0, 0, 64, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Slope");*/
+		&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Tri's Test");
 
 	NNS_G2dInitOamManagerModule();
+
+	for(int i = 0; i < 16; i++)
+		((uint16_t*)HW_OBJ_PLTT)[i] = 0x7FFF;
+	((uint16_t*)HW_OBJ_PLTT)[0] = 0;
+
+	G2_SetOBJAttr(&GXOamAttrArray[0], 0, 0, 0, GX_OAM_MODE_NORMAL, FALSE, GX_OAM_EFFECT_NONE, GX_OAM_SHAPE_64x32, GX_OAM_COLORMODE_16, 0, 0, 0);
 
 	mUIManager = new UIManager(this);
 	//mTrackBuildUISlice = new TrackBuildUISlice();
@@ -424,6 +412,8 @@ void Game::Render()
 		mCamera->mRadius -= FX32_ONE >> 5;
 	if (mCamera->mRadius < FX32_ONE + FX32_HALF)
 		mCamera->mRadius = FX32_ONE + FX32_HALF;
+	if (keyData & PAD_BUTTON_START)
+		Game::GotoMenu();
 	G3X_Reset();
 	if (!mPicking)
 	{
@@ -432,7 +422,7 @@ void Game::Render()
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(TRUE);
 		G3X_AntiAlias(mAntiAliasEnabled);
-		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0100, 0x8000 - 0x200);
+		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0200, 0x8000 - 0x200);
 		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
@@ -516,26 +506,14 @@ void Game::Render()
 	calcpos4.z = horizonrnear.z - FX_Mul(f, horizonrfar.z - horizonrnear.z);
 
 	int xstart = ((MATH_MIN(calcpos.x, MATH_MIN(calcpos2.x, MATH_MIN(calcpos3.x, calcpos4.x))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
-	if (xstart < 0)
-		xstart = 0;
-	if (xstart > 64)
-		xstart = 64;
+	xstart = MATH_CLAMP(xstart, 0, 64);
 	int xend = ((MATH_MAX(calcpos.x, MATH_MAX(calcpos2.x, MATH_MAX(calcpos3.x, calcpos4.x))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
-	if (xend < 0)
-		xend = 0;
-	if (xend > 64)
-		xend = 64;
+	xend = MATH_CLAMP(xend, 0, 64);
 
 	int zstart = ((MATH_MIN(calcpos.z, MATH_MIN(calcpos2.z, MATH_MIN(calcpos3.z, calcpos4.z))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
-	if (zstart < 0)
-		zstart = 0;
-	if (zstart > 64)
-		zstart = 64;
+	zstart = MATH_CLAMP(zstart, 0, 64);
 	int zend = ((MATH_MAX(calcpos.z, MATH_MAX(calcpos2.z, MATH_MAX(calcpos3.z, calcpos4.z))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
-	if (zend < 0)
-		zend = 0;
-	if (zend > 64)
-		zend = 64;
+	zend = MATH_CLAMP(zend, 0, 64);
 
 	if (mPicking)
 	{
@@ -562,51 +540,6 @@ void Game::Render()
 	G3_PushMtx();
 	{
 		mMap->Render(xstart, xend, zstart, zend, mPicking, mSelectedMapX, mSelectedMapZ);
-		/*G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
-		G3_PushMtx();
-		{
-			int i = 0;
-			for (int y = zstart; y < zend; y++)
-			{
-				for (int x = xstart; x < xend; x++)
-				{
-					G3_PushMtx();
-					{
-						if (mPicking) G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
-						else if(mSelectedMapX == x && mSelectedMapZ == y)
-						{
-							G3_MaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-							G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
-							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG);
-						}
-						else if(mGridEnabled)
-							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG);
-						G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
-						tile_render(&sDummyMap[y][x], mTerrainManager);
-						if (!mPicking && mSelectedMapX == x && mSelectedMapZ == y)
-						{
-							G3_MaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
-							G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0,0,0), FALSE);
-							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
-						}
-					}
-					G3_PopMtx(1);
-					i++;
-				}
-			}
-			//NOCASH_Printf("Total quads: %d", i);
-		}
-		G3_PopMtx(1);
-		for (int i = 0; i < 60; i++)
-		{
-			if (sDummyPieces[i]->mPosition.x >= xstart && sDummyPieces[i]->mPosition.x < xend &&
-				sDummyPieces[i]->mPosition.z >= zstart && sDummyPieces[i]->mPosition.z < zend)
-			{
-				if (mPicking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-				sDummyPieces[i]->Render(mTerrainManager);
-			}
-		}*/
-
 		NNS_G3dGePushMtx();
 		{
 			NNS_G3dGeTranslateVec(&mTrain.firstPart->position);
@@ -649,6 +582,18 @@ void Game::Render()
 	}
 	G3_PopMtx(1);
 	mUIManager->Render();
+	char result[32];
+	MI_CpuClear8(result, 32);
+	OS_SPrintf(result, "%d", G3X_GetVtxListRamCount());
+	u16 result2[32];
+	MI_CpuClear8(result2, 64);
+	for (int i = 0; i < 32; i++)
+	{
+		result2[i] = result[i];
+	}
+	NNS_G2dCharCanvasClear(&mCanvas, 0);
+	NNS_G2dTextCanvasDrawTextRect(
+		&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)result2);// (NNSG2dChar*)L"Tri's Test");
 	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
 }
 

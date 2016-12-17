@@ -30,6 +30,9 @@ private:
 	NNSFndList mTrackList;
 	NNSFndList mSceneryList;
 	BOOL mGridEnabled;
+
+	void FixSlopes();
+	void PlaceTreesRandomly();
 public:
 	Map();
 	~Map();
@@ -45,6 +48,8 @@ public:
 	}
 
 	void Render(int xstart, int xend, int zstart, int zend, BOOL picking, int selectedMapX, int selectedMapZ);
+	void GenerateLandscape();
+	void GenerateTrees();
 
 	BOOL GetGridEnabled()
 	{

@@ -14,6 +14,7 @@ static fx32 tile_corner_to_y[4] = {0, TILE_HEIGHT, -TILE_HEIGHT, 0};
 #define GX_FX32_FX10_MIN          (fx32)(0xfffff000)
 
 static VecFx16 normalsForCorners[256];
+static VecFx16 normalsForCorners2[256];
 
 void setup_normals()
 {
@@ -23,7 +24,7 @@ void setup_normals()
 		tile.corners = i;
 		if (tile.ltCorner == 3 || tile.rtCorner == 3 || tile.lbCorner == 3 || tile.rbCorner == 3)
 			continue;
-		VecFx32 vtx[4] =
+		const VecFx32 vtx[4] =
 		{
 			{ 0, tile_corner_to_y[tile.ltCorner], 0 },
 			{ 0, tile_corner_to_y[tile.lbCorner],  FX32_ONE },
@@ -46,15 +47,18 @@ void setup_normals()
 			VEC_Subtract(&vtx[1], &vtx[0], &tmpB);
 			VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
 			VEC_Normalize(&tmpC, &normal);
+			normal.x = -normal.x;
+			normal.y = -normal.y;
+			normal.z = -normal.z;
 			if (normal.x > GX_FX32_FX10_MAX) normal.x = GX_FX32_FX10_MAX;
 			else if (normal.x < GX_FX32_FX10_MIN) normal.x = GX_FX32_FX10_MIN;
 			if (normal.y > GX_FX32_FX10_MAX) normal.y = GX_FX32_FX10_MAX;
 			else if (normal.y < GX_FX32_FX10_MIN) normal.y = GX_FX32_FX10_MIN;
 			if (normal.z > GX_FX32_FX10_MAX) normal.z = GX_FX32_FX10_MAX;
 			else if (normal.z < GX_FX32_FX10_MIN) normal.z = GX_FX32_FX10_MIN;
-			normalsForCorners[i].x = -normal.x;
-			normalsForCorners[i].y = -normal.y;
-			normalsForCorners[i].z = -normal.z;
+			normalsForCorners[i].x = normal.x;
+			normalsForCorners[i].y = normal.y;
+			normalsForCorners[i].z = normal.z;
 		}
 		else if ((tile.ltCorner == TILE_CORNER_UP && tile.rtCorner == TILE_CORNER_UP && tile.lbCorner + tile.rbCorner == 0) ||
 			(tile.ltCorner == TILE_CORNER_DOWN && tile.rtCorner == TILE_CORNER_DOWN && tile.lbCorner + tile.rbCorner == 0) ||
@@ -70,15 +74,18 @@ void setup_normals()
 			VEC_Subtract(&vtx[1], &vtx[0], &tmpB);
 			VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
 			VEC_Normalize(&tmpC, &normal);
+			normal.x = -normal.x;
+			normal.y = -normal.y;
+			normal.z = -normal.z;
 			if (normal.x > GX_FX32_FX10_MAX) normal.x = GX_FX32_FX10_MAX;
 			else if (normal.x < GX_FX32_FX10_MIN) normal.x = GX_FX32_FX10_MIN;
 			if (normal.y > GX_FX32_FX10_MAX) normal.y = GX_FX32_FX10_MAX;
 			else if (normal.y < GX_FX32_FX10_MIN) normal.y = GX_FX32_FX10_MIN;
 			if (normal.z > GX_FX32_FX10_MAX) normal.z = GX_FX32_FX10_MAX;
 			else if (normal.z < GX_FX32_FX10_MIN) normal.z = GX_FX32_FX10_MIN;
-			normalsForCorners[i].x = -normal.x;
-			normalsForCorners[i].y = -normal.y;
-			normalsForCorners[i].z = -normal.z;
+			normalsForCorners[i].x = normal.x;
+			normalsForCorners[i].y = normal.y;
+			normalsForCorners[i].z = normal.z;
 		}
 		else
 		{
@@ -87,13 +94,14 @@ void setup_normals()
 			else if (vtx[0].y == 0 && vtx[1].y == 0 && vtx[2].y != 0 && vtx[3].y == 0) idx = 3;
 			else if (vtx[0].y == 0 && vtx[1].y != 0 && vtx[2].y == 0 && vtx[3].y == 0) idx = 2;
 			else if (vtx[0].y != 0 && vtx[1].y == 0 && vtx[2].y == 0 && vtx[3].y == 0) idx = 1;
-			//First triangle
-			idx = (idx + 1) & 3;
-			idx = (idx + 1) & 3;
-			//Second triangle
 			VecFx32 tmpA, tmpB, tmpC, normal;
-			VEC_Subtract(&vtx[idx], &vtx[(idx + 1) & 3], &tmpA);
-			VEC_Subtract(&vtx[(idx + 2) & 3], &vtx[(idx + 1) & 3], &tmpB);
+			//First triangle
+			//VEC_Subtract(&vtx[idx], &vtx[(idx + 1) & 3], &tmpA);
+			//VEC_Subtract(&vtx[(idx + 2) & 3], &vtx[(idx + 1) & 3], &tmpB);
+			//VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
+			//VEC_Normalize(&tmpC, &normal);
+			VEC_Subtract(&vtx[(idx + 1) & 3], &vtx[idx], &tmpA);
+			VEC_Subtract(&vtx[(idx + 2) & 3], &vtx[idx], &tmpB);
 			VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
 			VEC_Normalize(&tmpC, &normal);
 			if (normal.x > GX_FX32_FX10_MAX) normal.x = GX_FX32_FX10_MAX;
@@ -102,9 +110,32 @@ void setup_normals()
 			else if (normal.y < GX_FX32_FX10_MIN) normal.y = GX_FX32_FX10_MIN;
 			if (normal.z > GX_FX32_FX10_MAX) normal.z = GX_FX32_FX10_MAX;
 			else if (normal.z < GX_FX32_FX10_MIN) normal.z = GX_FX32_FX10_MIN;
-			normalsForCorners[i].x = -normal.x;
-			normalsForCorners[i].y = -normal.y;
-			normalsForCorners[i].z = -normal.z;
+			normalsForCorners[i].x = normal.x;
+			normalsForCorners[i].y = normal.y;
+			normalsForCorners[i].z = normal.z;
+			idx = (idx + 1) & 3;
+			idx = (idx + 1) & 3;
+			//Second triangle
+			/*VEC_Subtract(&vtx[idx], &vtx[(idx + 1) & 3], &tmpA);
+			VEC_Subtract(&vtx[(idx + 2) & 3], &vtx[(idx + 1) & 3], &tmpB);
+			VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
+			VEC_Normalize(&tmpC, &normal);
+			normal.x = -normal.x;
+			normal.y = -normal.y;
+			normal.z = -normal.z;*/
+			VEC_Subtract(&vtx[(idx + 1) & 3], &vtx[idx], &tmpA);
+			VEC_Subtract(&vtx[(idx + 2) & 3], &vtx[idx], &tmpB);
+			VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
+			VEC_Normalize(&tmpC, &normal);
+			if (normal.x > GX_FX32_FX10_MAX) normal.x = GX_FX32_FX10_MAX;
+			else if (normal.x < GX_FX32_FX10_MIN) normal.x = GX_FX32_FX10_MIN;
+			if (normal.y > GX_FX32_FX10_MAX) normal.y = GX_FX32_FX10_MAX;
+			else if (normal.y < GX_FX32_FX10_MIN) normal.y = GX_FX32_FX10_MIN;
+			if (normal.z > GX_FX32_FX10_MAX) normal.z = GX_FX32_FX10_MAX;
+			else if (normal.z < GX_FX32_FX10_MIN) normal.z = GX_FX32_FX10_MIN;
+			normalsForCorners2[i].x = normal.x;
+			normalsForCorners2[i].y = normal.y;
+			normalsForCorners2[i].z = normal.z;
 		}
 	}
 }
@@ -212,7 +243,7 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 			G3_Begin(GX_BEGIN_TRIANGLES);
 			{
 				//First triangle
-				G3_Normal(0, GX_FX16_FX10_MAX, 0);
+				G3_Normal(normalsForCorners[tile->corners].x, normalsForCorners[tile->corners].y, normalsForCorners[tile->corners].z);
 				G3_TexCoord(0, 0);
 				G3_Vtx(vtx[idx].x, vtx[idx].y, vtx[idx].z);
 				idx = (idx + 1) & 3;
@@ -222,7 +253,8 @@ void tile_render(tile_t* tile, TerrainManager* terrainManager)
 				G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
 				G3_Vtx(vtx[idx].x, vtx[idx].y, vtx[idx].z);
 				//Second triangle
-				G3_Normal(normalsForCorners[tile->corners].x, normalsForCorners[tile->corners].y, normalsForCorners[tile->corners].z);
+				G3_Normal(normalsForCorners2[tile->corners].x, normalsForCorners2[tile->corners].y, normalsForCorners2[tile->corners].z);
+				//G3_Normal(normalsForCorners[tile->corners].x, normalsForCorners[tile->corners].y, normalsForCorners[tile->corners].z);
 				G3_TexCoord(0, 0);
 				G3_Vtx(vtx[idx].x, vtx[idx].y, vtx[idx].z);
 				idx = (idx + 1) & 3;

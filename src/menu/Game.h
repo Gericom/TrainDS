@@ -25,8 +25,8 @@ private:
 
 	Map* mMap;
 
-	BOOL mPicking;
-	BOOL mProcessPicking;
+	bool mPicking;
+	bool mProcessPicking;
 	int mPickingPointX;
 	int mPickingPointY;
 	int mPickingXStart;
@@ -35,7 +35,7 @@ private:
 	int mSelectedTrain;
 	int mSelectedMapX;
 	int mSelectedMapZ;
-	BOOL mPickingOK;
+	bool mPickingOK;
 	OSTick mPenDownTime;
 	OSTick mPenUpTime;
 	PickingCallbackFunc mPickingCallback;
@@ -43,7 +43,7 @@ private:
 	int mPenDownPointX;
 	int mPenDownPointY;
 
-	BOOL mAntiAliasEnabled;
+	bool mAntiAliasEnabled;
 
 	int mKeyTimer;
 

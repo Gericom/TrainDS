@@ -73,6 +73,7 @@
     <ClCompile Include="src\terrain\scenery\RCT2Tree1.cpp" />
     <ClCompile Include="src\terrain\terrain.cpp" />
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
+    <ClCompile Include="src\terrain\tgp.cpp" />
     <ClCompile Include="src\terrain\track\TrackPieceQuarterCircle2x2.cpp" />
     <ClCompile Include="src\terrain\track\TrackPieceStraight1x1.cpp" />
     <ClCompile Include="src\ui\UIManager.cpp" />
@@ -98,6 +99,7 @@
     <ClInclude Include="src\terrain\scenery\SceneryObject.h" />
     <ClInclude Include="src\terrain\terrain.h" />
     <ClInclude Include="src\terrain\TerrainManager.h" />
+    <ClInclude Include="src\terrain\tgp.h" />
     <ClInclude Include="src\terrain\track\TrackPiece.h" />
     <ClInclude Include="src\terrain\track\TrackPieceQuarterCircle2x2.h" />
     <ClInclude Include="src\terrain\track\TrackPieceStraight1x1.h" />
