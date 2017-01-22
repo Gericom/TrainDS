@@ -59,24 +59,27 @@ void Map::Render(int xstart, int xend, int zstart, int zend, BOOL picking, int s
 		//NOCASH_Printf("Total quads: %d", i);
 	}
 	G3_PopMtx(1);
-	TrackPiece* trackPiece = NULL;
-	while ((trackPiece = (TrackPiece*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
+	if (!picking)
 	{
-		if (trackPiece->mPosition.x >= xstart && trackPiece->mPosition.x < xend &&
-			trackPiece->mPosition.z >= zstart && trackPiece->mPosition.z < zend)
+		TrackPiece* trackPiece = NULL;
+		while ((trackPiece = (TrackPiece*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 		{
-			if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-			trackPiece->Render(mTerrainManager);
+			if (trackPiece->mPosition.x >= xstart && trackPiece->mPosition.x < xend &&
+				trackPiece->mPosition.z >= zstart && trackPiece->mPosition.z < zend)
+			{
+				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
+				trackPiece->Render(mTerrainManager);
+			}
 		}
-	}
-	SceneryObject* sceneryObject = NULL;
-	while ((sceneryObject = (SceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
-	{
-		if (sceneryObject->mPosition.x >= xstart && sceneryObject->mPosition.x < xend &&
-			sceneryObject->mPosition.z >= zstart && sceneryObject->mPosition.z < zend)
+		SceneryObject* sceneryObject = NULL;
+		while ((sceneryObject = (SceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
 		{
-			if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-			sceneryObject->Render(mTerrainManager);
+			if (sceneryObject->mPosition.x >= xstart && sceneryObject->mPosition.x < xend &&
+				sceneryObject->mPosition.z >= zstart && sceneryObject->mPosition.z < zend)
+			{
+				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
+				sceneryObject->Render(mTerrainManager);
+			}
 		}
 	}
 }

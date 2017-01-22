@@ -10,6 +10,7 @@
 #include "terrain/track/TrackPiece.h"
 #include "terrain/track/TrackPieceQuarterCircle2x2.h"
 #include "terrain/track/TrackPieceStraight1x1.h"
+#include "terrain/track/FlexTrack.h"
 #include "terrain/scenery/RCT2Tree1.h"
 #include "engine/PathWorker.h"
 #include "vehicles/train.h"
@@ -319,6 +320,11 @@ void Game::OnPenMove(int x, int y)
 
 }
 
+int state = 0;
+int firstX;
+int firstZ;
+FlexTrack* piece;
+
 void Game::OnPenUpPickingCallback(picking_result_t result)
 {
 	if (result == mPenDownResult)
@@ -334,6 +340,24 @@ void Game::OnPenUpPickingCallback(picking_result_t result)
 				mSelectedMapX = mPickingXStart + idx % (mPickingXEnd - mPickingXStart);
 				mSelectedMapZ = mPickingZStart + idx / (mPickingXEnd - mPickingXStart);
 				NOCASH_Printf("Picked (%d,%d)", mSelectedMapX, mSelectedMapZ);
+				if (state == 0)
+				{
+					firstX = mSelectedMapX;
+					firstZ = mSelectedMapZ;
+					state++;
+				}
+				else if (state == 1)
+				{
+					piece = new FlexTrack(firstX, mMap->mTiles[firstZ][firstX].y, firstZ, mSelectedMapX, mMap->mTiles[mSelectedMapZ][mSelectedMapX].y, mSelectedMapZ);
+					mMap->AddTrackPiece(piece);
+					//state++;
+					state = 0;
+				}
+				else
+				{
+					piece->mEndPosition.x = mSelectedMapX;
+					piece->mEndPosition.z = mSelectedMapZ;
+				}
 			}
 			else if (PICKING_TYPE(result) == PICKING_TYPE_TRAIN)
 			{
