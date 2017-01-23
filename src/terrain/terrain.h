@@ -16,7 +16,7 @@ typedef struct
 #define TILE_CORNER_DOWN	2
 
 //#define TILE_HEIGHT			(FX32_HALF >> 1)
-#define TILE_HEIGHT			(FX32_HALF - (FX32_HALF >> 2))
+#define TILE_HEIGHT			(FX32_ONE - (FX32_HALF >> 1)) //(FX32_HALF - (FX32_HALF >> 2))
 
 typedef struct
 {

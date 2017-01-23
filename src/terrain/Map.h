@@ -24,12 +24,13 @@ typedef uint16_t picking_result_t;
 class Map
 {
 public:
+	uint8_t* mVtx;
 	tile_t mTiles[64][64];
 private:
 	TerrainManager* mTerrainManager;
 	NNSFndList mTrackList;
 	NNSFndList mSceneryList;
-	BOOL mGridEnabled;
+	bool mGridEnabled;
 
 	void FixSlopes();
 	void PlaceTreesRandomly();
@@ -47,16 +48,16 @@ public:
 		NNS_FndAppendListObject(&mSceneryList, object);
 	}
 
-	void Render(int xstart, int xend, int zstart, int zend, BOOL picking, int selectedMapX, int selectedMapZ);
+	void Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ);
 	void GenerateLandscape();
 	void GenerateTrees();
 
-	BOOL GetGridEnabled()
+	bool GetGridEnabled()
 	{
 		return mGridEnabled;
 	}
 
-	void SetGridEnabled(BOOL enabled)
+	void SetGridEnabled(bool enabled)
 	{
 		mGridEnabled = enabled;
 	}

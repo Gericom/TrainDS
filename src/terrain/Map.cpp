@@ -1,6 +1,7 @@
 #include <nitro.h>
 #include <nnsys/fnd.h>
 #include "core.h"
+#include "util.h"
 #include "terrain.h"
 #include "TerrainManager.h"
 #include "terrain/track/TrackPiece.h"
@@ -15,6 +16,7 @@ Map::Map()
 	NNS_FND_INIT_LIST(&mTrackList, TrackPiece, mLink);
 	NNS_FND_INIT_LIST(&mSceneryList, SceneryObject, mLink);
 	mTerrainManager = new TerrainManager();
+	mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);
 }
 
 Map::~Map()
@@ -22,9 +24,70 @@ Map::~Map()
 	delete mTerrainManager;
 }
 
-void Map::Render(int xstart, int xend, int zstart, int zend, BOOL picking, int selectedMapX, int selectedMapZ)
+#define Y_OFFSET 100
+
+void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ)
 {
+	texture_t* tex = mTerrainManager->GetTerrainTexture(0);
+	G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
+		GX_TEXGEN_TEXCOORD,    // use texcoord
+		(GXTexSizeS)tex->nitroWidth,        // 16 pixels
+		(GXTexSizeT)tex->nitroHeight,        // 16 pixels
+		GX_TEXREPEAT_NONE,     // no repeat
+		GX_TEXFLIP_NONE,       // no flip
+		GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+		NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+	);
+	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 	G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+	G3_PushMtx();
+	{
+		int i = 0;
+		for (int y = zstart; y < zend && y < 127; y++)
+		{
+			for (int x = xstart; x < xend && x < 127; x++)
+			{
+				G3_PushMtx();
+				{
+					if (picking) G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
+					else if (selectedMapX == x && selectedMapZ == y)
+					{
+						G3_MaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+						G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
+						G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+					}
+					else if (mGridEnabled)
+						G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+					G3_Begin(GX_BEGIN_QUADS);
+					G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
+					G3_Scale(FX32_ONE, 128 * FX32_ONE, FX32_ONE);
+					G3_Color(GX_RGB(mVtx[y * 128 + x] >> 3, mVtx[y * 128 + x] >> 3, mVtx[y * 128 + x] >> 3));
+					G3_TexCoord(0, 0);
+					G3_Vtx(0, (mVtx[y * 128 + x] - Y_OFFSET), 0);
+					G3_Color(GX_RGB(mVtx[(y + 1) * 128 + x] >> 3, mVtx[(y + 1) * 128 + x] >> 3, mVtx[(y + 1) * 128 + x] >> 3));
+					G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(0, (mVtx[(y + 1) * 128 + x] - Y_OFFSET), FX32_ONE);
+					G3_Color(GX_RGB(mVtx[(y + 1) * 128 + (x + 1)] >> 3, mVtx[(y + 1) * 128 + (x + 1)] >> 3, mVtx[(y + 1) * 128 + (x + 1)] >> 3));
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(FX32_ONE, (mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET), FX32_ONE);
+					G3_Color(GX_RGB(mVtx[y * 128 + (x + 1)] >> 3, mVtx[y * 128 + (x + 1)] >> 3, mVtx[y * 128 + (x + 1)] >> 3));
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
+					G3_Vtx(FX32_ONE, (mVtx[y * 128 + (x + 1)] - Y_OFFSET), 0);
+					G3_End();
+					if (!picking && selectedMapX == x && selectedMapZ == y)
+					{
+						G3_MaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
+						G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+						G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
+					}
+				}
+				G3_PopMtx(1);
+				i++;
+			}
+		}
+	}
+	G3_PopMtx(1);
+	/*G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 	G3_PushMtx();
 	{
 		int i = 0;
@@ -81,7 +144,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, BOOL picking, int s
 				sceneryObject->Render(mTerrainManager);
 			}
 		}
-	}
+	}*/
 }
 
 /**

@@ -22,7 +22,7 @@
 
 //static tile_t sDummyMap[64][64];
 //static trackpiece_t sDummyPieces[8];
-static TrackPiece* sDummyPieces[60];//10];
+static TrackPiece* sDummyPieces[120];//10];
 
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
@@ -106,8 +106,8 @@ void Game::Initialize(int arg)
 
 	//mTerrainManager = new TerrainManager();
 	mMap = new Map();
-	mMap->GenerateLandscape();
-	mMap->GenerateTrees();
+	//mMap->GenerateLandscape();
+	//mMap->GenerateTrees();
 
 	//MI_CpuClearFast(&sDummyMap[0][0], sizeof(sDummyMap));
 
@@ -136,8 +136,8 @@ void Game::Initialize(int arg)
 				mMap->mTiles[y][x].rbCorner = TILE_CORNER_UP;
 			}
 		}
-	}
-	mMap->mTiles[32 - 3][32].ltCorner = TILE_CORNER_UP;
+	}*/
+	/*mMap->mTiles[32 - 3][32].ltCorner = TILE_CORNER_UP;
 	mMap->mTiles[32 - 3][32].lbCorner = TILE_CORNER_UP;
 	mMap->mTiles[32 - 3][32].groundType = 0;//1;
 	mMap->mTiles[32 - 4][32].lbCorner = TILE_CORNER_UP;
@@ -157,20 +157,36 @@ void Game::Initialize(int arg)
 	sDummyPieces[8] = new TrackPieceStraight1x1(32 - 3, 0, 32 - 3, TRACKPIECE_ROT_270);
 	sDummyPieces[9] = new TrackPieceQuarterCircle2x2(32 - 3, 0, 32 - 2, TRACKPIECE_ROT_270);*/
 
-	for (int i = 0; i < 60; i++)
+
+	/*for (int i = 0; i < 20; i++)
 	{
-		sDummyPieces[i] = new TrackPieceStraight1x1(2 + i, 0, 32, TRACKPIECE_ROT_0);
+		mMap->mTiles[32 - 3][2 + i].ltCorner = TILE_CORNER_UP;
+		mMap->mTiles[32 - 3][2 + i].rtCorner = TILE_CORNER_UP;
+		mMap->mTiles[32 - 4][2 + i].y = 1;
+		mMap->mTiles[32 - 4][2 + i].ltCorner = TILE_CORNER_UP;
+		mMap->mTiles[32 - 4][2 + i].rtCorner = TILE_CORNER_UP;
+		mMap->mTiles[32 - 5][2 + i].y = 2;
+		mMap->mTiles[32 - 6][2 + i].y = 2;
+		mMap->mTiles[32 - 7][2 + i].y = 2;
+		mMap->mTiles[32 - 8][2 + i].y = 2;
+		mMap->mTiles[32 - 9][2 + i].y = 2;
+		mMap->mTiles[32 - 10][2 + i].y = 2;
+	}*/
+	for (int i = 0; i < 120; i++)
+	{
+		sDummyPieces[i] = new TrackPieceStraight1x1(32 + 32, 0, 2 + i, TRACKPIECE_ROT_90);
+		mMap->AddTrackPiece(new TrackPieceStraight1x1(31 + 32, 0, 2 + i, TRACKPIECE_ROT_90));
 	}
 
-	for (int i = 0; i < 60; i++)
+	for (int i = 0; i < 120; i++)
 	{
 		sDummyPieces[i]->mPrev[0] = (i == 0) ? NULL : sDummyPieces[i - 1];
 		sDummyPieces[i]->mPrev[1] = sDummyPieces[i]->mPrev[2] = sDummyPieces[i]->mPrev[3] = NULL;
-		sDummyPieces[i]->mNext[0] = (i == 59) ? NULL : sDummyPieces[i + 1];
+		sDummyPieces[i]->mNext[0] = (i == 119) ? NULL : sDummyPieces[i + 1];
 		sDummyPieces[i]->mNext[1] = sDummyPieces[i]->mNext[2] = sDummyPieces[i]->mNext[3] = NULL;
 	}
 
-	for (int i = 0; i < 60; i++)
+	for (int i = 0; i < 120; i++)
 	{
 		mMap->AddTrackPiece(sDummyPieces[i]);
 	}
@@ -530,14 +546,14 @@ void Game::Render()
 	calcpos4.z = horizonrnear.z - FX_Mul(f, horizonrfar.z - horizonrnear.z);
 
 	int xstart = ((MATH_MIN(calcpos.x, MATH_MIN(calcpos2.x, MATH_MIN(calcpos3.x, calcpos4.x))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
-	xstart = MATH_CLAMP(xstart, 0, 64);
+	xstart = MATH_CLAMP(xstart, 0, 128);
 	int xend = ((MATH_MAX(calcpos.x, MATH_MAX(calcpos2.x, MATH_MAX(calcpos3.x, calcpos4.x))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
-	xend = MATH_CLAMP(xend, 0, 64);
+	xend = MATH_CLAMP(xend, 0, 128);
 
 	int zstart = ((MATH_MIN(calcpos.z, MATH_MIN(calcpos2.z, MATH_MIN(calcpos3.z, calcpos4.z))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
-	zstart = MATH_CLAMP(zstart, 0, 64);
+	zstart = MATH_CLAMP(zstart, 0, 128);
 	int zend = ((MATH_MAX(calcpos.z, MATH_MAX(calcpos2.z, MATH_MAX(calcpos3.z, calcpos4.z))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
-	zend = MATH_CLAMP(zend, 0, 64);
+	zend = MATH_CLAMP(zend, 0, 128);
 
 	if (mPicking)
 	{
