@@ -24,7 +24,7 @@ Map::~Map()
 	delete mTerrainManager;
 }
 
-#define Y_OFFSET 100
+#define Y_OFFSET 128 //100
 
 void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ)
 {
@@ -61,16 +61,17 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 					G3_Begin(GX_BEGIN_QUADS);
 					G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
 					G3_Scale(FX32_ONE, 128 * FX32_ONE, FX32_ONE);
-					G3_Color(GX_RGB(mVtx[y * 128 + x] >> 3, mVtx[y * 128 + x] >> 3, mVtx[y * 128 + x] >> 3));
+					G3_Normal(0, GX_FX16_FX10_MAX, 0);
+					//G3_Color(GX_RGB(mVtx[y * 128 + x] >> 3, mVtx[y * 128 + x] >> 3, mVtx[y * 128 + x] >> 3));
 					G3_TexCoord(0, 0);
 					G3_Vtx(0, (mVtx[y * 128 + x] - Y_OFFSET), 0);
-					G3_Color(GX_RGB(mVtx[(y + 1) * 128 + x] >> 3, mVtx[(y + 1) * 128 + x] >> 3, mVtx[(y + 1) * 128 + x] >> 3));
+					//G3_Color(GX_RGB(mVtx[(y + 1) * 128 + x] >> 3, mVtx[(y + 1) * 128 + x] >> 3, mVtx[(y + 1) * 128 + x] >> 3));
 					G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
 					G3_Vtx(0, (mVtx[(y + 1) * 128 + x] - Y_OFFSET), FX32_ONE);
-					G3_Color(GX_RGB(mVtx[(y + 1) * 128 + (x + 1)] >> 3, mVtx[(y + 1) * 128 + (x + 1)] >> 3, mVtx[(y + 1) * 128 + (x + 1)] >> 3));
+					//G3_Color(GX_RGB(mVtx[(y + 1) * 128 + (x + 1)] >> 3, mVtx[(y + 1) * 128 + (x + 1)] >> 3, mVtx[(y + 1) * 128 + (x + 1)] >> 3));
 					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
 					G3_Vtx(FX32_ONE, (mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET), FX32_ONE);
-					G3_Color(GX_RGB(mVtx[y * 128 + (x + 1)] >> 3, mVtx[y * 128 + (x + 1)] >> 3, mVtx[y * 128 + (x + 1)] >> 3));
+					//G3_Color(GX_RGB(mVtx[y * 128 + (x + 1)] >> 3, mVtx[y * 128 + (x + 1)] >> 3, mVtx[y * 128 + (x + 1)] >> 3));
 					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
 					G3_Vtx(FX32_ONE, (mVtx[y * 128 + (x + 1)] - Y_OFFSET), 0);
 					G3_End();

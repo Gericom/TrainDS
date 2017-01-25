@@ -18,6 +18,8 @@
 #include "engine/Camera.h"
 #include "engine/LookAtCamera.h"
 #include "engine/ThirdPersonCamera.h"
+#include "inih/INIReader.h"
+#include "terrain/managers/SfxManager.h"
 #include "Game.h"
 
 //static tile_t sDummyMap[64][64];
@@ -303,6 +305,8 @@ void Game::Initialize(int arg)
 
 	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*/18 * 4096, 40960 * 4);
 	setup_normals();
+
+	mSfxManager = new SfxManager();
 }
 
 void Game::Pick(int x, int y, PickingCallbackFunc callback)
@@ -635,6 +639,7 @@ void Game::Render()
 	NNS_G2dTextCanvasDrawTextRect(
 		&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)result2);// (NNSG2dChar*)L"Tri's Test");
 	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
+	mSfxManager->Update();
 }
 
 void Game::VBlank()

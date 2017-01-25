@@ -4,6 +4,7 @@
 #include "vehicles/train.h"
 #include "terrain/terrain.h"
 #include "terrain/Map.h"
+#include "terrain/managers/SfxManager.h"
 
 class TerrainManager;
 class UIManager;
@@ -24,6 +25,7 @@ private:
 	/*LookAtCamera*/ThirdPersonCamera* mCamera;
 
 	Map* mMap;
+	SfxManager* mSfxManager;
 
 	bool mPicking;
 	bool mProcessPicking;
