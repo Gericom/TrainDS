@@ -199,9 +199,9 @@ void Game::Initialize(int arg)
 	mTrain.firstPart->pathWorker2 = new PathWorker(sDummyPieces[0], FX32_ONE);
 	mTrain.firstPart->next = NULL;
 
-	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL, FALSE);
+	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/a3.nsbmd", NULL, FALSE);
 	NNS_G3dResDefaultSetup(mLocModel);
-	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL, TRUE);
+	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/a3.nsbtx", NULL, TRUE);
 	NNS_G3dResDefaultSetup(mLocTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mLocModel), 0);
 	NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);

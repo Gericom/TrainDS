@@ -24,7 +24,7 @@ Map::~Map()
 	delete mTerrainManager;
 }
 
-#define Y_OFFSET 100
+#define Y_OFFSET 0
 
 void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ)
 {
