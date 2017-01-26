@@ -5,12 +5,13 @@ class TerrainManager;
 class TrackPiece;
 class SceneryObject;
 
-typedef struct
+/*typedef struct
 {
 	uint32_t x : 12;
 	uint32_t y : 8;
 	uint32_t z : 12;
-} mapcoord_t;
+} mapcoord_t;*/
+typedef VecFx32 mapcoord_t;
 
 typedef uint16_t picking_result_t;
 
@@ -25,12 +26,15 @@ class Map
 {
 public:
 	uint8_t* mVtx;
+	VecFx10* mNormals;
 	tile_t mTiles[64][64];
 private:
 	TerrainManager* mTerrainManager;
 	NNSFndList mTrackList;
 	NNSFndList mSceneryList;
 	bool mGridEnabled;
+
+	void RecalculateNormals(int xstart, int xend, int zstart, int zend);
 
 	void FixSlopes();
 	void PlaceTreesRandomly();
@@ -48,7 +52,7 @@ public:
 		NNS_FndAppendListObject(&mSceneryList, object);
 	}
 
-	void Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ);
+	void Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos);
 	void GenerateLandscape();
 	void GenerateTrees();
 

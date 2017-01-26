@@ -8,7 +8,7 @@ class TerrainManager;
 class TrackPieceQuarterCircle2x2 : public TrackPiece
 {
 public:
-	TrackPieceQuarterCircle2x2(uint16_t x, uint8_t y, uint16_t z, int rot)
+	TrackPieceQuarterCircle2x2(fx32 x, fx32 y, fx32 z, int rot)
 		: TrackPiece(x, y, z, rot)
 	{ }
 

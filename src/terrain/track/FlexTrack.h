@@ -8,7 +8,7 @@ class FlexTrack : public TrackPiece
 public:
 	mapcoord_t mEndPosition;
 public:
-	FlexTrack(uint16_t x1, uint8_t y1, uint16_t z1, uint16_t x2, uint8_t y2, uint16_t z2)
+	FlexTrack(fx32 x1, fx32 y1, fx32 z1, fx32 x2, fx32 y2, fx32 z2)
 		: TrackPiece(x1, y1, z1, 0)
 	{ 
 		mEndPosition.x = x2;
