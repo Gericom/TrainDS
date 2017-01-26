@@ -11,9 +11,6 @@ public:
 	ThirdPersonCamera()
 		: mRadius(2.5 * FX32_ONE), mTheta(0), mPhi(0), mTrain(NULL)
 	{
-		mUp.x = 0;
-		mUp.y = FX32_ONE;
-		mUp.z = 0;
 		//mRotation = Quaternion();
 		//mRotation.Identity();
 		//mDirection.x = 0;//FX32_ONE;

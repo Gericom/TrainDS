@@ -17,6 +17,10 @@ Map::Map()
 	NNS_FND_INIT_LIST(&mSceneryList, SceneryObject, mLink);
 	mTerrainManager = new TerrainManager();
 	mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);
+	mNormals = new VecFx10[128 * 128];
+	RecalculateNormals(0, 127, 0, 127);
+	//mVtx = new uint8_t[128 * 128];
+	//MI_CpuFillFast(mVtx, 0x80808080, 128 * 128);
 }
 
 Map::~Map()
@@ -26,7 +30,138 @@ Map::~Map()
 
 #define Y_OFFSET 128 //100
 
-void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ)
+#include <nitro/itcm_begin.h>
+
+void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
+{
+	for (int y = zstart; y < zend && y < 127; y+=2)
+	{
+		//VecFx32 faceNorms[2][3][2];
+		for (int x = xstart; x < xend && x < 127; x++)
+		{
+			//shift normals
+			/*faceNorms[0][0][0] = faceNorms[0][1][0];
+			faceNorms[0][0][1] = faceNorms[0][1][1];
+			faceNorms[0][1][0] = faceNorms[0][2][0];
+			faceNorms[0][1][1] = faceNorms[0][2][1];
+			faceNorms[1][0][0] = faceNorms[1][1][0];
+			faceNorms[1][0][1] = faceNorms[1][1][1];
+			faceNorms[1][1][0] = faceNorms[1][2][0];
+			faceNorms[1][1][1] = faceNorms[1][2][1];
+
+			//calculate 16 face normals
+			for (int fy = -1; fy <= 0; fy++)
+			{
+				//for (int fx = -1; fx <= 1; fx++)
+				//{
+				int fx = 1;
+				const VecFx32 vtxFace[4] =
+				{
+					{ 0, (mVtx[(y + fy) * 128 + x + fx] - Y_OFFSET) * 128 * FX32_ONE, 0 },
+					{ 0, (mVtx[(y + fy + 1) * 128 + x + fx] - Y_OFFSET) * 128 * FX32_ONE,  FX32_ONE },
+					{ FX32_ONE, (mVtx[(y + fy) * 128 + (x + fx + 1)] - Y_OFFSET) * 128 * FX32_ONE,  0 },
+					{ FX32_ONE, (mVtx[(y + fy + 1) * 128 + (x + fx + 1)] - Y_OFFSET) * 128 * FX32_ONE, FX32_ONE }
+				};
+				VecFx32 tmpA, tmpB, tmpC, normalA, normalB;
+				VEC_Subtract(&vtxFace[1], &vtxFace[0], &tmpA);
+				VEC_Subtract(&vtxFace[2], &vtxFace[0], &tmpB);
+				VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
+				VEC_Normalize(&tmpC, &faceNorms[fy + 1][fx + 1][0]);
+
+				VEC_Subtract(&vtxFace[3], &vtxFace[1], &tmpA);
+				VEC_Subtract(&vtxFace[2], &vtxFace[1], &tmpB);
+				VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
+				VEC_Normalize(&tmpC, &faceNorms[fy + 1][fx + 1][1]);
+				//}
+			}*/
+
+			VecFx32 thisvtx = { x * FX32_ONE, (mVtx[y * 128 + x] - Y_OFFSET) * 128 * FX32_ONE, y * FX32_ONE };
+
+			VecFx32 norms[4];
+
+			{
+				const VecFx32 vtxFace[4] =
+				{
+					{ x * FX32_ONE, (mVtx[(y - 1) * 128 + x] - Y_OFFSET) * 128 * FX32_ONE, (y - 1) * FX32_ONE },
+					{ (x - 1) * FX32_ONE, (mVtx[y * 128 + x - 1] - Y_OFFSET) * 128 * FX32_ONE, y * FX32_ONE },
+					thisvtx
+				};
+
+				VecFx32 tmpA, tmpB, tmpC;
+				VEC_Subtract(&vtxFace[1], &vtxFace[0], &tmpA);
+				VEC_Subtract(&vtxFace[2], &vtxFace[0], &tmpB);
+				VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
+				VEC_Normalize(&tmpC, &norms[0]);
+			}
+
+			{
+				const VecFx32 vtxFace[4] =
+				{
+					{ x * FX32_ONE, (mVtx[(y - 1) * 128 + x] - Y_OFFSET) * 128 * FX32_ONE, (y - 1) * FX32_ONE },
+					thisvtx,
+					{ (x - 1) * FX32_ONE, (mVtx[(y - 1) * 128 + x + 1] - Y_OFFSET) * 128 * FX32_ONE, (y - 1) * FX32_ONE }
+				};
+
+				VecFx32 tmpA, tmpB, tmpC;
+				VEC_Subtract(&vtxFace[1], &vtxFace[0], &tmpA);
+				VEC_Subtract(&vtxFace[2], &vtxFace[0], &tmpB);
+				VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
+				VEC_Normalize(&tmpC, &norms[1]);
+			}
+
+			{
+				const VecFx32 vtxFace[4] =
+				{
+					{ (x - 1) * FX32_ONE, (mVtx[y * 128 + x - 1] - Y_OFFSET) * 128 * FX32_ONE, y * FX32_ONE },
+					{ x * FX32_ONE, (mVtx[(y + 1) * 128 + x] - Y_OFFSET) * 128 * FX32_ONE, (y + 1) * FX32_ONE },
+					thisvtx
+				};
+
+				VecFx32 tmpA, tmpB, tmpC;
+				VEC_Subtract(&vtxFace[1], &vtxFace[0], &tmpA);
+				VEC_Subtract(&vtxFace[2], &vtxFace[0], &tmpB);
+				VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
+				VEC_Normalize(&tmpC, &norms[2]);
+			}
+
+			{
+				const VecFx32 vtxFace[4] =
+				{
+					thisvtx,
+					{ x * FX32_ONE, (mVtx[(y + 1) * 128 + x] - Y_OFFSET) * 128 * FX32_ONE, (y + 1) * FX32_ONE },
+					{ (x + 1) * FX32_ONE, (mVtx[y * 128 + x + 1] - Y_OFFSET) * 128 * FX32_ONE, y * FX32_ONE }
+				};
+
+				VecFx32 tmpA, tmpB, tmpC;
+				VEC_Subtract(&vtxFace[1], &vtxFace[0], &tmpA);
+				VEC_Subtract(&vtxFace[2], &vtxFace[0], &tmpB);
+				VEC_CrossProduct(&tmpA, &tmpB, &tmpC);
+				VEC_Normalize(&tmpC, &norms[3]);
+			}
+
+
+			VecFx32 norm;
+			norm.x = norms[0].x + norms[1].x + norms[2].x + norms[3].x;
+
+			norm.y = norms[0].y + norms[1].y + norms[2].y + norms[3].y;
+
+			norm.z = norms[0].z + norms[1].z + norms[2].z + norms[3].z;
+
+			VEC_Normalize(&norm, &norm);
+
+			if (norm.x > GX_FX32_FX10_MAX) norm.x = GX_FX32_FX10_MAX;
+			else if (norm.x < GX_FX32_FX10_MIN) norm.x = GX_FX32_FX10_MIN;
+			if (norm.y > GX_FX32_FX10_MAX) norm.y = GX_FX32_FX10_MAX;
+			else if (norm.y < GX_FX32_FX10_MIN) norm.y = GX_FX32_FX10_MIN;
+			if (norm.z > GX_FX32_FX10_MAX) norm.z = GX_FX32_FX10_MAX;
+			else if (norm.z < GX_FX32_FX10_MIN) norm.z = GX_FX32_FX10_MIN;
+
+			mNormals[y * 128 + x] = GX_VECFX10(norm.x, norm.y, norm.z);
+		}
+	}
+}
+
+void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos)
 {
 	texture_t* tex = mTerrainManager->GetTerrainTexture(0);
 	G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
@@ -45,45 +180,144 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 		int i = 0;
 		for (int y = zstart; y < zend && y < 127; y++)
 		{
+			//VecFx32 faceNorms[3][3][2];
+			//VecFx32 norms[4];
 			for (int x = xstart; x < xend && x < 127; x++)
 			{
-				G3_PushMtx();
+				VecFx32 diff = 
 				{
-					if (picking) G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
-					else if (selectedMapX == x && selectedMapZ == y)
+					x * FX32_ONE - camPos->x - 32 * FX32_ONE,
+					0,
+					y * FX32_ONE - camPos->z - 32 * FX32_ONE
+				};
+				fx32 dist = VEC_Mag(&diff);
+				if (dist <= (14 * FX32_ONE))
+				{
+					G3_PushMtx();
 					{
-						G3_MaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-						G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
-						G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+						if (picking) G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
+						else if (selectedMapX == x && selectedMapZ == y)
+						{
+							G3_MaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+							G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
+							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+						}
+						else if (mGridEnabled)
+							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+
+						const VecFx32 vtx[4] =
+						{
+							{ 0, mVtx[y * 128 + x] - Y_OFFSET, 0 },
+							{ 0, mVtx[(y + 1) * 128 + x] - Y_OFFSET,  FX32_ONE },
+							{ FX32_ONE, mVtx[y * 128 + (x + 1)] - Y_OFFSET,  0 },
+							{ FX32_ONE, mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET, FX32_ONE }
+						};
+
+						G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
+						G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
+						G3_Scale(FX32_ONE, 128 * FX32_ONE, FX32_ONE);
+					
+						G3_TexCoord(0, 0);
+						reg_G3_NORMAL = mNormals[y * 128 + x];
+						G3_Vtx(vtx[0].x, vtx[0].y, vtx[0].z);
+
+						G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
+						reg_G3_NORMAL = mNormals[(y + 1) * 128 + x];
+						G3_VtxYZ(vtx[1].y, vtx[1].z);
+
+						G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
+						reg_G3_NORMAL = mNormals[y * 128 + (x + 1)];
+						G3_Vtx(vtx[2].x, vtx[2].y, vtx[2].z);
+					
+						G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
+						reg_G3_NORMAL = mNormals[(y + 1) * 128 + (x + 1)];
+						G3_VtxYZ(vtx[3].y, vtx[3].z);
+
+						G3_End();
+						if (!picking && selectedMapX == x && selectedMapZ == y)
+						{
+							G3_MaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
+							G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
+						}
 					}
-					else if (mGridEnabled)
-						G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG);
-					G3_Begin(GX_BEGIN_QUADS);
-					G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
-					G3_Scale(FX32_ONE, 128 * FX32_ONE, FX32_ONE);
-					G3_Normal(0, GX_FX16_FX10_MAX, 0);
-					//G3_Color(GX_RGB(mVtx[y * 128 + x] >> 3, mVtx[y * 128 + x] >> 3, mVtx[y * 128 + x] >> 3));
-					G3_TexCoord(0, 0);
-					G3_Vtx(0, (mVtx[y * 128 + x] - Y_OFFSET), 0);
-					//G3_Color(GX_RGB(mVtx[(y + 1) * 128 + x] >> 3, mVtx[(y + 1) * 128 + x] >> 3, mVtx[(y + 1) * 128 + x] >> 3));
-					G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
-					G3_Vtx(0, (mVtx[(y + 1) * 128 + x] - Y_OFFSET), FX32_ONE);
-					//G3_Color(GX_RGB(mVtx[(y + 1) * 128 + (x + 1)] >> 3, mVtx[(y + 1) * 128 + (x + 1)] >> 3, mVtx[(y + 1) * 128 + (x + 1)] >> 3));
-					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
-					G3_Vtx(FX32_ONE, (mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET), FX32_ONE);
-					//G3_Color(GX_RGB(mVtx[y * 128 + (x + 1)] >> 3, mVtx[y * 128 + (x + 1)] >> 3, mVtx[y * 128 + (x + 1)] >> 3));
-					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
-					G3_Vtx(FX32_ONE, (mVtx[y * 128 + (x + 1)] - Y_OFFSET), 0);
-					G3_End();
-					if (!picking && selectedMapX == x && selectedMapZ == y)
-					{
-						G3_MaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
-						G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-						G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
-					}
+					G3_PopMtx(1);
 				}
-				G3_PopMtx(1);
 				i++;
+			}
+		}
+		//i = 0;
+		for (int y = zstart & ~1; y < zend && y < 127; y+=2)
+		{
+			for (int x = xstart & ~1; x < xend && x < 127; x+=2)
+			{
+				VecFx32 diff =
+				{
+					x * FX32_ONE - camPos->x - 32 * FX32_ONE,
+					0,
+					y * FX32_ONE - camPos->z - 32 * FX32_ONE
+				};
+				fx32 dist = VEC_Mag(&diff);
+				if (dist > 13 * FX32_ONE)
+				{
+					G3_PushMtx();
+					{
+						//if (picking) G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
+						//else if (selectedMapX == x && selectedMapZ == y)
+						//{
+						//	G3_MaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+						//	G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
+						//	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+						//}
+						//else if (mGridEnabled)
+						//	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+						/*G3_Begin(GX_BEGIN_QUADS);
+						G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
+						G3_Scale(FX32_ONE, 128 * FX32_ONE, FX32_ONE);
+						G3_Normal(0, GX_FX16_FX10_MAX, 0);
+						G3_TexCoord(0, 0);
+						G3_Vtx(0, (mVtx[y * 128 + x] - Y_OFFSET), 0);
+
+						G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
+						G3_VtxYZ((mVtx[(y + 2) * 128 + x] - Y_OFFSET), 2 * FX32_ONE);
+
+						G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
+						G3_VtxXY(2 * FX32_ONE, (mVtx[(y + 2) * 128 + (x + 2)] - Y_OFFSET));
+
+						G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
+						G3_VtxYZ((mVtx[y * 128 + (x + 2)] - Y_OFFSET), 0);
+						G3_End();*/
+						G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
+						G3_Translate(x * FX32_ONE, 0, y * FX32_ONE);
+						G3_Scale(FX32_ONE, 128 * FX32_ONE, FX32_ONE);
+						
+						G3_TexCoord(0, 0);
+						reg_G3_NORMAL = mNormals[y * 128 + x];
+						G3_Vtx(0, (mVtx[y * 128 + x] - Y_OFFSET), 0);
+
+						G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
+						reg_G3_NORMAL = mNormals[(y + 2) * 128 + x];
+						G3_VtxYZ((mVtx[(y + 2) * 128 + x] - Y_OFFSET), 2 * FX32_ONE);
+
+						G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
+						reg_G3_NORMAL = mNormals[y * 128 + (x + 2)];
+						G3_Vtx(2 * FX32_ONE, (mVtx[y * 128 + (x + 2)] - Y_OFFSET), 0);
+
+						G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
+						reg_G3_NORMAL = mNormals[(y + 2) * 128 + (x + 2)];
+						G3_VtxYZ((mVtx[(y + 2) * 128 + (x + 2)] - Y_OFFSET), 2 * FX32_ONE);
+
+						G3_End();
+						//if (!picking && selectedMapX == x && selectedMapZ == y)
+						//{
+						//	G3_MaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
+						//	G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+						//	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
+						//}
+					}
+					G3_PopMtx(1);
+				}
+				//i++;
 			}
 		}
 	}
@@ -122,7 +356,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 		}
 		//NOCASH_Printf("Total quads: %d", i);
 	}
-	G3_PopMtx(1);
+	G3_PopMtx(1);*/
 	if (!picking)
 	{
 		TrackPiece* trackPiece = NULL;
@@ -145,8 +379,10 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 				sceneryObject->Render(mTerrainManager);
 			}
 		}
-	}*/
+	}
 }
+
+#include <nitro/itcm_end.h>
 
 /**
 * This function takes care of the fact that land in OpenTTD can never differ

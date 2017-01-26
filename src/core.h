@@ -6,6 +6,13 @@
 #include "../resources/sound/sdat/sound_data.sadl"
 #include "print.h"
 
+//fix error in include (; removed)
+#undef GX_FX32_FX10_MAX
+#undef GX_FX32_FX10_MIN
+
+#define GX_FX32_FX10_MAX          (fx32)(0x00000fff)
+#define GX_FX32_FX10_MIN          (fx32)(0xfffff000)
+
 typedef u8 uint8_t;
 typedef u16 uint16_t;
 typedef u32 uint32_t;

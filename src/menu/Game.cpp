@@ -18,6 +18,7 @@
 #include "engine/Camera.h"
 #include "engine/LookAtCamera.h"
 #include "engine/ThirdPersonCamera.h"
+#include "engine/FreeRoamCamera.h"
 #include "inih/INIReader.h"
 #include "terrain/managers/SfxManager.h"
 #include "Game.h"
@@ -217,28 +218,6 @@ void Game::Initialize(int arg)
 	NNS_G3dRenderObjInit(&mTrain.firstPart->renderObj, model);
 	NNS_FndFreeToExpHeap(gHeapHandle, mLocTextures);
 
-	/*{
-		uint32_t size;
-		void* buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntft", &size, TRUE);
-		DC_FlushRange(buffer, size);
-
-		NNSGfdTexKey texKey = NNS_GfdAllocTexVram(size, FALSE, 0);
-		Util_LoadTextureWithKey(texKey, buffer);
-		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
-
-		buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntfp", &size, TRUE);
-		DC_FlushRange(buffer, size);
-
-		NNSGfdPlttKey plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
-		Util_LoadPaletteWithKey(plttKey, buffer);
-		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
-
-		mShadowTex.texKey = texKey;
-		mShadowTex.plttKey = plttKey;
-		mShadowTex.nitroWidth = GX_TEXSIZE_S8;
-		mShadowTex.nitroHeight = GX_TEXSIZE_T8;
-		mShadowTex.nitroFormat = GX_TEXFMT_A5I3;
-	}*/
 	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
 	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL, FALSE);
@@ -273,8 +252,15 @@ void Game::Initialize(int arg)
 	mProcessPicking = FALSE;
 	mPickingCallback = NULL;
 
-	mCamera = new ThirdPersonCamera();//LookAtCamera();
-	mCamera->mTrain = &mTrain;
+	//mCamera = new ThirdPersonCamera();//LookAtCamera();
+	//mCamera->mTrain = &mTrain;
+	Train_UpdatePos(&mTrain);
+	mCamera = new FreeRoamCamera();
+	mCamera->mDestination = mTrain.firstPart->position;
+	mCamera->mDestination.x -= 32 * FX32_ONE;
+	mCamera->mDestination.z -= 32 * FX32_ONE;
+	VecFx32 camRot = { 0, 22 * FX32_ONE, 0 };
+	mCamera->SetRotation(&camRot);
 	/*#ifdef FIRST_PERSON
 		mCamera->mUp.x = 0;
 		mCamera->mUp.y = FX32_ONE;
@@ -303,7 +289,7 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*/18 * 4096, 40960 * 4);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*//*18*/24 * 4096, 40960 * 4);
 	setup_normals();
 
 	mSfxManager = new SfxManager();
@@ -411,7 +397,7 @@ void Game::Render()
 	}
 	mUIManager->ProcessInput();
 	u16 keyData = PAD_Read();
-	if (keyData & PAD_BUTTON_A)
+	/*if (keyData & PAD_BUTTON_A)
 	{
 		mTrain.isDriving = TRUE;
 		mTrain.isDrivingBackwards = FALSE;
@@ -421,12 +407,12 @@ void Game::Render()
 		mTrain.isDriving = TRUE;
 		mTrain.isDrivingBackwards = TRUE;
 	}
-	else mTrain.isDriving = FALSE;
+	else */mTrain.isDriving = FALSE;
 	if (!mKeyTimer)
 	{
 		if (keyData & PAD_BUTTON_X)
 		{
-			mMap->SetGridEnabled(!mMap->GetGridEnabled());// mGridEnabled = !mGridEnabled;
+			mMap->SetGridEnabled(!mMap->GetGridEnabled());
 			mKeyTimer = 10;
 		}
 		if (keyData & PAD_BUTTON_Y)
@@ -437,7 +423,7 @@ void Game::Render()
 	}
 	else
 		mKeyTimer--;
-	if (keyData & PAD_KEY_LEFT)
+	/*if (keyData & PAD_KEY_LEFT)
 		mCamera->mTheta -= FX32_ONE;
 	else if (keyData & PAD_KEY_RIGHT)
 		mCamera->mTheta += FX32_ONE;
@@ -455,7 +441,43 @@ void Game::Render()
 	else if (keyData & PAD_BUTTON_R && mCamera->mRadius > FX32_HALF)
 		mCamera->mRadius -= FX32_ONE >> 5;
 	if (mCamera->mRadius < FX32_ONE + FX32_HALF)
-		mCamera->mRadius = FX32_ONE + FX32_HALF;
+		mCamera->mRadius = FX32_ONE + FX32_HALF;*/
+
+	VecFx32 camRot;
+	mCamera->GetRotation(&camRot);
+	if (keyData & PAD_BUTTON_A)
+	{
+		if (keyData & PAD_KEY_LEFT)
+			camRot.x += FX32_ONE >> 1;
+		else if (keyData & PAD_KEY_RIGHT)
+			camRot.x -= FX32_ONE >> 1;
+		if (keyData & PAD_KEY_UP)
+			camRot.y += FX32_ONE >> 2;
+		else if (keyData & PAD_KEY_DOWN)
+			camRot.y -= FX32_ONE >> 2;
+		if (keyData & PAD_BUTTON_L)
+			mCamera->MoveY(FX32_ONE >> 6);
+		else if (keyData & PAD_BUTTON_R)
+			mCamera->MoveY(-FX32_ONE >> 6);
+	}
+	else
+	{
+		if (keyData & PAD_KEY_LEFT)
+			mCamera->MoveX(-FX32_ONE / 24);
+		else if (keyData & PAD_KEY_RIGHT)
+			mCamera->MoveX(FX32_ONE / 24);
+		if (keyData & PAD_KEY_UP)
+			mCamera->MoveZ(FX32_ONE / 24);
+		else if (keyData & PAD_KEY_DOWN)
+			mCamera->MoveZ(-FX32_ONE / 24);
+		if (keyData & PAD_BUTTON_L)
+			camRot.x += FX32_ONE >> 1;
+		else if (keyData & PAD_BUTTON_R)
+			camRot.x -= FX32_ONE >> 1;
+	}
+
+	mCamera->SetRotation(&camRot);
+
 	if (keyData & PAD_BUTTON_START)
 		Game::GotoMenu();
 	G3X_Reset();
@@ -498,8 +520,8 @@ void Game::Render()
 	VEC_Normalize(&camforward, &camforward);
 
 	//far
-	fx32 camfarx = mCamera->mPosition.x + camforward.x * 18;//16;//20;
-	fx32 camfarz = mCamera->mPosition.z + camforward.z * 18;//16;//20;
+	fx32 camfarx = mCamera->mPosition.x + camforward.x * 24;//18;//16;//20;
+	fx32 camfarz = mCamera->mPosition.z + camforward.z * 24;//18;//16;//20;
 
 	int horizonx;
 	int horizony;
@@ -567,7 +589,15 @@ void Game::Render()
 	}
 
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
-	NNS_G3dGlbLightVector(GX_LIGHTID_0, -2048, -2897, -2048);
+	/*VecFx32 vec = { 0, FX32_CONST(0.1), FX32_CONST(0.1) };
+	VEC_Normalize(&vec, &vec);
+	if (vec.x > GX_FX32_FX10_MAX) vec.x = GX_FX32_FX10_MAX;
+	else if (vec.x < GX_FX32_FX10_MIN) vec.x = GX_FX32_FX10_MIN;
+	if (vec.y > GX_FX32_FX10_MAX) vec.y = GX_FX32_FX10_MAX;
+	else if (vec.y < GX_FX32_FX10_MIN) vec.y = GX_FX32_FX10_MIN;
+	if (vec.z > GX_FX32_FX10_MAX) vec.z = GX_FX32_FX10_MAX;
+	else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;*/
+	NNS_G3dGlbLightVector(GX_LIGHTID_0,/* vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
 	NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31, 31, 31));
 	if (mPicking)
 	{
@@ -576,14 +606,14 @@ void Game::Render()
 	}
 	else
 	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(21, 21, 21), FALSE);
 		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
 	}
 	NNS_G3dGlbFlushP();
 	NNS_G3dGeFlushBuffer();
 	G3_PushMtx();
 	{
-		mMap->Render(xstart, xend, zstart, zend, mPicking, mSelectedMapX, mSelectedMapZ);
+		mMap->Render(xstart, xend, zstart, zend, mPicking, mSelectedMapX, mSelectedMapZ, &mCamera->mPosition);
 		NNS_G3dGePushMtx();
 		{
 			NNS_G3dGeTranslateVec(&mTrain.firstPart->position);

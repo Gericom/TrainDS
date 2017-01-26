@@ -30,7 +30,7 @@ public:
 	TrackPiece* mNext[4];
 
 public:
-	TrackPiece(uint16_t x, uint8_t y, uint16_t z, int rot)
+	TrackPiece(fx32 x, fx32 y, fx32 z, int rot)
 		: mRot(rot)
 	{ 
 		mPosition.x = x;

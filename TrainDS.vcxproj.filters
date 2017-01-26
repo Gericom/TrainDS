@@ -91,6 +91,9 @@
     <ClCompile Include="src\terrain\managers\SfxManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\engine\FreeRoamCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\util.h">
@@ -193,6 +196,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\terrain\managers\SeqArcSfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\FreeRoamCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

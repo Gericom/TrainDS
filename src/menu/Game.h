@@ -11,6 +11,7 @@ class UIManager;
 class TrackBuildUISlice;
 class LookAtCamera;
 class ThirdPersonCamera;
+class FreeRoamCamera;
 
 class Game : public SimpleMenu
 {
@@ -22,7 +23,7 @@ private:
 	train_t mTrain;
 	train_part_t mTrainPart;
 
-	/*LookAtCamera*/ThirdPersonCamera* mCamera;
+	FreeRoamCamera*/*ThirdPersonCamera**/ mCamera;
 
 	Map* mMap;
 	SfxManager* mSfxManager;
