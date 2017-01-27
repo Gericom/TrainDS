@@ -75,7 +75,7 @@ void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
 				//}
 			}*/
 
-			VecFx32 thisvtx = { x * FX32_ONE, (mVtx[y * 128 + x] - Y_OFFSET) * 128 * FX32_ONE, y * FX32_ONE };
+			/*VecFx32 thisvtx = { x * FX32_ONE, (mVtx[y * 128 + x] - Y_OFFSET) * 128 * FX32_ONE, y * FX32_ONE };
 
 			VecFx32 norms[4];
 
@@ -145,7 +145,16 @@ void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
 
 			norm.y = norms[0].y + norms[1].y + norms[2].y + norms[3].y;
 
-			norm.z = norms[0].z + norms[1].z + norms[2].z + norms[3].z;
+			norm.z = norms[0].z + norms[1].z + norms[2].z + norms[3].z;*/
+
+			fx32 hl = (mVtx[y * 128 + x - 1] - Y_OFFSET) * 128 * FX32_ONE; //TERRAIN(t, x - 1, z);
+			fx32 hr = (mVtx[y * 128 + x + 1] - Y_OFFSET) * 128 * FX32_ONE; //TERRAIN(t, x + 1, z);
+			fx32 hd = (mVtx[(y + 1) * 128 + x] - Y_OFFSET) * 128 * FX32_ONE; //TERRAIN(t, x, z + 1); /* Terrain expands towards -Z */
+			fx32 hu = (mVtx[(y - 1) * 128 + x] - Y_OFFSET) * 128 * FX32_ONE; //TERRAIN(t, x, z - 1);
+			VecFx32 norm = { hl - hr, 2 * FX32_ONE, hd - hu };
+			norm.x = -norm.x;
+			norm.y = -norm.y;
+			norm.z = -norm.z;
 
 			VEC_Normalize(&norm, &norm);
 
@@ -236,7 +245,8 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 						G3_End();
 						if (!picking && selectedMapX == x && selectedMapZ == y)
 						{
-							G3_MaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
+							//G3_MaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
+							G3_MaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(21, 21, 21), FALSE);
 							G3_MaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
 							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
 						}

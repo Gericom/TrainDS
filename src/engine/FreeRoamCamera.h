@@ -41,15 +41,18 @@ public:
 
 	void MoveY(fx32 amount)
 	{
-		mDestination.x -= FX_Mul(FX_Mul(amount, mRotXCos), mRotYSin);
-		mDestination.y += FX_Mul(amount, mRotYCos);
-		mDestination.z -= FX_Mul(FX_Mul(amount, mRotXSin), mRotYSin);
+		//mDestination.x -= FX_Mul(FX_Mul(amount, mRotXCos), mRotYSin);
+		//mDestination.y += FX_Mul(amount, mRotYCos);
+		//mDestination.z -= FX_Mul(FX_Mul(amount, mRotXSin), mRotYSin);
+		mDestination.y += amount;
 	}
 
 	void MoveZ(fx32 amount)
 	{
-		mDestination.x += FX_Mul(FX_Mul(-amount, mRotXCos), mRotYCos);
-		mDestination.z += FX_Mul(FX_Mul(-amount, mRotXSin), mRotYCos);
+		//mDestination.x += FX_Mul(FX_Mul(-amount, mRotXCos), mRotYCos);
+		//mDestination.z += FX_Mul(FX_Mul(-amount, mRotXSin), mRotYCos);
+		mDestination.x -= FX_Mul(amount, mRotXCos);
+		mDestination.z -= FX_Mul(amount, mRotXSin);
 	}
 
 

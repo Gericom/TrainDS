@@ -484,7 +484,7 @@ void Game::Render()
 	if (!mPicking)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
-		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, FALSE);
+		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, TRUE);
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(TRUE);
 		G3X_AntiAlias(mAntiAliasEnabled);
@@ -589,7 +589,7 @@ void Game::Render()
 	}
 
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
-	/*VecFx32 vec = { 0, FX32_CONST(0.1), FX32_CONST(0.1) };
+	/*VecFx32 vec = { FX32_CONST(100), FX32_CONST(80), FX32_CONST(-100) };
 	VEC_Normalize(&vec, &vec);
 	if (vec.x > GX_FX32_FX10_MAX) vec.x = GX_FX32_FX10_MAX;
 	else if (vec.x < GX_FX32_FX10_MIN) vec.x = GX_FX32_FX10_MIN;
@@ -597,8 +597,8 @@ void Game::Render()
 	else if (vec.y < GX_FX32_FX10_MIN) vec.y = GX_FX32_FX10_MIN;
 	if (vec.z > GX_FX32_FX10_MAX) vec.z = GX_FX32_FX10_MAX;
 	else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;*/
-	NNS_G3dGlbLightVector(GX_LIGHTID_0,/* vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
-	NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31, 31, 31));
+	NNS_G3dGlbLightVector(GX_LIGHTID_0, /*vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
+	NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/GX_RGB(31, 31, 31));
 	if (mPicking)
 	{
 		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
@@ -608,6 +608,10 @@ void Game::Render()
 	{
 		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(21, 21, 21), FALSE);
 		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(20, 12, 3), GX_RGB(5, 5, 5), FALSE);
+		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(31, 26, 22), GX_RGB(0, 0, 0), FALSE);
+		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(31, 31, 31), FALSE);
+		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(5, 5, 5), GX_RGB(0, 0, 0), FALSE);
 	}
 	NNS_G3dGlbFlushP();
 	NNS_G3dGeFlushBuffer();
