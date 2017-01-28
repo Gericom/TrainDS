@@ -206,11 +206,11 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 							{
 								reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
 								reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
-								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 							}
 						}
 						else if (mGridEnabled)
-							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG);
+							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 
 						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_MTX_TRANS, G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL);
 						{
@@ -248,7 +248,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 							{
 								reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(30, 30, 30), GX_RGB(5, 5, 5), FALSE);
 								reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(GX_RGB(3, 3, 3), GX_RGB(0, 0, 0), FALSE);
-								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
+								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 							}
 						}
 					}
@@ -257,14 +257,14 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 				i++;
 			}
 		}
-		for (int y = zstart & ~1; y < zend && y < 127; y+=2)
+		for (int y = zstart & ~1; y < (zend | 1) && y < 127; y += 2)
 		{
-			for (int x = xstart & ~1; x < xend && x < 127; x+=2)
+			for (int x = xstart & ~1; x < (xend | 1) && x < 127; x+=2)
 			{
 				fx32 diff_x = x * FX32_ONE - camPos->x - 32 * FX32_ONE;
 				fx32 diff_z = y * FX32_ONE - camPos->z - 32 * FX32_ONE;
 				fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_z, diff_z);
-				if (dist >= (6 * 6 * FX32_ONE) && dist <= (16 * 16 * FX32_ONE))
+				if (dist >= (6 * 6 * FX32_ONE) && dist <= (14 * 14 * FX32_ONE))
 				{
 					reg_G3X_GXFIFO = GX_PACK_OP(G3OP_MTX_PUSH, G3OP_MTX_TRANS, G3OP_BEGIN, G3OP_TEXCOORD);
 					{
@@ -299,14 +299,14 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 				}
 			}
 		}
-		for (int y = zstart & ~3; y < zend && y < 127; y += 4)
+		for (int y = zstart & ~3; y < (zend | 3) && y < 127; y += 4)
 		{
-			for (int x = xstart & ~3; x < xend && x < 127; x += 4)
+			for (int x = xstart & ~3; x < (xend | 3) && x < 127; x += 4)
 			{
 				fx32 diff_x = x * FX32_ONE - camPos->x - 32 * FX32_ONE;
 				fx32 diff_z = y * FX32_ONE - camPos->z - 32 * FX32_ONE;
 				fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_z, diff_z);
-				if (dist >= (12 * 12 * FX32_ONE))
+				if (dist >= (10 * 10 * FX32_ONE))
 				{
 					reg_G3X_GXFIFO = GX_PACK_OP(G3OP_MTX_PUSH, G3OP_MTX_TRANS, G3OP_BEGIN, G3OP_TEXCOORD);
 					{

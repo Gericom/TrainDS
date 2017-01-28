@@ -289,7 +289,7 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*//*18*//*24*/32 * 4096, 40960 * 4);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*//*18*//*24*/31 * 4096, 40960 * 4);
 	setup_normals();
 
 	mSfxManager = new SfxManager();
@@ -581,8 +581,8 @@ void Game::Render()
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(TRUE);
 		G3X_AntiAlias(mAntiAliasEnabled);
-		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x200);
-		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31);
+		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
+		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
 		{
@@ -606,7 +606,7 @@ void Game::Render()
 
 	Train_UpdateSound(&mTrain, mCamera);
 
-	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
+	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 	VecFx32 vec = { FX32_CONST(0), FX32_CONST(-1), FX32_CONST(-1) };
 	VEC_Normalize(&vec, &vec);
 	if (vec.x > GX_FX32_FX10_MAX) vec.x = GX_FX32_FX10_MAX;
@@ -730,14 +730,14 @@ void Game::Render()
 	VecFx32 bbmin, bbmax;
 	CalculateVisibleGrid(&bbmin, &bbmax);
 
-	int xstart = (bbmin.x - FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
 	xstart = MATH_CLAMP(xstart, 0, 128);
-	int zstart = (bbmin.z - FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
 	zstart = MATH_CLAMP(zstart, 0, 128);
 
-	int xend = (bbmax.x + FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
 	xend = MATH_CLAMP(xend, 0, 128);
-	int zend = (bbmax.z + FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
 	zend = MATH_CLAMP(zend, 0, 128);
 
 	NOCASH_Printf("x: %d; %d", xstart, xend);
