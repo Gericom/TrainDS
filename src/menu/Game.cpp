@@ -289,7 +289,7 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*//*18*/24 * 4096, 40960 * 4);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*//*18*//*24*/32 * 4096, 40960 * 4);
 	setup_normals();
 
 	mSfxManager = new SfxManager();
@@ -346,7 +346,7 @@ void Game::OnPenUpPickingCallback(picking_result_t result)
 				mSelectedMapX = mPickingXStart + idx % (mPickingXEnd - mPickingXStart);
 				mSelectedMapZ = mPickingZStart + idx / (mPickingXEnd - mPickingXStart);
 				NOCASH_Printf("Picked (%d,%d)", mSelectedMapX, mSelectedMapZ);
-				if (state == 0)
+				/*if (state == 0)
 				{
 					firstX = mSelectedMapX;
 					firstZ = mSelectedMapZ;
@@ -363,7 +363,11 @@ void Game::OnPenUpPickingCallback(picking_result_t result)
 				{
 					piece->mEndPosition.x = mSelectedMapX;
 					piece->mEndPosition.z = mSelectedMapZ;
-				}
+				}*/
+				//mMap->mVtx[mSelectedMapZ * 128 + mSelectedMapX]++;
+				//mMap->mVtx[mSelectedMapZ * 128 + mSelectedMapX + 1]++;
+				//mMap->mVtx[(mSelectedMapZ + 1) * 128 + mSelectedMapX]++;
+				//mMap->mVtx[(mSelectedMapZ + 1) * 128 + mSelectedMapX + 1]++;
 			}
 			else if (PICKING_TYPE(result) == PICKING_TYPE_TRAIN)
 			{
@@ -380,6 +384,95 @@ void Game::OnPenUp(int x, int y)
 	{
 		Pick(x, y, &Game::OnPenUpPickingCallback);
 	}
+}
+
+static void G3_Vtx32(VecFx32* vec)
+{
+	G3_PushMtx();
+	G3_Translate(vec->x, vec->y, vec->z);
+	G3_Vtx10(0, 0, 0);
+	G3_PopMtx(1);
+}
+
+static void VEC_MinMax(VecFx32* a, VecFx32* min, VecFx32* max)
+{
+	if (a->x < min->x)
+		min->x = a->x;
+	if (a->y < min->y)
+		min->y = a->y;
+	if (a->z < min->z)
+		min->z = a->z;
+
+	if (a->x > max->x)
+		max->x = a->x;
+	if (a->y > max->y)
+		max->y = a->y;
+	if (a->z > max->z)
+		max->z = a->z;
+}
+
+static void CalculateVisibleGrid(VecFx32* bbmin, VecFx32* bbmax)
+{
+	int y = 0;
+
+	//calculate the corners of the frustum box
+	VecFx32 far_top_left;
+	VecFx32 near_top_left;
+	NNS_G3dScrPosToWorldLine(0, 0, &near_top_left, &far_top_left);
+
+	/*fx32 f = FX_Div(near_top_left.y, far_top_left.y - near_top_left.y);
+	VecFx32 top_left;
+	top_left.x = near_top_left.x - FX_Mul(f, far_top_left.x - near_top_left.x);
+	top_left.y = 0;
+	top_left.z = near_top_left.z - FX_Mul(f, far_top_left.z - near_top_left.z);*/
+
+	VecFx32 far_top_right;
+	VecFx32 near_top_right;
+	NNS_G3dScrPosToWorldLine(255, 0, &near_top_right, &far_top_right);
+
+	/*f = FX_Div(near_top_right.y, far_top_right.y - near_top_right.y);
+	VecFx32 top_right;
+	top_right.x = near_top_right.x - FX_Mul(f, far_top_right.x - near_top_right.x);
+	top_right.y = 0;
+	top_right.z = near_top_right.z - FX_Mul(f, far_top_right.z - near_top_right.z);*/
+
+	VecFx32 far_bottom_left;
+	VecFx32 near_bottom_left;
+	NNS_G3dScrPosToWorldLine(0, 191, &near_bottom_left, &far_bottom_left);
+
+	/*f = FX_Div(near_bottom_left.y, far_bottom_left.y - near_bottom_left.y);
+	VecFx32 bottom_left;
+	bottom_left.x = near_bottom_left.x - FX_Mul(f, far_bottom_left.x - near_bottom_left.x);
+	bottom_left.y = 0;
+	bottom_left.z = near_bottom_left.z - FX_Mul(f, far_bottom_left.z - near_bottom_left.z); */
+
+	VecFx32 far_bottom_right;
+	VecFx32 near_bottom_right;
+	NNS_G3dScrPosToWorldLine(255, 191, &near_bottom_right, &far_bottom_right);
+
+	/*f = FX_Div(near_bottom_right.y, far_bottom_right.y - near_bottom_right.y);
+	VecFx32 bottom_right;
+	bottom_right.x = near_bottom_right.x - FX_Mul(f, far_bottom_right.x - near_bottom_right.x);
+	bottom_right.y = 0;
+	bottom_right.z = near_bottom_right.z - FX_Mul(f, far_bottom_right.z - near_bottom_right.z); */
+
+	VecFx32 min = { FX32_MAX, FX32_MAX, FX32_MAX };
+	VecFx32 max = { FX32_MIN, FX32_MIN, FX32_MIN };
+
+	VEC_MinMax(&far_top_left, &min, &max);
+	VEC_MinMax(&near_top_left, &min, &max);
+	VEC_MinMax(&far_top_right, &min, &max);
+	VEC_MinMax(&near_top_right, &min, &max);
+	VEC_MinMax(&far_bottom_left, &min, &max);
+	VEC_MinMax(&near_bottom_left, &min, &max);
+	VEC_MinMax(&far_bottom_right, &min, &max);
+	VEC_MinMax(&near_bottom_right, &min, &max);
+
+	NOCASH_Printf("min: %d; %d; %d", min.x / 4096, min.y / 4096, min.z / 4096);
+	NOCASH_Printf("max: %d; %d; %d", max.x / 4096, max.y / 4096, max.z / 4096);
+
+	*bbmin = min;
+	*bbmax = max;
 }
 
 void Game::Render()
@@ -488,7 +581,7 @@ void Game::Render()
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(TRUE);
 		G3X_AntiAlias(mAntiAliasEnabled);
-		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0200, 0x8000 - 0x200);
+		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x200);
 		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
@@ -513,8 +606,36 @@ void Game::Render()
 
 	Train_UpdateSound(&mTrain, mCamera);
 
+	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
+	VecFx32 vec = { FX32_CONST(0), FX32_CONST(-1), FX32_CONST(-1) };
+	VEC_Normalize(&vec, &vec);
+	if (vec.x > GX_FX32_FX10_MAX) vec.x = GX_FX32_FX10_MAX;
+	else if (vec.x < GX_FX32_FX10_MIN) vec.x = GX_FX32_FX10_MIN;
+	if (vec.y > GX_FX32_FX10_MAX) vec.y = GX_FX32_FX10_MAX;
+	else if (vec.y < GX_FX32_FX10_MIN) vec.y = GX_FX32_FX10_MIN;
+	if (vec.z > GX_FX32_FX10_MAX) vec.z = GX_FX32_FX10_MAX;
+	else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;
+	NNS_G3dGlbLightVector(GX_LIGHTID_0, /*vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
+	NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/GX_RGB(31, 31, 31));
+	if (mPicking)
+	{
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+	}
+	else
+	{
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(30, 30, 30), GX_RGB(5, 5, 5), FALSE);
+		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(3, 3, 3), GX_RGB(0, 0, 0), FALSE);
+		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(20, 12, 3), GX_RGB(5, 5, 5), FALSE);
+		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(31, 26, 22), GX_RGB(0, 0, 0), FALSE);
+		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(31, 31, 31), FALSE);
+		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(5, 5, 5), GX_RGB(0, 0, 0), FALSE);
+	}
+	NNS_G3dGlbFlushP();
+	NNS_G3dGeFlushBuffer();
+
 	//which part to render
-	VecFx32 camforward;
+	/*VecFx32 camforward;
 	mCamera->GetLookDirection(&camforward);
 	camforward.y = 0;
 	VEC_Normalize(&camforward, &camforward);
@@ -535,41 +656,54 @@ void Game::Render()
 	VecFx32 horizonlfar;
 	NNS_G3dScrPosToWorldLine(0, horizony, &horizonlnear, &horizonlfar);
 
+	NOCASH_Printf("horizonlnear: %d; %d; %d", horizonlnear.x / 4096, horizonlnear.y / 4096, horizonlnear.z / 4096);
+	NOCASH_Printf("horizonlfar: %d; %d; %d", horizonlfar.x / 4096, horizonlfar.y / 4096, horizonlfar.z / 4096);
+
 	VecFx32 horizonrnear;
 	VecFx32 horizonrfar;
 	NNS_G3dScrPosToWorldLine(255, horizony, &horizonrnear, &horizonrfar);
+
+	NOCASH_Printf("horizonrnear: %d; %d; %d", horizonrnear.x / 4096, horizonrnear.y / 4096, horizonrnear.z / 4096);
+	NOCASH_Printf("horizonrfar: %d; %d; %d", horizonrfar.x / 4096, horizonrfar.y / 4096, horizonrfar.z / 4096);
 
 	VecFx32 blnearpos;
 	VecFx32 blfarpos;
 	NNS_G3dScrPosToWorldLine(0, 191, &blnearpos, &blfarpos);
 
+	NOCASH_Printf("blnearpos: %d; %d; %d", blnearpos.x / 4096, blnearpos.y / 4096, blnearpos.z / 4096);
+	NOCASH_Printf("blfarpos: %d; %d; %d", blfarpos.x / 4096, blfarpos.y / 4096, blfarpos.z / 4096);
+
 	VecFx32 brnearpos;
 	VecFx32 brfarpos;
 	NNS_G3dScrPosToWorldLine(255, 191, &brnearpos, &brfarpos);
 
+	NOCASH_Printf("brnearpos: %d; %d; %d", brnearpos.x / 4096, brnearpos.y / 4096, brnearpos.z / 4096);
+	NOCASH_Printf("brfarpos: %d; %d; %d", brfarpos.x / 4096, brfarpos.y / 4096, brfarpos.z / 4096);
+
+
 	VecFx32 calcpos;
 	fx32 f = FX_Div(blnearpos.y, blfarpos.y - blnearpos.y);
-	calcpos.x = blnearpos.x - FX_Mul(f, blfarpos.x - blnearpos.x);
+	calcpos.x = blnearpos.x -FX_Mul(f, blfarpos.x - blnearpos.x);
 	calcpos.y = 0;
-	calcpos.z = blnearpos.z - FX_Mul(f, blfarpos.z - blnearpos.z);
+	calcpos.z = blnearpos.z -FX_Mul(f, blfarpos.z - blnearpos.z);
 
 	VecFx32 calcpos2;
 	f = FX_Div(brnearpos.y, brfarpos.y - brnearpos.y);
-	calcpos2.x = brnearpos.x - FX_Mul(f, brfarpos.x - brnearpos.x);
+	calcpos2.x = brnearpos.x -FX_Mul(f, brfarpos.x - brnearpos.x);
 	calcpos2.y = 0;
-	calcpos2.z = brnearpos.z - FX_Mul(f, brfarpos.z - brnearpos.z);
+	calcpos2.z = brnearpos.z -FX_Mul(f, brfarpos.z - brnearpos.z);
 
 	VecFx32 calcpos3;
 	f = FX_Div(horizonlnear.y, horizonlfar.y - horizonlnear.y);
-	calcpos3.x = horizonlnear.x - FX_Mul(f, horizonlfar.x - horizonlnear.x);
+	calcpos3.x = horizonlnear.x -FX_Mul(f, horizonlfar.x - horizonlnear.x);
 	calcpos3.y = 0;
-	calcpos3.z = horizonlnear.z - FX_Mul(f, horizonlfar.z - horizonlnear.z);
+	calcpos3.z = horizonlnear.z -FX_Mul(f, horizonlfar.z - horizonlnear.z);
 
 	VecFx32 calcpos4;
 	f = FX_Div(horizonrnear.y, horizonrfar.y - horizonrnear.y);
-	calcpos4.x = horizonrnear.x - FX_Mul(f, horizonrfar.x - horizonrnear.x);
+	calcpos4.x = horizonrnear.x -FX_Mul(f, horizonrfar.x - horizonrnear.x);
 	calcpos4.y = 0;
-	calcpos4.z = horizonrnear.z - FX_Mul(f, horizonrfar.z - horizonrnear.z);
+	calcpos4.z = horizonrnear.z -FX_Mul(f, horizonrfar.z - horizonrnear.z);
 
 	int xstart = ((MATH_MIN(calcpos.x, MATH_MIN(calcpos2.x, MATH_MIN(calcpos3.x, calcpos4.x))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
 	xstart = MATH_CLAMP(xstart, 0, 128);
@@ -581,6 +715,34 @@ void Game::Render()
 	int zend = ((MATH_MAX(calcpos.z, MATH_MAX(calcpos2.z, MATH_MAX(calcpos3.z, calcpos4.z))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
 	zend = MATH_CLAMP(zend, 0, 128);
 
+	NOCASH_Printf("x: %d; %d", xstart, xend);
+	NOCASH_Printf("z: %d; %d", zstart, zend);
+
+	/*int zstart2 = MATH_MIN(horizonlfar.z, horizonrfar.z) / FX32_ONE + 32;
+	zstart2 = MATH_CLAMP(zstart2, 0, 128);
+	int zend2 = MATH_MAX(horizonlfar.z, horizonrfar.z) / FX32_ONE + 32;
+	zend2 = MATH_CLAMP(zend2, 0, 128);
+	NOCASH_Printf("z2: %d; %d", zstart2, zend2);*/
+
+	//zstart = zstart2;
+	//zend = zend2;
+
+	VecFx32 bbmin, bbmax;
+	CalculateVisibleGrid(&bbmin, &bbmax);
+
+	int xstart = (bbmin.x - FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	xstart = MATH_CLAMP(xstart, 0, 128);
+	int zstart = (bbmin.z - FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	zstart = MATH_CLAMP(zstart, 0, 128);
+
+	int xend = (bbmax.x + FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	xend = MATH_CLAMP(xend, 0, 128);
+	int zend = (bbmax.z + FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	zend = MATH_CLAMP(zend, 0, 128);
+
+	NOCASH_Printf("x: %d; %d", xstart, xend);
+	NOCASH_Printf("z: %d; %d", zstart, zend);
+
 	if (mPicking)
 	{
 		mPickingXStart = xstart;
@@ -588,33 +750,6 @@ void Game::Render()
 		mPickingZStart = zstart;
 	}
 
-	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
-	/*VecFx32 vec = { FX32_CONST(100), FX32_CONST(80), FX32_CONST(-100) };
-	VEC_Normalize(&vec, &vec);
-	if (vec.x > GX_FX32_FX10_MAX) vec.x = GX_FX32_FX10_MAX;
-	else if (vec.x < GX_FX32_FX10_MIN) vec.x = GX_FX32_FX10_MIN;
-	if (vec.y > GX_FX32_FX10_MAX) vec.y = GX_FX32_FX10_MAX;
-	else if (vec.y < GX_FX32_FX10_MIN) vec.y = GX_FX32_FX10_MIN;
-	if (vec.z > GX_FX32_FX10_MAX) vec.z = GX_FX32_FX10_MAX;
-	else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;*/
-	NNS_G3dGlbLightVector(GX_LIGHTID_0, /*vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
-	NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/GX_RGB(31, 31, 31));
-	if (mPicking)
-	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-	}
-	else
-	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(21, 21, 21), FALSE);
-		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(20, 12, 3), GX_RGB(5, 5, 5), FALSE);
-		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(31, 26, 22), GX_RGB(0, 0, 0), FALSE);
-		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(31, 31, 31), FALSE);
-		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(5, 5, 5), GX_RGB(0, 0, 0), FALSE);
-	}
-	NNS_G3dGlbFlushP();
-	NNS_G3dGeFlushBuffer();
 	G3_PushMtx();
 	{
 		mMap->Render(xstart, xend, zstart, zend, mPicking, mSelectedMapX, mSelectedMapZ, &mCamera->mPosition);
@@ -662,7 +797,7 @@ void Game::Render()
 	mUIManager->Render();
 	char result[32];
 	MI_CpuClear8(result, 32);
-	OS_SPrintf(result, "%d", G3X_GetVtxListRamCount());
+	OS_SPrintf(result, "%d; %d", G3X_GetVtxListRamCount(), G3X_GetPolygonListRamCount());
 	u16 result2[32];
 	MI_CpuClear8(result2, 64);
 	for (int i = 0; i < 32; i++)
