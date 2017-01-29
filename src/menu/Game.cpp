@@ -21,6 +21,8 @@
 #include "engine/FreeRoamCamera.h"
 #include "inih/INIReader.h"
 #include "terrain/managers/SfxManager.h"
+#include "tools/DragTool.h"
+#include "tools/AddTrackTool.h"
 #include "Game.h"
 
 //static tile_t sDummyMap[64][64];
@@ -202,9 +204,9 @@ void Game::Initialize(int arg)
 	mTrain.firstPart->pathWorker2 = new PathWorker(sDummyPieces[0], FX32_ONE);
 	mTrain.firstPart->next = NULL;
 
-	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/a3.nsbmd", NULL, FALSE);
+	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/train.nsbmd", NULL, FALSE);
 	NNS_G3dResDefaultSetup(mLocModel);
-	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/a3.nsbtx", NULL, TRUE);
+	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/train.nsbtx", NULL, TRUE);
 	NNS_G3dResDefaultSetup(mLocTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mLocModel), 0);
 	NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);
@@ -247,9 +249,6 @@ void Game::Initialize(int arg)
 	NNS_SndArcLoadBank(BANK_TRAIN, gSndHeapHandle);
 	NNS_SndArcPlayerStartSeqArc(&mTrain.trackSoundHandle, SEQ_TRAIN, TRAIN_TRACK);
 
-	mPicking = FALSE;
-	mPickingOK = FALSE;
-	mProcessPicking = FALSE;
 	mPickingCallback = NULL;
 
 	//mCamera = new ThirdPersonCamera();//LookAtCamera();
@@ -293,19 +292,44 @@ void Game::Initialize(int arg)
 	setup_normals();
 
 	mSfxManager = new SfxManager();
+	mDragTool = new AddTrackTool(this);
 }
 
-void Game::Pick(int x, int y, PickingCallbackFunc callback)
+void Game::RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg)
 {
-	mPicking = TRUE;
 	mPickingPointX = x;
 	mPickingPointY = y;
 	mPickingCallback = callback;
-	reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT & ~REG_G3X_DISP3DCNT_TME_MASK;
-	G3X_SetClearColor(0, 31, 0x7fff, 0, FALSE);
-	G3X_EdgeMarking(FALSE);
-	G3X_AntiAlias(FALSE);
-	G3X_SetFog(FALSE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0020, 0);
+	mPickingCallbackArg = arg;
+	mPickingRequested = true;
+}
+
+void Game::HandlePickingEarly()
+{
+	if (mPickingState == PICKING_STATE_RENDERING)
+	{
+		mPickingState = PICKING_STATE_CAPTURING;
+	}
+	else if (mPickingState == PICKING_STATE_CAPTURING)
+	{
+		if (mPickingCallback) mPickingCallback(mPickingCallbackArg, ((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256]);
+		mPickingCallback = NULL;
+		mPickingState = PICKING_STATE_READY;
+	}
+}
+
+void Game::HandlePickingLate()
+{
+	if (mPickingState == PICKING_STATE_READY && mPickingRequested)
+	{
+		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT & ~REG_G3X_DISP3DCNT_TME_MASK;
+		G3X_SetClearColor(0, 31, 0x7fff, 0, FALSE);
+		G3X_EdgeMarking(FALSE);
+		G3X_AntiAlias(FALSE);
+		G3X_SetFog(FALSE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0020, 0);
+		mPickingRequested = false;
+		mPickingState = PICKING_STATE_RENDERING;
+	}
 }
 
 void Game::OnPenDownPickingCallback(picking_result_t result)
@@ -315,15 +339,16 @@ void Game::OnPenDownPickingCallback(picking_result_t result)
 
 void Game::OnPenDown(int x, int y)
 {
-	mPenDownTime = OS_GetTick();
+	mDragTool->OnPenDown(x, y);
+	/*mPenDownTime = OS_GetTick();
 	mPenDownPointX = x;
 	mPenDownPointY = y;
-	Pick(x, y, &Game::OnPenDownPickingCallback);
+	RequestPicking(x, y, Game::OnPenDownPickingCallback, this);*/
 }
 
 void Game::OnPenMove(int x, int y)
 {
-
+	mDragTool->OnPenMove(x, y);
 }
 
 int state = 0;
@@ -379,11 +404,12 @@ void Game::OnPenUpPickingCallback(picking_result_t result)
 
 void Game::OnPenUp(int x, int y)
 {
-	mPenUpTime = OS_GetTick();
-	if (abs(mPenDownPointX - x) < 16 && abs(mPenDownPointY - y) < 16)
-	{
-		Pick(x, y, &Game::OnPenUpPickingCallback);
-	}
+	mDragTool->OnPenUp(x, y);
+	//mPenUpTime = OS_GetTick();
+	//if (abs(mPenDownPointX - x) < 16 && abs(mPenDownPointY - y) < 16)
+	//{
+	//	RequestPicking(x, y, Game::OnPenUpPickingCallback, this);
+	//}
 }
 
 static void G3_Vtx32(VecFx32* vec)
@@ -468,8 +494,8 @@ static void CalculateVisibleGrid(VecFx32* bbmin, VecFx32* bbmax)
 	VEC_MinMax(&far_bottom_right, &min, &max);
 	VEC_MinMax(&near_bottom_right, &min, &max);
 
-	NOCASH_Printf("min: %d; %d; %d", min.x / 4096, min.y / 4096, min.z / 4096);
-	NOCASH_Printf("max: %d; %d; %d", max.x / 4096, max.y / 4096, max.z / 4096);
+	//NOCASH_Printf("min: %d; %d; %d", min.x / 4096, min.y / 4096, min.z / 4096);
+	//NOCASH_Printf("max: %d; %d; %d", max.x / 4096, max.y / 4096, max.z / 4096);
 
 	*bbmin = min;
 	*bbmax = max;
@@ -477,19 +503,12 @@ static void CalculateVisibleGrid(VecFx32* bbmin, VecFx32* bbmax)
 
 void Game::Render()
 {
-	if (mPicking)
-	{
-		mProcessPicking = TRUE;
-		mPicking = FALSE;
-	}
-	else if (mProcessPicking)//process picking result
-	{
-		if (mPickingCallback) (this->*mPickingCallback)(((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256]);
-		mPickingCallback = NULL;
-		mProcessPicking = FALSE;
-	}
+	HandlePickingEarly();
+
 	mUIManager->ProcessInput();
 	u16 keyData = PAD_Read();
+
+	HandlePickingLate();
 	/*if (keyData & PAD_BUTTON_A)
 	{
 		mTrain.isDriving = TRUE;
@@ -549,9 +568,9 @@ void Game::Render()
 		else if (keyData & PAD_KEY_DOWN)
 			camRot.y -= FX32_ONE >> 2;
 		if (keyData & PAD_BUTTON_L)
-			mCamera->MoveY(FX32_ONE >> 6);
+			mCamera->MoveY(-FX32_ONE >> 5);
 		else if (keyData & PAD_BUTTON_R)
-			mCamera->MoveY(-FX32_ONE >> 6);
+			mCamera->MoveY(FX32_ONE >> 5);
 	}
 	else
 	{
@@ -564,9 +583,9 @@ void Game::Render()
 		else if (keyData & PAD_KEY_DOWN)
 			mCamera->MoveZ(-FX32_ONE / 24);
 		if (keyData & PAD_BUTTON_L)
-			camRot.x += FX32_ONE >> 1;
-		else if (keyData & PAD_BUTTON_R)
 			camRot.x -= FX32_ONE >> 1;
+		else if (keyData & PAD_BUTTON_R)
+			camRot.x += FX32_ONE >> 1;
 	}
 
 	mCamera->SetRotation(&camRot);
@@ -574,7 +593,7 @@ void Game::Render()
 	if (keyData & PAD_BUTTON_START)
 		Game::GotoMenu();
 	G3X_Reset();
-	if (!mPicking)
+	if (mPickingState != PICKING_STATE_RENDERING)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
 		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, TRUE);
@@ -607,17 +626,17 @@ void Game::Render()
 	Train_UpdateSound(&mTrain, mCamera);
 
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-	VecFx32 vec = { FX32_CONST(0), FX32_CONST(-1), FX32_CONST(-1) };
+	/*VecFx32 vec = { FX32_CONST(0), FX32_CONST(-1), FX32_CONST(-1) };
 	VEC_Normalize(&vec, &vec);
 	if (vec.x > GX_FX32_FX10_MAX) vec.x = GX_FX32_FX10_MAX;
 	else if (vec.x < GX_FX32_FX10_MIN) vec.x = GX_FX32_FX10_MIN;
 	if (vec.y > GX_FX32_FX10_MAX) vec.y = GX_FX32_FX10_MAX;
 	else if (vec.y < GX_FX32_FX10_MIN) vec.y = GX_FX32_FX10_MIN;
 	if (vec.z > GX_FX32_FX10_MAX) vec.z = GX_FX32_FX10_MAX;
-	else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;
+	else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;*/
 	NNS_G3dGlbLightVector(GX_LIGHTID_0, /*vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
 	NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/GX_RGB(31, 31, 31));
-	if (mPicking)
+	if (mPickingState == PICKING_STATE_RENDERING)
 	{
 		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
 		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
@@ -740,10 +759,10 @@ void Game::Render()
 	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
 	zend = MATH_CLAMP(zend, 0, 128);
 
-	NOCASH_Printf("x: %d; %d", xstart, xend);
-	NOCASH_Printf("z: %d; %d", zstart, zend);
+	//NOCASH_Printf("x: %d; %d", xstart, xend);
+	//NOCASH_Printf("z: %d; %d", zstart, zend);
 
-	if (mPicking)
+	if (mPickingState == PICKING_STATE_RENDERING)
 	{
 		mPickingXStart = xstart;
 		mPickingXEnd = xend;
@@ -752,7 +771,7 @@ void Game::Render()
 
 	G3_PushMtx();
 	{
-		mMap->Render(xstart, xend, zstart, zend, mPicking, mSelectedMapX, mSelectedMapZ, &mCamera->mPosition);
+		mMap->Render(xstart, xend, zstart, zend, mPickingState == PICKING_STATE_RENDERING, mSelectedMapX, mSelectedMapZ, &mCamera->mPosition);
 		NNS_G3dGePushMtx();
 		{
 			NNS_G3dGeTranslateVec(&mTrain.firstPart->position);
@@ -770,7 +789,7 @@ void Game::Render()
 			NNS_G3dGeScale(FX32_ONE / 7, FX32_ONE / 7, FX32_ONE / 7);
 			NNS_G3dGeMtxMode(GX_MTXMODE_POSITION_VECTOR);
 
-			if (mPicking)
+			if (mPickingState == PICKING_STATE_RENDERING)
 			{
 				NNS_G3dMdlSetMdlDiffAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0, 0, 0));
 				NNS_G3dMdlSetMdlAmbAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0, 0, 0));
@@ -813,7 +832,7 @@ void Game::Render()
 
 void Game::VBlank()
 {
-	if (mPicking)
+	if (mPickingState == PICKING_STATE_RENDERING)
 	{
 		GX_SetBankForBG(GX_VRAM_BG_128_C);
 		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);

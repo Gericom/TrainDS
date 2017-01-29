@@ -31,6 +31,7 @@ public:
 private:
 	TerrainManager* mTerrainManager;
 	NNSFndList mTrackList;
+	TrackPiece* mGhostPiece;
 	NNSFndList mSceneryList;
 	bool mGridEnabled;
 
@@ -45,6 +46,20 @@ public:
 	void AddTrackPiece(TrackPiece* piece)
 	{
 		NNS_FndAppendListObject(&mTrackList, piece);
+	}
+
+	void BeginAddTrackPiece(TrackPiece* piece)
+	{
+		mGhostPiece = piece;
+	}
+
+	void FinishAddTrackPiece(TrackPiece* piece)
+	{
+		if (mGhostPiece == piece)
+		{
+			AddTrackPiece(mGhostPiece);
+			mGhostPiece = NULL;
+		}
 	}
 
 	void AddSceneryObject(SceneryObject* object)
@@ -65,6 +80,8 @@ public:
 	{
 		mGridEnabled = enabled;
 	}
+
+	bool ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecFx32* result);
 };
 
 #endif

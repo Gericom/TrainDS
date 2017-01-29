@@ -12,24 +12,25 @@ class TrackBuildUISlice;
 class LookAtCamera;
 class ThirdPersonCamera;
 class FreeRoamCamera;
+class DragTool;
 
 class Game : public SimpleMenu
 {
 	friend class TrackBuildUISlice;
 private:
-	typedef void (Game::*PickingCallbackFunc)(picking_result_t result);
+	typedef void (*PickingCallbackFunc)(void* arg, picking_result_t result);
+
+	enum PickingState
+	{
+		PICKING_STATE_READY,
+		PICKING_STATE_RENDERING,
+		PICKING_STATE_CAPTURING
+	};
 
 	NNSG3dResFileHeader* mLocModel;
 	train_t mTrain;
 	train_part_t mTrainPart;
 
-	FreeRoamCamera*/*ThirdPersonCamera**/ mCamera;
-
-	Map* mMap;
-	SfxManager* mSfxManager;
-
-	bool mPicking;
-	bool mProcessPicking;
 	int mPickingPointX;
 	int mPickingPointY;
 	int mPickingXStart;
@@ -38,13 +39,16 @@ private:
 	int mSelectedTrain;
 	int mSelectedMapX;
 	int mSelectedMapZ;
-	bool mPickingOK;
 	OSTick mPenDownTime;
 	OSTick mPenUpTime;
 	PickingCallbackFunc mPickingCallback;
+	void* mPickingCallbackArg;
 	picking_result_t mPenDownResult;
 	int mPenDownPointX;
 	int mPenDownPointY;
+
+	PickingState mPickingState;
+	bool mPickingRequested;
 
 	bool mAntiAliasEnabled;
 
@@ -65,9 +69,26 @@ private:
 
 	texture_t mShadowTex;
 
-	void Pick(int x, int y, PickingCallbackFunc callback);
+	DragTool* mDragTool;
+
+	//void Pick(int x, int y, PickingCallbackFunc callback);
+
+	void OnPenDown(int x, int y);
+	void OnPenMove(int x, int y);
+	void OnPenUp(int x, int y);
+
+	void HandlePickingEarly();
+	void HandlePickingLate();
 public:
-	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mAntiAliasEnabled(TRUE), mKeyTimer(0) { }
+	FreeRoamCamera*/*ThirdPersonCamera**/ mCamera;
+
+	Map* mMap;
+	SfxManager* mSfxManager;
+
+public:
+	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mAntiAliasEnabled(TRUE), mKeyTimer(0), 
+		mPickingState(PICKING_STATE_READY), mPickingRequested(false) 
+	{ }
 
 	void Initialize(int arg);
 
@@ -86,12 +107,21 @@ public:
 		((Game*)context)->OnPenUp(x, y);
 	}
 
+	static void OnPenDownPickingCallback(void* arg, picking_result_t result)
+	{
+		((Game*)arg)->OnPenDownPickingCallback(result);
+	}
+
 	void OnPenDownPickingCallback(picking_result_t result);
+
+	static void OnPenUpPickingCallback(void* arg, picking_result_t result)
+	{
+		((Game*)arg)->OnPenUpPickingCallback(result);
+	}
+
 	void OnPenUpPickingCallback(picking_result_t result);
 
-	void OnPenDown(int x, int y);
-	void OnPenMove(int x, int y);
-	void OnPenUp(int x, int y);
+	void RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg);
 
 	void Render();
 	void VBlank();
@@ -101,6 +131,19 @@ public:
 	{
 		gNextMenuArg = 0;
 		gNextMenuCreateFunc = CreateMenu;
+	}
+
+	void GetMapPosFromPickingResult(picking_result_t result, int &mapX, int &mapY)
+	{
+		if (PICKING_IDX(result) <= 0 || PICKING_TYPE(result) != PICKING_TYPE_MAP)
+		{
+			mapX = -1;
+			mapY = -1;
+			return;
+		}
+		int idx = PICKING_IDX(result) - 1;
+		mapX = mPickingXStart + idx % (mPickingXEnd - mPickingXStart);
+		mapY = mPickingZStart + idx / (mPickingXEnd - mPickingXStart);
 	}
 
 private:
