@@ -180,7 +180,7 @@ void Game::Initialize(int arg)
 	for (int i = 0; i < 120; i++)
 	{
 		sDummyPieces[i] = new TrackPieceStraight1x1(32 + 32, 0, 2 + i, TRACKPIECE_ROT_90);
-		mMap->AddTrackPiece(new TrackPieceStraight1x1(31 + 32, 0, 2 + i, TRACKPIECE_ROT_90));
+		//mMap->AddTrackPiece(new TrackPieceStraight1x1(31 + 32, 0, 2 + i, TRACKPIECE_ROT_90));
 	}
 
 	for (int i = 0; i < 120; i++)
@@ -193,7 +193,7 @@ void Game::Initialize(int arg)
 
 	for (int i = 0; i < 120; i++)
 	{
-		mMap->AddTrackPiece(sDummyPieces[i]);
+		//mMap->AddTrackPiece(sDummyPieces[i]);
 	}
 
 	//mMap->AddSceneryObject(new RCT2Tree1(32 - 1, 1, 32 - 3, 0));
@@ -652,99 +652,6 @@ void Game::Render()
 	}
 	NNS_G3dGlbFlushP();
 	NNS_G3dGeFlushBuffer();
-
-	//which part to render
-	/*VecFx32 camforward;
-	mCamera->GetLookDirection(&camforward);
-	camforward.y = 0;
-	VEC_Normalize(&camforward, &camforward);
-
-	//far
-	fx32 camfarx = mCamera->mPosition.x + camforward.x * 24;//18;//16;//20;
-	fx32 camfarz = mCamera->mPosition.z + camforward.z * 24;//18;//16;//20;
-
-	int horizonx;
-	int horizony;
-	VecFx32 wpos = { camfarx, 0, camfarz };
-	NNS_G3dWorldPosToScrPos(&wpos, &horizonx, &horizony);
-
-	if (horizony < 0) horizony = 0;
-	if (horizony > 191) horizony = 191;
-
-	VecFx32 horizonlnear;
-	VecFx32 horizonlfar;
-	NNS_G3dScrPosToWorldLine(0, horizony, &horizonlnear, &horizonlfar);
-
-	NOCASH_Printf("horizonlnear: %d; %d; %d", horizonlnear.x / 4096, horizonlnear.y / 4096, horizonlnear.z / 4096);
-	NOCASH_Printf("horizonlfar: %d; %d; %d", horizonlfar.x / 4096, horizonlfar.y / 4096, horizonlfar.z / 4096);
-
-	VecFx32 horizonrnear;
-	VecFx32 horizonrfar;
-	NNS_G3dScrPosToWorldLine(255, horizony, &horizonrnear, &horizonrfar);
-
-	NOCASH_Printf("horizonrnear: %d; %d; %d", horizonrnear.x / 4096, horizonrnear.y / 4096, horizonrnear.z / 4096);
-	NOCASH_Printf("horizonrfar: %d; %d; %d", horizonrfar.x / 4096, horizonrfar.y / 4096, horizonrfar.z / 4096);
-
-	VecFx32 blnearpos;
-	VecFx32 blfarpos;
-	NNS_G3dScrPosToWorldLine(0, 191, &blnearpos, &blfarpos);
-
-	NOCASH_Printf("blnearpos: %d; %d; %d", blnearpos.x / 4096, blnearpos.y / 4096, blnearpos.z / 4096);
-	NOCASH_Printf("blfarpos: %d; %d; %d", blfarpos.x / 4096, blfarpos.y / 4096, blfarpos.z / 4096);
-
-	VecFx32 brnearpos;
-	VecFx32 brfarpos;
-	NNS_G3dScrPosToWorldLine(255, 191, &brnearpos, &brfarpos);
-
-	NOCASH_Printf("brnearpos: %d; %d; %d", brnearpos.x / 4096, brnearpos.y / 4096, brnearpos.z / 4096);
-	NOCASH_Printf("brfarpos: %d; %d; %d", brfarpos.x / 4096, brfarpos.y / 4096, brfarpos.z / 4096);
-
-
-	VecFx32 calcpos;
-	fx32 f = FX_Div(blnearpos.y, blfarpos.y - blnearpos.y);
-	calcpos.x = blnearpos.x -FX_Mul(f, blfarpos.x - blnearpos.x);
-	calcpos.y = 0;
-	calcpos.z = blnearpos.z -FX_Mul(f, blfarpos.z - blnearpos.z);
-
-	VecFx32 calcpos2;
-	f = FX_Div(brnearpos.y, brfarpos.y - brnearpos.y);
-	calcpos2.x = brnearpos.x -FX_Mul(f, brfarpos.x - brnearpos.x);
-	calcpos2.y = 0;
-	calcpos2.z = brnearpos.z -FX_Mul(f, brfarpos.z - brnearpos.z);
-
-	VecFx32 calcpos3;
-	f = FX_Div(horizonlnear.y, horizonlfar.y - horizonlnear.y);
-	calcpos3.x = horizonlnear.x -FX_Mul(f, horizonlfar.x - horizonlnear.x);
-	calcpos3.y = 0;
-	calcpos3.z = horizonlnear.z -FX_Mul(f, horizonlfar.z - horizonlnear.z);
-
-	VecFx32 calcpos4;
-	f = FX_Div(horizonrnear.y, horizonrfar.y - horizonrnear.y);
-	calcpos4.x = horizonrnear.x -FX_Mul(f, horizonrfar.x - horizonrnear.x);
-	calcpos4.y = 0;
-	calcpos4.z = horizonrnear.z -FX_Mul(f, horizonrfar.z - horizonrnear.z);
-
-	int xstart = ((MATH_MIN(calcpos.x, MATH_MIN(calcpos2.x, MATH_MIN(calcpos3.x, calcpos4.x))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
-	xstart = MATH_CLAMP(xstart, 0, 128);
-	int xend = ((MATH_MAX(calcpos.x, MATH_MAX(calcpos2.x, MATH_MAX(calcpos3.x, calcpos4.x))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
-	xend = MATH_CLAMP(xend, 0, 128);
-
-	int zstart = ((MATH_MIN(calcpos.z, MATH_MIN(calcpos2.z, MATH_MIN(calcpos3.z, calcpos4.z))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
-	zstart = MATH_CLAMP(zstart, 0, 128);
-	int zend = ((MATH_MAX(calcpos.z, MATH_MAX(calcpos2.z, MATH_MAX(calcpos3.z, calcpos4.z))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
-	zend = MATH_CLAMP(zend, 0, 128);
-
-	NOCASH_Printf("x: %d; %d", xstart, xend);
-	NOCASH_Printf("z: %d; %d", zstart, zend);
-
-	/*int zstart2 = MATH_MIN(horizonlfar.z, horizonrfar.z) / FX32_ONE + 32;
-	zstart2 = MATH_CLAMP(zstart2, 0, 128);
-	int zend2 = MATH_MAX(horizonlfar.z, horizonrfar.z) / FX32_ONE + 32;
-	zend2 = MATH_CLAMP(zend2, 0, 128);
-	NOCASH_Printf("z2: %d; %d", zstart2, zend2);*/
-
-	//zstart = zstart2;
-	//zend = zend2;
 
 	VecFx32 bbmin, bbmax;
 	CalculateVisibleGrid(&bbmin, &bbmax);

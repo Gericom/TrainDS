@@ -3,6 +3,7 @@
 
 class TerrainManager;
 class TrackPiece;
+class FlexTrack;
 class SceneryObject;
 
 /*typedef struct
@@ -27,33 +28,30 @@ class Map
 public:
 	uint8_t* mVtx;
 	VecFx10* mNormals;
-	tile_t mTiles[64][64];
+	//tile_t mTiles[64][64];
 private:
 	TerrainManager* mTerrainManager;
 	NNSFndList mTrackList;
-	TrackPiece* mGhostPiece;
+	FlexTrack* mGhostPiece;
 	NNSFndList mSceneryList;
 	bool mGridEnabled;
 
 	void RecalculateNormals(int xstart, int xend, int zstart, int zend);
-
-	void FixSlopes();
-	void PlaceTreesRandomly();
 public:
 	Map();
 	~Map();
 
-	void AddTrackPiece(TrackPiece* piece)
+	void AddTrackPiece(FlexTrack* piece)
 	{
 		NNS_FndAppendListObject(&mTrackList, piece);
 	}
 
-	void BeginAddTrackPiece(TrackPiece* piece)
+	void BeginAddTrackPiece(FlexTrack* piece)
 	{
 		mGhostPiece = piece;
 	}
 
-	void FinishAddTrackPiece(TrackPiece* piece)
+	void FinishAddTrackPiece(FlexTrack* piece)
 	{
 		if (mGhostPiece == piece)
 		{
@@ -68,8 +66,6 @@ public:
 	}
 
 	void Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos);
-	void GenerateLandscape();
-	void GenerateTrees();
 
 	bool GetGridEnabled()
 	{
@@ -82,6 +78,8 @@ public:
 	}
 
 	bool ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecFx32* result);
+
+	void TrySnapGhostTrack();
 };
 
 #endif
