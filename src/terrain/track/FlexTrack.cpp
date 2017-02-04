@@ -43,12 +43,12 @@ void FlexTrack::Render(TerrainManager* terrainManager)
 
 	VecFx32 posdiff = 
 	{
-		(mEndPosition.x - mPosition.x) * FX32_ONE,
+		(mEndPosition.x - mPosition.x),// * FX32_ONE,
 		0,
-		(mEndPosition.z - mPosition.z) * FX32_ONE
+		(mEndPosition.z - mPosition.z)// * FX32_ONE
 	};
 	VEC_Normalize(&posdiff, &posdiff);
-	if(posdiff.x < 0)
+	/*if(posdiff.x < 0)
 		posdiff.x = (posdiff.x - FX32_HALF) / FX32_ONE * FX32_ONE;
 	else
 		posdiff.x = (posdiff.x + FX32_HALF) / FX32_ONE * FX32_ONE;
@@ -57,60 +57,61 @@ void FlexTrack::Render(TerrainManager* terrainManager)
 	else
 		posdiff.z = (posdiff.z + FX32_HALF) / FX32_ONE * FX32_ONE;
 
-	NOCASH_Printf("%d, %d\n", posdiff.x, posdiff.z);
+	NOCASH_Printf("%d, %d\n", posdiff.x, posdiff.z);*/
 
 	//divide the curve in 5 pieces, just increase t by 0.25 each time to get the points
 	//the first (t = 0) and the last point (t = 1) don't need calculation as they're already know
-#define NR_POINTS	6
+#define NR_POINTS	2 //6
 	VecFx32 points[NR_POINTS];
 	for (int i = 0; i < NR_POINTS; i++)
 	{
 		if (i == 0)
 		{
-			points[i].x = mPosition.x * FX32_ONE + FX32_HALF;
-			points[i].y = mPosition.y * TILE_HEIGHT;
-			points[i].z = mPosition.z * FX32_ONE + FX32_HALF;
+			points[i].x = mPosition.x;// *FX32_ONE + FX32_HALF;
+			points[i].y = mPosition.y;// *TILE_HEIGHT;
+			points[i].z = mPosition.z;// *FX32_ONE + FX32_HALF;
 		}
 		else if (i == (NR_POINTS - 1))
 		{
-			points[i].x = mEndPosition.x * FX32_ONE + FX32_HALF;
-			points[i].y = mEndPosition.y * TILE_HEIGHT;
-			points[i].z = mEndPosition.z * FX32_ONE + FX32_HALF;
+			points[i].x = mEndPosition.x;// *FX32_ONE + FX32_HALF;
+			points[i].y = mEndPosition.y;// *TILE_HEIGHT;
+			points[i].z = mEndPosition.z;// *FX32_ONE + FX32_HALF;
 		}
 		else
 		{
 			VecFx32 center=
 			{
-				(mPosition.x + mEndPosition.x) * FX32_HALF,
-				mPosition.y * TILE_HEIGHT,
-				(mPosition.z + mEndPosition.z) * FX32_HALF,
+				(mPosition.x + mEndPosition.x) / 2, // * FX32_HALF,
+				mPosition.y,// * TILE_HEIGHT,
+				(mPosition.z + mEndPosition.z) / 2 //* FX32_HALF,
 			};
 			VecFx32 p0;
-			p0.x = mPosition.x * FX32_ONE + FX32_HALF;
-			p0.y = mPosition.y * TILE_HEIGHT;
-			p0.z = mPosition.z * FX32_ONE + FX32_HALF;
+			p0.x = mPosition.x;// *FX32_ONE + FX32_HALF;
+			p0.y = mPosition.y;// *TILE_HEIGHT;
+			p0.z = mPosition.z;// *FX32_ONE + FX32_HALF;
 			VecFx32 p1 = center;//p0;
-			if(posdiff.x == 0)
-				p1.x = p0.x;
-			else
-				p1.z = p0.z;
+			//if(posdiff.x == 0)
+			//	p1.x = p0.x;
+			//else
+			//	p1.z = p0.z;
 			//p1.x += FX32_ONE;
 			VecFx32 p3;
-			p3.x = mEndPosition.x * FX32_ONE + FX32_HALF;
-			p3.y = mEndPosition.y * TILE_HEIGHT;
-			p3.z = mEndPosition.z * FX32_ONE + FX32_HALF;
+			p3.x = mEndPosition.x;// *FX32_ONE + FX32_HALF;
+			p3.y = mEndPosition.y;// *TILE_HEIGHT;
+			p3.z = mEndPosition.z;// *FX32_ONE + FX32_HALF;
 			VecFx32 p2 = center;//p3;
-			if (posdiff.x == 0)
-				p2.x = p3.x;
-			else
-				p2.z = p3.z;
+			//if (posdiff.x == 0)
+			//	p2.x = p3.x;
+			//else
+			//	p2.z = p3.z;
 			//p2.x -= FX32_ONE;
-			points[i].y = mPosition.y * TILE_HEIGHT;
+			points[i].y = mPosition.y;// *TILE_HEIGHT;
 			interpolateBezierXZ(&p0, &p1, &p2, &p3, i * FX32_ONE / (NR_POINTS - 1), &points[i]);
 		}
 	}
 	G3_PushMtx();
 	{
+		G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
 		G3_Begin(GX_BEGIN_QUAD_STRIP);
 		{
 			G3_Normal(0, GX_FX16_FX10_MAX, 0);

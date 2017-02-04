@@ -6,13 +6,6 @@
 
 static fx32 tile_corner_to_y[4] = {0, TILE_HEIGHT, -TILE_HEIGHT, 0};
 
-//fix error in include (; removed)
-#undef GX_FX32_FX10_MAX
-#undef GX_FX32_FX10_MIN
-
-#define GX_FX32_FX10_MAX          (fx32)(0x00000fff)
-#define GX_FX32_FX10_MIN          (fx32)(0xfffff000)
-
 static VecFx16 normalsForCorners[256];
 static VecFx16 normalsForCorners2[256];
 

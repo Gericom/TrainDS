@@ -18,11 +18,16 @@
 #include "engine/Camera.h"
 #include "engine/LookAtCamera.h"
 #include "engine/ThirdPersonCamera.h"
+#include "engine/FreeRoamCamera.h"
+#include "inih/INIReader.h"
+#include "terrain/managers/SfxManager.h"
+#include "tools/DragTool.h"
+#include "tools/AddTrackTool.h"
 #include "Game.h"
 
 //static tile_t sDummyMap[64][64];
 //static trackpiece_t sDummyPieces[8];
-static TrackPiece* sDummyPieces[60];//10];
+static TrackPiece* sDummyPieces[120];//10];
 
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
@@ -106,8 +111,8 @@ void Game::Initialize(int arg)
 
 	//mTerrainManager = new TerrainManager();
 	mMap = new Map();
-	mMap->GenerateLandscape();
-	mMap->GenerateTrees();
+	//mMap->GenerateLandscape();
+	//mMap->GenerateTrees();
 
 	//MI_CpuClearFast(&sDummyMap[0][0], sizeof(sDummyMap));
 
@@ -136,8 +141,8 @@ void Game::Initialize(int arg)
 				mMap->mTiles[y][x].rbCorner = TILE_CORNER_UP;
 			}
 		}
-	}
-	mMap->mTiles[32 - 3][32].ltCorner = TILE_CORNER_UP;
+	}*/
+	/*mMap->mTiles[32 - 3][32].ltCorner = TILE_CORNER_UP;
 	mMap->mTiles[32 - 3][32].lbCorner = TILE_CORNER_UP;
 	mMap->mTiles[32 - 3][32].groundType = 0;//1;
 	mMap->mTiles[32 - 4][32].lbCorner = TILE_CORNER_UP;
@@ -157,20 +162,36 @@ void Game::Initialize(int arg)
 	sDummyPieces[8] = new TrackPieceStraight1x1(32 - 3, 0, 32 - 3, TRACKPIECE_ROT_270);
 	sDummyPieces[9] = new TrackPieceQuarterCircle2x2(32 - 3, 0, 32 - 2, TRACKPIECE_ROT_270);*/
 
-	for (int i = 0; i < 60; i++)
+
+	/*for (int i = 0; i < 20; i++)
 	{
-		sDummyPieces[i] = new TrackPieceStraight1x1(2 + i, 0, 32, TRACKPIECE_ROT_0);
+		mMap->mTiles[32 - 3][2 + i].ltCorner = TILE_CORNER_UP;
+		mMap->mTiles[32 - 3][2 + i].rtCorner = TILE_CORNER_UP;
+		mMap->mTiles[32 - 4][2 + i].y = 1;
+		mMap->mTiles[32 - 4][2 + i].ltCorner = TILE_CORNER_UP;
+		mMap->mTiles[32 - 4][2 + i].rtCorner = TILE_CORNER_UP;
+		mMap->mTiles[32 - 5][2 + i].y = 2;
+		mMap->mTiles[32 - 6][2 + i].y = 2;
+		mMap->mTiles[32 - 7][2 + i].y = 2;
+		mMap->mTiles[32 - 8][2 + i].y = 2;
+		mMap->mTiles[32 - 9][2 + i].y = 2;
+		mMap->mTiles[32 - 10][2 + i].y = 2;
+	}*/
+	for (int i = 0; i < 120; i++)
+	{
+		sDummyPieces[i] = new TrackPieceStraight1x1(32 + 32, 0, 2 + i, TRACKPIECE_ROT_90);
+		mMap->AddTrackPiece(new TrackPieceStraight1x1(31 + 32, 0, 2 + i, TRACKPIECE_ROT_90));
 	}
 
-	for (int i = 0; i < 60; i++)
+	for (int i = 0; i < 120; i++)
 	{
 		sDummyPieces[i]->mPrev[0] = (i == 0) ? NULL : sDummyPieces[i - 1];
 		sDummyPieces[i]->mPrev[1] = sDummyPieces[i]->mPrev[2] = sDummyPieces[i]->mPrev[3] = NULL;
-		sDummyPieces[i]->mNext[0] = (i == 59) ? NULL : sDummyPieces[i + 1];
+		sDummyPieces[i]->mNext[0] = (i == 119) ? NULL : sDummyPieces[i + 1];
 		sDummyPieces[i]->mNext[1] = sDummyPieces[i]->mNext[2] = sDummyPieces[i]->mNext[3] = NULL;
 	}
 
-	for (int i = 0; i < 60; i++)
+	for (int i = 0; i < 120; i++)
 	{
 		mMap->AddTrackPiece(sDummyPieces[i]);
 	}
@@ -183,9 +204,9 @@ void Game::Initialize(int arg)
 	mTrain.firstPart->pathWorker2 = new PathWorker(sDummyPieces[0], FX32_ONE);
 	mTrain.firstPart->next = NULL;
 
-	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL, FALSE);
+	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/train.nsbmd", NULL, FALSE);
 	NNS_G3dResDefaultSetup(mLocModel);
-	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL, TRUE);
+	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/train.nsbtx", NULL, TRUE);
 	NNS_G3dResDefaultSetup(mLocTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mLocModel), 0);
 	NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);
@@ -199,28 +220,6 @@ void Game::Initialize(int arg)
 	NNS_G3dRenderObjInit(&mTrain.firstPart->renderObj, model);
 	NNS_FndFreeToExpHeap(gHeapHandle, mLocTextures);
 
-	/*{
-		uint32_t size;
-		void* buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntft", &size, TRUE);
-		DC_FlushRange(buffer, size);
-
-		NNSGfdTexKey texKey = NNS_GfdAllocTexVram(size, FALSE, 0);
-		Util_LoadTextureWithKey(texKey, buffer);
-		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
-
-		buffer = Util_LoadFileToBuffer("/data/game/PanelShadow.ntfp", &size, TRUE);
-		DC_FlushRange(buffer, size);
-
-		NNSGfdPlttKey plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
-		Util_LoadPaletteWithKey(plttKey, buffer);
-		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
-
-		mShadowTex.texKey = texKey;
-		mShadowTex.plttKey = plttKey;
-		mShadowTex.nitroWidth = GX_TEXSIZE_S8;
-		mShadowTex.nitroHeight = GX_TEXSIZE_T8;
-		mShadowTex.nitroFormat = GX_TEXFMT_A5I3;
-	}*/
 	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
 	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL, FALSE);
@@ -250,13 +249,17 @@ void Game::Initialize(int arg)
 	NNS_SndArcLoadBank(BANK_TRAIN, gSndHeapHandle);
 	NNS_SndArcPlayerStartSeqArc(&mTrain.trackSoundHandle, SEQ_TRAIN, TRAIN_TRACK);
 
-	mPicking = FALSE;
-	mPickingOK = FALSE;
-	mProcessPicking = FALSE;
 	mPickingCallback = NULL;
 
-	mCamera = new ThirdPersonCamera();//LookAtCamera();
-	mCamera->mTrain = &mTrain;
+	//mCamera = new ThirdPersonCamera();//LookAtCamera();
+	//mCamera->mTrain = &mTrain;
+	Train_UpdatePos(&mTrain);
+	mCamera = new FreeRoamCamera();
+	mCamera->mDestination = mTrain.firstPart->position;
+	mCamera->mDestination.x -= 32 * FX32_ONE;
+	mCamera->mDestination.z -= 32 * FX32_ONE;
+	VecFx32 camRot = { 0, 22 * FX32_ONE, 0 };
+	mCamera->SetRotation(&camRot);
 	/*#ifdef FIRST_PERSON
 		mCamera->mUp.x = 0;
 		mCamera->mUp.y = FX32_ONE;
@@ -285,21 +288,48 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*/18 * 4096, 40960 * 4);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*//*18*//*24*/31 * 4096, 40960 * 4);
 	setup_normals();
+
+	mSfxManager = new SfxManager();
+	mDragTool = new AddTrackTool(this);
 }
 
-void Game::Pick(int x, int y, PickingCallbackFunc callback)
+void Game::RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg)
 {
-	mPicking = TRUE;
 	mPickingPointX = x;
 	mPickingPointY = y;
 	mPickingCallback = callback;
-	reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT & ~REG_G3X_DISP3DCNT_TME_MASK;
-	G3X_SetClearColor(0, 31, 0x7fff, 0, FALSE);
-	G3X_EdgeMarking(FALSE);
-	G3X_AntiAlias(FALSE);
-	G3X_SetFog(FALSE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0020, 0);
+	mPickingCallbackArg = arg;
+	mPickingRequested = true;
+}
+
+void Game::HandlePickingEarly()
+{
+	if (mPickingState == PICKING_STATE_RENDERING)
+	{
+		mPickingState = PICKING_STATE_CAPTURING;
+	}
+	else if (mPickingState == PICKING_STATE_CAPTURING)
+	{
+		if (mPickingCallback) mPickingCallback(mPickingCallbackArg, ((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256]);
+		mPickingCallback = NULL;
+		mPickingState = PICKING_STATE_READY;
+	}
+}
+
+void Game::HandlePickingLate()
+{
+	if (mPickingState == PICKING_STATE_READY && mPickingRequested)
+	{
+		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT & ~REG_G3X_DISP3DCNT_TME_MASK;
+		G3X_SetClearColor(0, 31, 0x7fff, 0, FALSE);
+		G3X_EdgeMarking(FALSE);
+		G3X_AntiAlias(FALSE);
+		G3X_SetFog(FALSE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0020, 0);
+		mPickingRequested = false;
+		mPickingState = PICKING_STATE_RENDERING;
+	}
 }
 
 void Game::OnPenDownPickingCallback(picking_result_t result)
@@ -309,15 +339,16 @@ void Game::OnPenDownPickingCallback(picking_result_t result)
 
 void Game::OnPenDown(int x, int y)
 {
-	mPenDownTime = OS_GetTick();
+	mDragTool->OnPenDown(x, y);
+	/*mPenDownTime = OS_GetTick();
 	mPenDownPointX = x;
 	mPenDownPointY = y;
-	Pick(x, y, &Game::OnPenDownPickingCallback);
+	RequestPicking(x, y, Game::OnPenDownPickingCallback, this);*/
 }
 
 void Game::OnPenMove(int x, int y)
 {
-
+	mDragTool->OnPenMove(x, y);
 }
 
 int state = 0;
@@ -340,7 +371,7 @@ void Game::OnPenUpPickingCallback(picking_result_t result)
 				mSelectedMapX = mPickingXStart + idx % (mPickingXEnd - mPickingXStart);
 				mSelectedMapZ = mPickingZStart + idx / (mPickingXEnd - mPickingXStart);
 				NOCASH_Printf("Picked (%d,%d)", mSelectedMapX, mSelectedMapZ);
-				if (state == 0)
+				/*if (state == 0)
 				{
 					firstX = mSelectedMapX;
 					firstZ = mSelectedMapZ;
@@ -357,7 +388,11 @@ void Game::OnPenUpPickingCallback(picking_result_t result)
 				{
 					piece->mEndPosition.x = mSelectedMapX;
 					piece->mEndPosition.z = mSelectedMapZ;
-				}
+				}*/
+				//mMap->mVtx[mSelectedMapZ * 128 + mSelectedMapX]++;
+				//mMap->mVtx[mSelectedMapZ * 128 + mSelectedMapX + 1]++;
+				//mMap->mVtx[(mSelectedMapZ + 1) * 128 + mSelectedMapX]++;
+				//mMap->mVtx[(mSelectedMapZ + 1) * 128 + mSelectedMapX + 1]++;
 			}
 			else if (PICKING_TYPE(result) == PICKING_TYPE_TRAIN)
 			{
@@ -369,29 +404,112 @@ void Game::OnPenUpPickingCallback(picking_result_t result)
 
 void Game::OnPenUp(int x, int y)
 {
-	mPenUpTime = OS_GetTick();
-	if (abs(mPenDownPointX - x) < 16 && abs(mPenDownPointY - y) < 16)
-	{
-		Pick(x, y, &Game::OnPenUpPickingCallback);
-	}
+	mDragTool->OnPenUp(x, y);
+	//mPenUpTime = OS_GetTick();
+	//if (abs(mPenDownPointX - x) < 16 && abs(mPenDownPointY - y) < 16)
+	//{
+	//	RequestPicking(x, y, Game::OnPenUpPickingCallback, this);
+	//}
+}
+
+static void G3_Vtx32(VecFx32* vec)
+{
+	G3_PushMtx();
+	G3_Translate(vec->x, vec->y, vec->z);
+	G3_Vtx10(0, 0, 0);
+	G3_PopMtx(1);
+}
+
+static void VEC_MinMax(VecFx32* a, VecFx32* min, VecFx32* max)
+{
+	if (a->x < min->x)
+		min->x = a->x;
+	if (a->y < min->y)
+		min->y = a->y;
+	if (a->z < min->z)
+		min->z = a->z;
+
+	if (a->x > max->x)
+		max->x = a->x;
+	if (a->y > max->y)
+		max->y = a->y;
+	if (a->z > max->z)
+		max->z = a->z;
+}
+
+static void CalculateVisibleGrid(VecFx32* bbmin, VecFx32* bbmax)
+{
+	int y = 0;
+
+	//calculate the corners of the frustum box
+	VecFx32 far_top_left;
+	VecFx32 near_top_left;
+	NNS_G3dScrPosToWorldLine(0, 0, &near_top_left, &far_top_left);
+
+	/*fx32 f = FX_Div(near_top_left.y, far_top_left.y - near_top_left.y);
+	VecFx32 top_left;
+	top_left.x = near_top_left.x - FX_Mul(f, far_top_left.x - near_top_left.x);
+	top_left.y = 0;
+	top_left.z = near_top_left.z - FX_Mul(f, far_top_left.z - near_top_left.z);*/
+
+	VecFx32 far_top_right;
+	VecFx32 near_top_right;
+	NNS_G3dScrPosToWorldLine(255, 0, &near_top_right, &far_top_right);
+
+	/*f = FX_Div(near_top_right.y, far_top_right.y - near_top_right.y);
+	VecFx32 top_right;
+	top_right.x = near_top_right.x - FX_Mul(f, far_top_right.x - near_top_right.x);
+	top_right.y = 0;
+	top_right.z = near_top_right.z - FX_Mul(f, far_top_right.z - near_top_right.z);*/
+
+	VecFx32 far_bottom_left;
+	VecFx32 near_bottom_left;
+	NNS_G3dScrPosToWorldLine(0, 191, &near_bottom_left, &far_bottom_left);
+
+	/*f = FX_Div(near_bottom_left.y, far_bottom_left.y - near_bottom_left.y);
+	VecFx32 bottom_left;
+	bottom_left.x = near_bottom_left.x - FX_Mul(f, far_bottom_left.x - near_bottom_left.x);
+	bottom_left.y = 0;
+	bottom_left.z = near_bottom_left.z - FX_Mul(f, far_bottom_left.z - near_bottom_left.z); */
+
+	VecFx32 far_bottom_right;
+	VecFx32 near_bottom_right;
+	NNS_G3dScrPosToWorldLine(255, 191, &near_bottom_right, &far_bottom_right);
+
+	/*f = FX_Div(near_bottom_right.y, far_bottom_right.y - near_bottom_right.y);
+	VecFx32 bottom_right;
+	bottom_right.x = near_bottom_right.x - FX_Mul(f, far_bottom_right.x - near_bottom_right.x);
+	bottom_right.y = 0;
+	bottom_right.z = near_bottom_right.z - FX_Mul(f, far_bottom_right.z - near_bottom_right.z); */
+
+	VecFx32 min = { FX32_MAX, FX32_MAX, FX32_MAX };
+	VecFx32 max = { FX32_MIN, FX32_MIN, FX32_MIN };
+
+	VEC_MinMax(&far_top_left, &min, &max);
+	VEC_MinMax(&near_top_left, &min, &max);
+	VEC_MinMax(&far_top_right, &min, &max);
+	VEC_MinMax(&near_top_right, &min, &max);
+	VEC_MinMax(&far_bottom_left, &min, &max);
+	VEC_MinMax(&near_bottom_left, &min, &max);
+	VEC_MinMax(&far_bottom_right, &min, &max);
+	VEC_MinMax(&near_bottom_right, &min, &max);
+
+	//NOCASH_Printf("min: %d; %d; %d", min.x / 4096, min.y / 4096, min.z / 4096);
+	//NOCASH_Printf("max: %d; %d; %d", max.x / 4096, max.y / 4096, max.z / 4096);
+
+	*bbmin = min;
+	*bbmax = max;
 }
 
 void Game::Render()
 {
-	if (mPicking)
-	{
-		mProcessPicking = TRUE;
-		mPicking = FALSE;
-	}
-	else if (mProcessPicking)//process picking result
-	{
-		if (mPickingCallback) (this->*mPickingCallback)(((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256]);
-		mPickingCallback = NULL;
-		mProcessPicking = FALSE;
-	}
+	HandlePickingEarly();
+
 	mUIManager->ProcessInput();
 	u16 keyData = PAD_Read();
-	if (keyData & PAD_BUTTON_A)
+
+	HandlePickingLate();
+	/*if (keyData & PAD_BUTTON_A)
 	{
 		mTrain.isDriving = TRUE;
 		mTrain.isDrivingBackwards = FALSE;
@@ -401,12 +519,12 @@ void Game::Render()
 		mTrain.isDriving = TRUE;
 		mTrain.isDrivingBackwards = TRUE;
 	}
-	else mTrain.isDriving = FALSE;
+	else */mTrain.isDriving = FALSE;
 	if (!mKeyTimer)
 	{
 		if (keyData & PAD_BUTTON_X)
 		{
-			mMap->SetGridEnabled(!mMap->GetGridEnabled());// mGridEnabled = !mGridEnabled;
+			mMap->SetGridEnabled(!mMap->GetGridEnabled());
 			mKeyTimer = 10;
 		}
 		if (keyData & PAD_BUTTON_Y)
@@ -417,7 +535,7 @@ void Game::Render()
 	}
 	else
 		mKeyTimer--;
-	if (keyData & PAD_KEY_LEFT)
+	/*if (keyData & PAD_KEY_LEFT)
 		mCamera->mTheta -= FX32_ONE;
 	else if (keyData & PAD_KEY_RIGHT)
 		mCamera->mTheta += FX32_ONE;
@@ -435,19 +553,55 @@ void Game::Render()
 	else if (keyData & PAD_BUTTON_R && mCamera->mRadius > FX32_HALF)
 		mCamera->mRadius -= FX32_ONE >> 5;
 	if (mCamera->mRadius < FX32_ONE + FX32_HALF)
-		mCamera->mRadius = FX32_ONE + FX32_HALF;
+		mCamera->mRadius = FX32_ONE + FX32_HALF;*/
+
+	VecFx32 camRot;
+	mCamera->GetRotation(&camRot);
+	if (keyData & PAD_BUTTON_A)
+	{
+		if (keyData & PAD_KEY_LEFT)
+			camRot.x += FX32_ONE >> 1;
+		else if (keyData & PAD_KEY_RIGHT)
+			camRot.x -= FX32_ONE >> 1;
+		if (keyData & PAD_KEY_UP)
+			camRot.y += FX32_ONE >> 2;
+		else if (keyData & PAD_KEY_DOWN)
+			camRot.y -= FX32_ONE >> 2;
+		if (keyData & PAD_BUTTON_L)
+			mCamera->MoveY(-FX32_ONE >> 5);
+		else if (keyData & PAD_BUTTON_R)
+			mCamera->MoveY(FX32_ONE >> 5);
+	}
+	else
+	{
+		if (keyData & PAD_KEY_LEFT)
+			mCamera->MoveX(-FX32_ONE / 24);
+		else if (keyData & PAD_KEY_RIGHT)
+			mCamera->MoveX(FX32_ONE / 24);
+		if (keyData & PAD_KEY_UP)
+			mCamera->MoveZ(FX32_ONE / 24);
+		else if (keyData & PAD_KEY_DOWN)
+			mCamera->MoveZ(-FX32_ONE / 24);
+		if (keyData & PAD_BUTTON_L)
+			camRot.x -= FX32_ONE >> 1;
+		else if (keyData & PAD_BUTTON_R)
+			camRot.x += FX32_ONE >> 1;
+	}
+
+	mCamera->SetRotation(&camRot);
+
 	if (keyData & PAD_BUTTON_START)
 		Game::GotoMenu();
 	G3X_Reset();
-	if (!mPicking)
+	if (mPickingState != PICKING_STATE_RENDERING)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
-		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, FALSE);
+		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, TRUE);
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(TRUE);
 		G3X_AntiAlias(mAntiAliasEnabled);
-		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0200, 0x8000 - 0x200);
-		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31);
+		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
+		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
 		{
@@ -471,15 +625,43 @@ void Game::Render()
 
 	Train_UpdateSound(&mTrain, mCamera);
 
+	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+	/*VecFx32 vec = { FX32_CONST(0), FX32_CONST(-1), FX32_CONST(-1) };
+	VEC_Normalize(&vec, &vec);
+	if (vec.x > GX_FX32_FX10_MAX) vec.x = GX_FX32_FX10_MAX;
+	else if (vec.x < GX_FX32_FX10_MIN) vec.x = GX_FX32_FX10_MIN;
+	if (vec.y > GX_FX32_FX10_MAX) vec.y = GX_FX32_FX10_MAX;
+	else if (vec.y < GX_FX32_FX10_MIN) vec.y = GX_FX32_FX10_MIN;
+	if (vec.z > GX_FX32_FX10_MAX) vec.z = GX_FX32_FX10_MAX;
+	else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;*/
+	NNS_G3dGlbLightVector(GX_LIGHTID_0, /*vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
+	NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/GX_RGB(31, 31, 31));
+	if (mPickingState == PICKING_STATE_RENDERING)
+	{
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+	}
+	else
+	{
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(30, 30, 30), GX_RGB(5, 5, 5), FALSE);
+		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(3, 3, 3), GX_RGB(0, 0, 0), FALSE);
+		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(20, 12, 3), GX_RGB(5, 5, 5), FALSE);
+		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(31, 26, 22), GX_RGB(0, 0, 0), FALSE);
+		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(31, 31, 31), FALSE);
+		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(5, 5, 5), GX_RGB(0, 0, 0), FALSE);
+	}
+	NNS_G3dGlbFlushP();
+	NNS_G3dGeFlushBuffer();
+
 	//which part to render
-	VecFx32 camforward;
+	/*VecFx32 camforward;
 	mCamera->GetLookDirection(&camforward);
 	camforward.y = 0;
 	VEC_Normalize(&camforward, &camforward);
 
 	//far
-	fx32 camfarx = mCamera->mPosition.x + camforward.x * 18;//16;//20;
-	fx32 camfarz = mCamera->mPosition.z + camforward.z * 18;//16;//20;
+	fx32 camfarx = mCamera->mPosition.x + camforward.x * 24;//18;//16;//20;
+	fx32 camfarz = mCamera->mPosition.z + camforward.z * 24;//18;//16;//20;
 
 	int horizonx;
 	int horizony;
@@ -493,77 +675,103 @@ void Game::Render()
 	VecFx32 horizonlfar;
 	NNS_G3dScrPosToWorldLine(0, horizony, &horizonlnear, &horizonlfar);
 
+	NOCASH_Printf("horizonlnear: %d; %d; %d", horizonlnear.x / 4096, horizonlnear.y / 4096, horizonlnear.z / 4096);
+	NOCASH_Printf("horizonlfar: %d; %d; %d", horizonlfar.x / 4096, horizonlfar.y / 4096, horizonlfar.z / 4096);
+
 	VecFx32 horizonrnear;
 	VecFx32 horizonrfar;
 	NNS_G3dScrPosToWorldLine(255, horizony, &horizonrnear, &horizonrfar);
+
+	NOCASH_Printf("horizonrnear: %d; %d; %d", horizonrnear.x / 4096, horizonrnear.y / 4096, horizonrnear.z / 4096);
+	NOCASH_Printf("horizonrfar: %d; %d; %d", horizonrfar.x / 4096, horizonrfar.y / 4096, horizonrfar.z / 4096);
 
 	VecFx32 blnearpos;
 	VecFx32 blfarpos;
 	NNS_G3dScrPosToWorldLine(0, 191, &blnearpos, &blfarpos);
 
+	NOCASH_Printf("blnearpos: %d; %d; %d", blnearpos.x / 4096, blnearpos.y / 4096, blnearpos.z / 4096);
+	NOCASH_Printf("blfarpos: %d; %d; %d", blfarpos.x / 4096, blfarpos.y / 4096, blfarpos.z / 4096);
+
 	VecFx32 brnearpos;
 	VecFx32 brfarpos;
 	NNS_G3dScrPosToWorldLine(255, 191, &brnearpos, &brfarpos);
 
+	NOCASH_Printf("brnearpos: %d; %d; %d", brnearpos.x / 4096, brnearpos.y / 4096, brnearpos.z / 4096);
+	NOCASH_Printf("brfarpos: %d; %d; %d", brfarpos.x / 4096, brfarpos.y / 4096, brfarpos.z / 4096);
+
+
 	VecFx32 calcpos;
 	fx32 f = FX_Div(blnearpos.y, blfarpos.y - blnearpos.y);
-	calcpos.x = blnearpos.x - FX_Mul(f, blfarpos.x - blnearpos.x);
+	calcpos.x = blnearpos.x -FX_Mul(f, blfarpos.x - blnearpos.x);
 	calcpos.y = 0;
-	calcpos.z = blnearpos.z - FX_Mul(f, blfarpos.z - blnearpos.z);
+	calcpos.z = blnearpos.z -FX_Mul(f, blfarpos.z - blnearpos.z);
 
 	VecFx32 calcpos2;
 	f = FX_Div(brnearpos.y, brfarpos.y - brnearpos.y);
-	calcpos2.x = brnearpos.x - FX_Mul(f, brfarpos.x - brnearpos.x);
+	calcpos2.x = brnearpos.x -FX_Mul(f, brfarpos.x - brnearpos.x);
 	calcpos2.y = 0;
-	calcpos2.z = brnearpos.z - FX_Mul(f, brfarpos.z - brnearpos.z);
+	calcpos2.z = brnearpos.z -FX_Mul(f, brfarpos.z - brnearpos.z);
 
 	VecFx32 calcpos3;
 	f = FX_Div(horizonlnear.y, horizonlfar.y - horizonlnear.y);
-	calcpos3.x = horizonlnear.x - FX_Mul(f, horizonlfar.x - horizonlnear.x);
+	calcpos3.x = horizonlnear.x -FX_Mul(f, horizonlfar.x - horizonlnear.x);
 	calcpos3.y = 0;
-	calcpos3.z = horizonlnear.z - FX_Mul(f, horizonlfar.z - horizonlnear.z);
+	calcpos3.z = horizonlnear.z -FX_Mul(f, horizonlfar.z - horizonlnear.z);
 
 	VecFx32 calcpos4;
 	f = FX_Div(horizonrnear.y, horizonrfar.y - horizonrnear.y);
-	calcpos4.x = horizonrnear.x - FX_Mul(f, horizonrfar.x - horizonrnear.x);
+	calcpos4.x = horizonrnear.x -FX_Mul(f, horizonrfar.x - horizonrnear.x);
 	calcpos4.y = 0;
-	calcpos4.z = horizonrnear.z - FX_Mul(f, horizonrfar.z - horizonrnear.z);
+	calcpos4.z = horizonrnear.z -FX_Mul(f, horizonrfar.z - horizonrnear.z);
 
 	int xstart = ((MATH_MIN(calcpos.x, MATH_MIN(calcpos2.x, MATH_MIN(calcpos3.x, calcpos4.x))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
-	xstart = MATH_CLAMP(xstart, 0, 64);
+	xstart = MATH_CLAMP(xstart, 0, 128);
 	int xend = ((MATH_MAX(calcpos.x, MATH_MAX(calcpos2.x, MATH_MAX(calcpos3.x, calcpos4.x))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
-	xend = MATH_CLAMP(xend, 0, 64);
+	xend = MATH_CLAMP(xend, 0, 128);
 
 	int zstart = ((MATH_MIN(calcpos.z, MATH_MIN(calcpos2.z, MATH_MIN(calcpos3.z, calcpos4.z))) - FX32_ONE - FX32_HALF) >> FX32_SHIFT) + 32;
-	zstart = MATH_CLAMP(zstart, 0, 64);
+	zstart = MATH_CLAMP(zstart, 0, 128);
 	int zend = ((MATH_MAX(calcpos.z, MATH_MAX(calcpos2.z, MATH_MAX(calcpos3.z, calcpos4.z))) + FX32_ONE + FX32_HALF) >> FX32_SHIFT) + 32;
-	zend = MATH_CLAMP(zend, 0, 64);
+	zend = MATH_CLAMP(zend, 0, 128);
 
-	if (mPicking)
+	NOCASH_Printf("x: %d; %d", xstart, xend);
+	NOCASH_Printf("z: %d; %d", zstart, zend);
+
+	/*int zstart2 = MATH_MIN(horizonlfar.z, horizonrfar.z) / FX32_ONE + 32;
+	zstart2 = MATH_CLAMP(zstart2, 0, 128);
+	int zend2 = MATH_MAX(horizonlfar.z, horizonrfar.z) / FX32_ONE + 32;
+	zend2 = MATH_CLAMP(zend2, 0, 128);
+	NOCASH_Printf("z2: %d; %d", zstart2, zend2);*/
+
+	//zstart = zstart2;
+	//zend = zend2;
+
+	VecFx32 bbmin, bbmax;
+	CalculateVisibleGrid(&bbmin, &bbmax);
+
+	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	xstart = MATH_CLAMP(xstart, 0, 128);
+	int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	zstart = MATH_CLAMP(zstart, 0, 128);
+
+	int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	xend = MATH_CLAMP(xend, 0, 128);
+	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	zend = MATH_CLAMP(zend, 0, 128);
+
+	//NOCASH_Printf("x: %d; %d", xstart, xend);
+	//NOCASH_Printf("z: %d; %d", zstart, zend);
+
+	if (mPickingState == PICKING_STATE_RENDERING)
 	{
 		mPickingXStart = xstart;
 		mPickingXEnd = xend;
 		mPickingZStart = zstart;
 	}
 
-	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG);
-	NNS_G3dGlbLightVector(GX_LIGHTID_0, -2048, -2897, -2048);
-	NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31, 31, 31));
-	if (mPicking)
-	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-	}
-	else
-	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(21, 21, 21), GX_RGB(15, 15, 15), FALSE);
-		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-	}
-	NNS_G3dGlbFlushP();
-	NNS_G3dGeFlushBuffer();
 	G3_PushMtx();
 	{
-		mMap->Render(xstart, xend, zstart, zend, mPicking, mSelectedMapX, mSelectedMapZ);
+		mMap->Render(xstart, xend, zstart, zend, mPickingState == PICKING_STATE_RENDERING, mSelectedMapX, mSelectedMapZ, &mCamera->mPosition);
 		NNS_G3dGePushMtx();
 		{
 			NNS_G3dGeTranslateVec(&mTrain.firstPart->position);
@@ -581,7 +789,7 @@ void Game::Render()
 			NNS_G3dGeScale(FX32_ONE / 7, FX32_ONE / 7, FX32_ONE / 7);
 			NNS_G3dGeMtxMode(GX_MTXMODE_POSITION_VECTOR);
 
-			if (mPicking)
+			if (mPickingState == PICKING_STATE_RENDERING)
 			{
 				NNS_G3dMdlSetMdlDiffAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0, 0, 0));
 				NNS_G3dMdlSetMdlAmbAll(mTrain.firstPart->renderObj.resMdl, GX_RGB(0, 0, 0));
@@ -608,7 +816,7 @@ void Game::Render()
 	mUIManager->Render();
 	char result[32];
 	MI_CpuClear8(result, 32);
-	OS_SPrintf(result, "%d", G3X_GetVtxListRamCount());
+	OS_SPrintf(result, "%d; %d", G3X_GetVtxListRamCount(), G3X_GetPolygonListRamCount());
 	u16 result2[32];
 	MI_CpuClear8(result2, 64);
 	for (int i = 0; i < 32; i++)
@@ -619,11 +827,12 @@ void Game::Render()
 	NNS_G2dTextCanvasDrawTextRect(
 		&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)result2);// (NNSG2dChar*)L"Tri's Test");
 	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
+	mSfxManager->Update();
 }
 
 void Game::VBlank()
 {
-	if (mPicking)
+	if (mPickingState == PICKING_STATE_RENDERING)
 	{
 		GX_SetBankForBG(GX_VRAM_BG_128_C);
 		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);

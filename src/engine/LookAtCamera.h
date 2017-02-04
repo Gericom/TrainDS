@@ -4,6 +4,13 @@
 class LookAtCamera : public Camera
 {
 public:
+	LookAtCamera()
+	{
+		mUp.x = 0;
+		mUp.y = FX32_ONE;
+		mUp.z = 0;
+	}
+
 	VecFx32 mPosition;
 	VecFx32 mDestination;
 	VecFx32 mUp;
