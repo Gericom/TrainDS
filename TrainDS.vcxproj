@@ -78,8 +78,6 @@
     <ClCompile Include="src\terrain\terrain.cpp" />
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
     <ClCompile Include="src\terrain\track\FlexTrack.cpp" />
-    <ClCompile Include="src\terrain\track\TrackPieceQuarterCircle2x2.cpp" />
-    <ClCompile Include="src\terrain\track\TrackPieceStraight1x1.cpp" />
     <ClCompile Include="src\tools\AddTrackTool.cpp" />
     <ClCompile Include="src\tools\DragTool.cpp" />
     <ClCompile Include="src\ui\UIManager.cpp" />
@@ -114,9 +112,7 @@
     <ClInclude Include="src\terrain\terrain.h" />
     <ClInclude Include="src\terrain\TerrainManager.h" />
     <ClInclude Include="src\terrain\track\FlexTrack.h" />
-    <ClInclude Include="src\terrain\track\TrackPiece.h" />
-    <ClInclude Include="src\terrain\track\TrackPieceQuarterCircle2x2.h" />
-    <ClInclude Include="src\terrain\track\TrackPieceStraight1x1.h" />
+    <ClInclude Include="src\terrain\track\TrackPieceEx.h" />
     <ClInclude Include="src\tools\AddTrackTool.h" />
     <ClInclude Include="src\tools\DragTool.h" />
     <ClInclude Include="src\tools\Tool.h" />

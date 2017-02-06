@@ -8,7 +8,7 @@
 void AddTrackTool::OnDragStart(VecFx32* position)
 {
 	mStartPos = *position;
-	mNewTrackPiece = new FlexTrack(mStartPos.x, mStartPos.y, mStartPos.z, position->x, position->y, position->z);
+	mNewTrackPiece = new FlexTrack(&mStartPos, position);
 	mContext->mMap->BeginAddTrackPiece(mNewTrackPiece);
 	mContext->mMap->TrySnapGhostTrack();
 }
@@ -17,7 +17,7 @@ void AddTrackTool::OnDragging(VecFx32* position)
 {
 	if (!mNewTrackPiece)
 		return;
-	mNewTrackPiece->mEndPosition = *position;
+	mNewTrackPiece->mPoints[1] = *position;
 	mContext->mMap->TrySnapGhostTrack();
 }
 
@@ -25,7 +25,7 @@ void AddTrackTool::OnDragEnd(VecFx32* position)
 {
 	if (!mNewTrackPiece)
 		return;
-	mNewTrackPiece->mEndPosition = *position;
+	mNewTrackPiece->mPoints[1] = *position;
 	mContext->mMap->TrySnapGhostTrack();
 	mContext->mMap->FinishAddTrackPiece(mNewTrackPiece);
 	mNewTrackPiece = NULL;

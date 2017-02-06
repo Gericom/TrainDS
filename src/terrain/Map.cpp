@@ -5,7 +5,7 @@
 #include "util.h"
 #include "terrain.h"
 #include "TerrainManager.h"
-#include "terrain/track/TrackPiece.h"
+#include "terrain/track/TrackPieceEx.h"
 #include "terrain/track/FlexTrack.h"
 #include "terrain/scenery/SceneryObject.h"
 #include "terrain/scenery/RCT2Tree1.h"
@@ -14,7 +14,7 @@
 Map::Map()
 	: mGridEnabled(FALSE), mGhostPiece(NULL)
 {
-	NNS_FND_INIT_LIST(&mTrackList, TrackPiece, mLink);
+	NNS_FND_INIT_LIST(&mTrackList, TrackPieceEx, mLink);
 	NNS_FND_INIT_LIST(&mSceneryList, SceneryObject, mLink);
 	mTerrainManager = new TerrainManager();
 	mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);
@@ -240,20 +240,20 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 	G3_PopMtx(1);
 	if (!picking)
 	{
-		TrackPiece* trackPiece = NULL;
-		while ((trackPiece = (TrackPiece*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
+		TrackPieceEx* trackPiece = NULL;
+		while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 		{
 			//if (trackPiece->mPosition.x >= xstart && trackPiece->mPosition.x < xend &&
 			//	trackPiece->mPosition.z >= zstart && trackPiece->mPosition.z < zend)
 			//{
 				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-				trackPiece->Render(mTerrainManager);
+				trackPiece->Render(this, mTerrainManager);
 			//}
 		}
 		if (mGhostPiece != NULL)
 		{
 			if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-			mGhostPiece->Render(mTerrainManager);
+			mGhostPiece->Render(this, mTerrainManager);
 		}
 		SceneryObject* sceneryObject = NULL;
 		while ((sceneryObject = (SceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
@@ -371,43 +371,111 @@ bool Map::ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecF
 	return PointInTriangle(result, &c, &b, &d);
 }
 
+fx32 Map::GetYOnMap(fx32 x, fx32 z)
+{
+	VecFx32 near = { x, 256 * FX32_ONE, z };
+	VecFx32 far = { x, -256 * FX32_ONE, z };
+
+	int mapX = (x + 32 * FX32_ONE) >> FX32_SHIFT;
+	int mapY = (z + 32 * FX32_ONE) >> FX32_SHIFT;
+
+	//get the plane of the map square
+	VecFx32 a =
+	{
+		mapX * FX32_ONE - 32 * FX32_ONE,
+		(mVtx[mapY * 128 + mapX] - Y_OFFSET) * 128,
+		mapY * FX32_ONE - 32 * FX32_ONE
+	};
+	VecFx32 b =
+	{
+		mapX * FX32_ONE - 32 * FX32_ONE,
+		(mVtx[(mapY + 1) * 128 + mapX] - Y_OFFSET) * 128,
+		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
+	};
+	VecFx32 c =
+	{
+		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
+		(mVtx[mapY * 128 + mapX + 1] - Y_OFFSET) * 128,
+		mapY * FX32_ONE - 32 * FX32_ONE
+	};
+	VecFx32 d =
+	{
+		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
+		(mVtx[(mapY + 1) * 128 + mapX + 1] - Y_OFFSET) * 128,
+		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
+	};
+	VecFx32 ab, ac, abXac;
+	if (PointInTriangle(&near, &a, &b, &c))
+	{
+		VEC_Subtract(&b, &a, &ab);
+		VEC_Subtract(&c, &a, &ac);
+		VEC_CrossProduct(&ab, &ac, &abXac);
+
+		//try the first triangle
+		fx32 pa = abXac.x;
+		fx32 pb = abXac.y;
+		fx32 pc = abXac.z;
+		fx32 pd = -(FX_Mul(pa, a.x) + FX_Mul(pb, a.y) + FX_Mul(pc, a.z));
+
+
+		fx32 top = FX_Mul(pa, near.x) + pd + FX_Mul(pb, near.y) + FX_Mul(pc, near.z);
+		fx32 bottom = FX_Mul(pa, near.x - far.x) + FX_Mul(pb, near.y - far.y) + FX_Mul(pc, near.z - far.z);
+		return near.y - FX_Div(FX_Mul(near.y - far.y, top), bottom);
+	}
+	else
+	{
+		VEC_Subtract(&b, &c, &ab);
+		VEC_Subtract(&d, &c, &ac);
+		VEC_CrossProduct(&ab, &ac, &abXac);
+
+		//try the first triangle
+		fx32 pa = abXac.x;
+		fx32 pb = abXac.y;
+		fx32 pc = abXac.z;
+		fx32 pd = -(FX_Mul(pa, c.x) + FX_Mul(pb, c.y) + FX_Mul(pc, c.z));
+
+		fx32 top = FX_Mul(pa, near.x) + pd + FX_Mul(pb, near.y) + FX_Mul(pc, near.z);
+		fx32 bottom = FX_Mul(pa, near.x - far.x) + FX_Mul(pb, near.y - far.y) + FX_Mul(pc, near.z - far.z);
+		return near.y - FX_Div(FX_Mul(near.y - far.y, top), bottom);
+	}
+}
+
+//We should get rid of the flextrack in this method
 void Map::TrySnapGhostTrack()
 {
 	if (mGhostPiece == NULL)
 		return;
-	FlexTrack* trackPiece = NULL;
-	while ((trackPiece = (FlexTrack*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
+	VecFx32 ghostEnd = ((FlexTrack*)mGhostPiece)->mPoints[1];
+	TrackPieceEx* trackPiece = NULL;
+	while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 	{
-		//start-start
-		//fx32 ssdist = 
-		//	FX_Mul(trackPiece->mPosition.x - mGhostPiece->mPosition.x, trackPiece->mPosition.x - mGhostPiece->mPosition.x) + 
-		//	FX_Mul(trackPiece->mPosition.y - mGhostPiece->mPosition.y, trackPiece->mPosition.y - mGhostPiece->mPosition.y) +
-		//	FX_Mul(trackPiece->mPosition.z - mGhostPiece->mPosition.z, trackPiece->mPosition.z - mGhostPiece->mPosition.z);
-		//start-end
-		fx32 sedist =
-			FX_Mul(trackPiece->mPosition.x - mGhostPiece->mEndPosition.x, trackPiece->mPosition.x - mGhostPiece->mEndPosition.x) +
-			FX_Mul(trackPiece->mPosition.y - mGhostPiece->mEndPosition.y, trackPiece->mPosition.y - mGhostPiece->mEndPosition.y) +
-			FX_Mul(trackPiece->mPosition.z - mGhostPiece->mEndPosition.z, trackPiece->mPosition.z - mGhostPiece->mEndPosition.z);
-		if (sedist <= FX32_ONE >> 2)
+		int nrConnectors = trackPiece->GetNrConnectionPoints();
+		for (int i = 0; i < nrConnectors; i++)
 		{
-			mGhostPiece->mEndPosition = trackPiece->mPosition;
-			//mGhostPiece->mNext[0] = trackPiece;
-			return;
-		}
-		//end-start
-		//fx32 esdist =
-		//	FX_Mul(trackPiece->mEndPosition.x - mGhostPiece->mPosition.x, trackPiece->mEndPosition.x - mGhostPiece->mPosition.x) +
-		//	FX_Mul(trackPiece->mEndPosition.y - mGhostPiece->mPosition.y, trackPiece->mEndPosition.y - mGhostPiece->mPosition.y) +
-		//	FX_Mul(trackPiece->mEndPosition.z - mGhostPiece->mPosition.z, trackPiece->mEndPosition.z - mGhostPiece->mPosition.z);
-		//end-end
-		fx32 eedist =
-			FX_Mul(trackPiece->mEndPosition.x - mGhostPiece->mEndPosition.x, trackPiece->mEndPosition.x - mGhostPiece->mEndPosition.x) +
-			FX_Mul(trackPiece->mEndPosition.y - mGhostPiece->mEndPosition.y, trackPiece->mEndPosition.y - mGhostPiece->mEndPosition.y) +
-			FX_Mul(trackPiece->mEndPosition.z - mGhostPiece->mEndPosition.z, trackPiece->mEndPosition.z - mGhostPiece->mEndPosition.z);
-		if (eedist <= FX32_ONE >> 2)
-		{
-			mGhostPiece->mEndPosition = trackPiece->mEndPosition;
-			return;
+			VecFx32 pos;
+			trackPiece->GetConnectionPoint(i, &pos);
+			fx32 sedist =
+				FX_Mul(pos.x - ghostEnd.x, pos.x - ghostEnd.x) +
+				FX_Mul(pos.y - ghostEnd.y, pos.y - ghostEnd.y) +
+				FX_Mul(pos.z - ghostEnd.z, pos.z - ghostEnd.z);
+			if (sedist <= FX32_ONE >> 2)
+			{
+				((FlexTrack*)mGhostPiece)->mPoints[1] = pos;
+				((FlexTrack*)mGhostPiece)->mConnections[1] = trackPiece;
+				((FlexTrack*)mGhostPiece)->mConnectionInPoints[1] = i;
+
+				((FlexTrack*)trackPiece)->mConnections[i] = mGhostPiece;
+				((FlexTrack*)trackPiece)->mConnectionInPoints[i] = 1;
+				return;
+			}
 		}
 	}
+	if ((FlexTrack*)((FlexTrack*)mGhostPiece)->mConnections[1] != NULL)
+	{
+		((FlexTrack*)((FlexTrack*)mGhostPiece)->mConnections[1])->mConnections[((FlexTrack*)mGhostPiece)->mConnectionInPoints[1]] = NULL;
+		((FlexTrack*)((FlexTrack*)mGhostPiece)->mConnections[1])->mConnectionInPoints[((FlexTrack*)mGhostPiece)->mConnectionInPoints[1]] = -1;
+	}
+
+	((FlexTrack*)mGhostPiece)->mConnections[1] = NULL;
+	((FlexTrack*)mGhostPiece)->mConnectionInPoints[1] = -1;
 }

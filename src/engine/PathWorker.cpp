@@ -1,7 +1,7 @@
 #include <nitro.h>
 #include "core.h"
 #include "terrain\terrain.h"
-#include "terrain\track\TrackPiece.h"
+#include "terrain\track\TrackPieceEx.h"
 #include "PathWorker.h"
 
 static void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
@@ -13,14 +13,16 @@ static void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
 
 void PathWorker::CalculatePoint()
 {
-	mCurPoint.x = mCurPoint.y = mCurPoint.z = 0;
-	if (mNextDistance < 0) return;
-	mCurPiece->CalculatePoint(&mCurPiecePoint, &mNextPiecePoint, &mNextDirection, FX_Div(mCurDistance, mNextDistance), &mCurPoint, &mCurDirection);
+	mCurPiece->CalculatePoint(mCurInPoint, FX_Div(mCurDistance, mNextDistance), &mCurPoint, &mCurDirection, mMap);
+	//mCurPoint.x = mCurPoint.y = mCurPoint.z = 0;
+	//if (mNextDistance < 0) return;
+	//mCurPiece->CalculatePoint(&mCurPiecePoint, &mNextPiecePoint, &mNextDirection, FX_Div(mCurDistance, mNextDistance), &mCurPoint, &mCurDirection);
 }
 
 void PathWorker::SetupPoint()
 {
-	fx32 xa = 0, za = 0;
+	mNextDistance = mCurPiece->GetTrackLength(mCurInPoint);
+	/*fx32 xa = 0, za = 0;
 	TrackPiece* a = mCurPiece;
 	if(a->mRot == TRACKPIECE_ROT_0) za = FX32_HALF;
 	else if(a->mRot == TRACKPIECE_ROT_90) { xa = FX32_HALF; za = FX32_ONE; }
@@ -48,13 +50,15 @@ void PathWorker::SetupPoint()
 		fx32 linDist = VEC_Mag(&diff);
 		mNextDistance = mCurPiece->GetNextDistance(linDist);
 	}
-	else mNextDistance = -FX32_ONE;
+	else mNextDistance = -FX32_ONE;*/
 }
 
-PathWorker::PathWorker(TrackPiece* curPiece, fx32 curDistance)
+PathWorker::PathWorker(TrackPieceEx* curPiece, int curInPoint, fx32 curDistance, Map* map)
 {
 	mCurPiece = curPiece;
+	mCurInPoint = curInPoint;
 	mCurDistance = curDistance;
+	mMap = map;
 	SetupPoint();
 	CalculatePoint();
 }
@@ -67,16 +71,24 @@ void PathWorker::Proceed(fx32 distance, VecFx32* point, VecFx32* direction)
 		while(mCurDistance > 0 && mNextDistance >= 0 && mCurDistance > mNextDistance)
 		{
 			mCurDistance -= mNextDistance;
-			mCurPiece = mCurPiece->mNext[0];
-			SetupPoint();
+
+			TrackPieceEx* newPiece;
+			int newInPoint;
+			mCurPiece->GetConnnectedTrack(mCurPiece->GetOutPointId(mCurInPoint), newPiece, newInPoint);
+			if (newPiece != NULL)
+			{
+				mCurPiece = newPiece;
+				mCurInPoint = newInPoint;
+				SetupPoint();
+			}
 		}
-		while(mCurDistance < 0 && mCurPiece->mPrev[0] != NULL)
+		/*while(mCurDistance < 0 && mCurPiece->mPrev[0] != NULL)
 		{
 			mCurPiece = mCurPiece->mPrev[0];
 			SetupPoint();
 			if(mNextDistance < 0) break;
 			mCurDistance = mNextDistance + mCurDistance;
-		}
+		}*/
 		CalculatePoint();
 	}
 	*point = mCurPoint;

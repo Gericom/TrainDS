@@ -3,7 +3,8 @@
 #include "core.h"
 #include "util.h"
 #include "terrain/TerrainManager.h"
-#include "TrackPiece.h"
+#include "terrain/Map.h"
+#include "TrackPieceEx.h"
 #include "FlexTrack.h"
 
 static void interpolateBezierXZ(VecFx32* a, VecFx32* b, VecFx32* c, VecFx32* d, fx32 t, VecFx32* dst)
@@ -27,7 +28,100 @@ static void interpolateBezierXZ(VecFx32* a, VecFx32* b, VecFx32* c, VecFx32* d, 
 	dst->z = z;
 }
 
-void FlexTrack::Render(TerrainManager* terrainManager)
+static void cubicHermiteInterpolate(VecFx32* a, VecFx32* b, VecFx32* c, VecFx32* d, fx32 t, VecFx32* dst)
+{
+	fx32 coef1 = FX_Mul(FX_Mul(FX32_ONE - t, FX32_ONE - t), FX32_ONE - t);
+	fx32 coef2 = (3 * FX_Mul(FX_Mul(t, t), t) -	6 * FX_Mul(t, t) + FX32_ONE * 4);
+	fx32 coef3 = (3 * (t + FX_Mul(t, t) - FX_Mul(FX_Mul(t, t), t)) + FX32_ONE);
+	fx32 coef4 = FX_Mul(FX_Mul(t, t), t);
+
+	fx32 x =
+		(FX_Mul(a->x, coef1) +
+			FX_Mul(b->x, coef2) +
+			FX_Mul(c->x, coef3) +
+			FX_Mul(d->x, coef4)) / 6;
+	fx32 y =
+		(FX_Mul(a->y, coef1) +
+			FX_Mul(b->y, coef2) +
+			FX_Mul(c->y, coef3) +
+			FX_Mul(d->y, coef4)) / 6;
+	fx32 z =
+		(FX_Mul(a->z, coef1) +
+			FX_Mul(b->z, coef2) +
+			FX_Mul(c->z, coef3) +
+			FX_Mul(d->z, coef4)) / 6;
+
+	dst->x = x;
+	dst->y = y;
+	dst->z = z;
+}
+
+static void cubicHermiteInterpolateDir(VecFx32* a, VecFx32* b, VecFx32* c, VecFx32* d, fx32 t, VecFx32* dst)
+{
+	fx32 coef1 = -3 * FX_Mul(t - FX32_ONE, t - FX32_ONE);
+	fx32 coef2 = -(12 * t - 9 * FX_Mul(t, t));
+	fx32 coef3 = 6 * t - 9 * FX_Mul(t, t) + 3 * FX32_ONE;
+	fx32 coef4 = 3 * FX_Mul(t, t);
+
+	fx32 x =
+		(FX_Mul(a->x, coef1) +
+			FX_Mul(b->x, coef2) +
+			FX_Mul(c->x, coef3) +
+			FX_Mul(d->x, coef4)) / 6;
+	fx32 y =
+		(FX_Mul(a->y, coef1) +
+			FX_Mul(b->y, coef2) +
+			FX_Mul(c->y, coef3) +
+			FX_Mul(d->y, coef4)) / 6;
+	fx32 z =
+		(FX_Mul(a->z, coef1) +
+			FX_Mul(b->z, coef2) +
+			FX_Mul(c->z, coef3) +
+			FX_Mul(d->z, coef4)) / 6;
+
+	dst->x = x;
+	dst->y = y;
+	dst->z = z;
+}
+
+static fx32 cubicInterpolate1D(fx32 a, fx32 b, fx32 c, fx32 d, fx32 t)
+{
+	fx32 a0, a1, a2, a3, t2;
+
+	t2 = FX_Mul(t, t);
+	//a0 = d - c - a + b;
+	//a1 = a - b - a0;
+	//a2 = c - a;
+	//a3 = b;
+	a0 = -3 * a + 9 * b - 9 * c + 3 * d;
+	a1 = 6 * a - 15*b + 12 * c - 3*d;
+	a2 = -3*a + 3*c;
+	a3 = 6 * b;
+
+	return (FX_Mul(a0, FX_Mul(t, t2)) + FX_Mul(a1, t2) + FX_Mul(a2, t) + a3) / 6;
+}
+
+static fx32 cubicInterpolate1DDir(fx32 a, fx32 b, fx32 c, fx32 d, fx32 t)
+{
+	return c / 2 - a / 2 + 2 * FX_Mul(t, a - (5 * b) / 2 + 2 * c - d / 2) - 3 * FX_Mul(FX_Mul(t, t), a / 2 - (3 * b) / 2 + (3 * c) / 2 - d / 2);
+	//return c - a + 2 * FX_Mul(t, 2 * a - 2 * b + c - d) - 3 * FX_Mul(FX_Mul(t, t), a - b + c - d);
+}
+
+static void cubicInterpolate(VecFx32* a, VecFx32* b, VecFx32* c, VecFx32* d, fx32 t, VecFx32* dst)
+{
+	dst->x = cubicInterpolate1D(a->x, b->x, c->x, d->x, t);
+	dst->y = cubicInterpolate1D(a->y, b->y, c->y, d->y, t);
+	dst->z = cubicInterpolate1D(a->z, b->z, c->z, d->z, t);
+}
+
+static void cubicInterpolateDir(VecFx32* a, VecFx32* b, VecFx32* c, VecFx32* d, fx32 t, VecFx32* dst)
+{
+	dst->x = cubicInterpolate1DDir(a->x, b->x, c->x, d->x, t);
+	dst->y = cubicInterpolate1DDir(a->y, b->y, c->y, d->y, t);
+	dst->z = cubicInterpolate1DDir(a->z, b->z, c->z, d->z, t);
+}
+
+void FlexTrack::Render(Map* map, TerrainManager* terrainManager)
 {
 	texture_t* tex = terrainManager->GetTrackTexture();
 	G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
@@ -40,74 +134,37 @@ void FlexTrack::Render(TerrainManager* terrainManager)
 		NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
 	);
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
-
-	VecFx32 posdiff = 
-	{
-		(mEndPosition.x - mPosition.x),// * FX32_ONE,
-		0,
-		(mEndPosition.z - mPosition.z)// * FX32_ONE
-	};
-	VEC_Normalize(&posdiff, &posdiff);
-	/*if(posdiff.x < 0)
-		posdiff.x = (posdiff.x - FX32_HALF) / FX32_ONE * FX32_ONE;
-	else
-		posdiff.x = (posdiff.x + FX32_HALF) / FX32_ONE * FX32_ONE;
-	if (posdiff.z < 0)
-		posdiff.z = (posdiff.z - FX32_HALF) / FX32_ONE * FX32_ONE;
-	else
-		posdiff.z = (posdiff.z + FX32_HALF) / FX32_ONE * FX32_ONE;
-
-	NOCASH_Printf("%d, %d\n", posdiff.x, posdiff.z);*/
-
-	//divide the curve in 5 pieces, just increase t by 0.25 each time to get the points
-	//the first (t = 0) and the last point (t = 1) don't need calculation as they're already know
-#define NR_POINTS	2 //6
+#define NR_POINTS	6
 	VecFx32 points[NR_POINTS];
+	VecFx32 normals[NR_POINTS];
 	for (int i = 0; i < NR_POINTS; i++)
 	{
-		if (i == 0)
+		VecFx32 a = mPoints[0];
+		if (mConnections[0] != NULL)
+			mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
+		VecFx32 b = mPoints[1];
+		if (mConnections[1] != NULL)
+			mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
+		/*if (i == 0 && mConnections[0] == NULL)
 		{
-			points[i].x = mPosition.x;// *FX32_ONE + FX32_HALF;
-			points[i].y = mPosition.y;// *TILE_HEIGHT;
-			points[i].z = mPosition.z;// *FX32_ONE + FX32_HALF;
+			points[i] = mPoints[0];
 		}
-		else if (i == (NR_POINTS - 1))
+		else if (i == (NR_POINTS - 1) && mConnections[1] == NULL)
 		{
-			points[i].x = mEndPosition.x;// *FX32_ONE + FX32_HALF;
-			points[i].y = mEndPosition.y;// *TILE_HEIGHT;
-			points[i].z = mEndPosition.z;// *FX32_ONE + FX32_HALF;
+			points[i] = mPoints[1];
 		}
 		else
-		{
-			VecFx32 center=
-			{
-				(mPosition.x + mEndPosition.x) / 2, // * FX32_HALF,
-				mPosition.y,// * TILE_HEIGHT,
-				(mPosition.z + mEndPosition.z) / 2 //* FX32_HALF,
-			};
-			VecFx32 p0;
-			p0.x = mPosition.x;// *FX32_ONE + FX32_HALF;
-			p0.y = mPosition.y;// *TILE_HEIGHT;
-			p0.z = mPosition.z;// *FX32_ONE + FX32_HALF;
-			VecFx32 p1 = center;//p0;
-			//if(posdiff.x == 0)
-			//	p1.x = p0.x;
-			//else
-			//	p1.z = p0.z;
-			//p1.x += FX32_ONE;
-			VecFx32 p3;
-			p3.x = mEndPosition.x;// *FX32_ONE + FX32_HALF;
-			p3.y = mEndPosition.y;// *TILE_HEIGHT;
-			p3.z = mEndPosition.z;// *FX32_ONE + FX32_HALF;
-			VecFx32 p2 = center;//p3;
-			//if (posdiff.x == 0)
-			//	p2.x = p3.x;
-			//else
-			//	p2.z = p3.z;
-			//p2.x -= FX32_ONE;
-			points[i].y = mPosition.y;// *TILE_HEIGHT;
-			interpolateBezierXZ(&p0, &p1, &p2, &p3, i * FX32_ONE / (NR_POINTS - 1), &points[i]);
-		}
+		{*/
+			cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (NR_POINTS - 1), &points[i]);
+		//}
+		points[i].y = map->GetYOnMap(points[i].x, points[i].z);
+		VecFx32 dir;
+		cubicInterpolateDir(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (NR_POINTS - 1), &dir);
+		dir.y = 0;
+		VEC_Normalize(&dir, &dir);
+		normals[i].x = -dir.z;
+		normals[i].y = 0;
+		normals[i].z = dir.x;
 	}
 	G3_PushMtx();
 	{
@@ -118,33 +175,7 @@ void FlexTrack::Render(TerrainManager* terrainManager)
 			fx32 dist = 0;
 			for (int i = 0; i < NR_POINTS; i++)
 			{
-				VecFx32 normal;
-				if (i == 0)
-				{
-					//normal.x = 0;
-					//normal.y = 0;
-					//normal.z = FX32_ONE;
-					normal.x = -posdiff.z;
-					normal.y = 0;
-					normal.z = posdiff.x;
-				}
-				else if (i == (NR_POINTS - 1))
-				{
-					//NOCASH_Printf("%d, %d, %d\n", posdiff.x, posdiff.y, posdiff.z);
-					normal.x = -posdiff.z;
-					normal.y = 0;
-					normal.z = posdiff.x;
-				}
-				else
-				{
-					VecFx32 diff;
-					VEC_Subtract(&points[i], &points[i - 1], &diff);
-					diff.y = 0;
-					VEC_Normalize(&diff, &diff);
-					normal.x = -diff.z;
-					normal.y = 0;
-					normal.z = diff.x;
-				}
+				VecFx32 normal = normals[i];
 				G3_PushMtx();
 				{
 					G3_Translate(points[i].x, points[i].y + (FX32_ONE / 16), points[i].z);
@@ -161,44 +192,51 @@ void FlexTrack::Render(TerrainManager* terrainManager)
 		G3_End();
 	}
 	G3_PopMtx(1);
+}
 
+fx32 FlexTrack::GetTrackLength(int inPoint)
+{
+	//todo
+	VecFx32 diff;
+	VEC_Subtract(&mPoints[0], &mPoints[1], &diff);
+	return VEC_Mag(&diff);
+}
 
-	/*for (int i = 0; i < 5; i++)
+void FlexTrack::CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir, Map* map)
+{
+	if (inPoint == 1)
+		progress = FX32_ONE - progress;
+
+	VecFx32 a = mPoints[0];
+	if (mConnections[0] != NULL)
+		mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
+	VecFx32 b = mPoints[1];
+	if (mConnections[1] != NULL)
+		mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
+	cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, progress, pPos);
+	cubicInterpolateDir(&a, &mPoints[0], &mPoints[1], &b, progress, pDir);
+
+	/*if (inPoint == 1)
 	{
-		G3_PushMtx();
-		{
-			G3_Translate(points[i].x, points[i].y + (FX32_ONE / 16), points[i].z);
-			VecFx32 vtx[4] =
-			{
-				{ -FX32_HALF, 0, -FX32_HALF },
-				{ -FX32_HALF, 0,  FX32_HALF },
-				{ FX32_HALF, 0,  FX32_HALF },
-				{ FX32_HALF, 0, -FX32_HALF }
-			};
-			G3_Begin(GX_BEGIN_QUADS);
-			{
-				G3_Normal(0, GX_FX16_FX10_MAX, 0);
-				G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
-				G3_Vtx(vtx[0].x, vtx[0].y, vtx[0].z);
-				G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
-				G3_Vtx(vtx[1].x, vtx[1].y, vtx[1].z);
-				G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
-				G3_Vtx(vtx[2].x, vtx[2].y, vtx[2].z);
-				G3_TexCoord(0, 0);
-				G3_Vtx(vtx[3].x, vtx[3].y, vtx[3].z);
-			}
-			G3_End();
-		}
-		G3_PopMtx(1);
+		MtxFx33 rot;
+		MTX_RotY33(&rot, FX32_SIN180, FX32_COS180);
+		MTX_MultVec33(pDir, &rot, pDir);
 	}*/
-}
+	if (inPoint == 1)
+	{
+		pDir->x = -pDir->x;
+		pDir->z = -pDir->z;
+	}
 
-fx32 FlexTrack::GetNextDistance(fx32 linDist)
-{
-	return linDist;
-}
+	//pDir->y = 0;
+	VEC_Normalize(pDir, pDir);
 
-void FlexTrack::CalculatePoint(VecFx32* pStartPos, VecFx32* pEndPos, VecFx32* pNextDir, fx32 progress, VecFx32* pPos, VecFx32* pDir)
-{
-	
+	pPos->y = map->GetYOnMap(pPos->x, pPos->z);
+
+	pPos->x += 32 * FX32_ONE;
+	pPos->z += 32 * FX32_ONE;
+
+	//pDir->x = 0;
+	//pDir->y = 0;
+	//pDir->z = FX32_ONE;
 }

@@ -2,8 +2,7 @@
 #define __MAP_H__
 
 class TerrainManager;
-class TrackPiece;
-class FlexTrack;
+class TrackPieceEx;
 class SceneryObject;
 
 /*typedef struct
@@ -28,11 +27,10 @@ class Map
 public:
 	uint8_t* mVtx;
 	VecFx10* mNormals;
-	//tile_t mTiles[64][64];
 private:
 	TerrainManager* mTerrainManager;
 	NNSFndList mTrackList;
-	FlexTrack* mGhostPiece;
+	TrackPieceEx* mGhostPiece;
 	NNSFndList mSceneryList;
 	bool mGridEnabled;
 
@@ -41,17 +39,17 @@ public:
 	Map();
 	~Map();
 
-	void AddTrackPiece(FlexTrack* piece)
+	void AddTrackPiece(TrackPieceEx* piece)
 	{
 		NNS_FndAppendListObject(&mTrackList, piece);
 	}
 
-	void BeginAddTrackPiece(FlexTrack* piece)
+	void BeginAddTrackPiece(TrackPieceEx* piece)
 	{
 		mGhostPiece = piece;
 	}
 
-	void FinishAddTrackPiece(FlexTrack* piece)
+	void FinishAddTrackPiece(TrackPieceEx* piece)
 	{
 		if (mGhostPiece == piece)
 		{
@@ -78,8 +76,15 @@ public:
 	}
 
 	bool ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecFx32* result);
+	fx32 GetYOnMap(fx32 x, fx32 z);
 
 	void TrySnapGhostTrack();
+
+	//tempoarly
+	TrackPieceEx* GetFirstTrackPiece()
+	{
+		return (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, NULL);
+	}
 };
 
 #endif

@@ -7,9 +7,7 @@
 #include "terrain/terrain.h"
 #include "terrain/Map.h"
 #include "terrain/TerrainManager.h"
-#include "terrain/track/TrackPiece.h"
-#include "terrain/track/TrackPieceQuarterCircle2x2.h"
-#include "terrain/track/TrackPieceStraight1x1.h"
+#include "terrain/track/TrackPieceEx.h"
 #include "terrain/track/FlexTrack.h"
 #include "terrain/scenery/RCT2Tree1.h"
 #include "engine/PathWorker.h"
@@ -27,7 +25,7 @@
 
 //static tile_t sDummyMap[64][64];
 //static trackpiece_t sDummyPieces[8];
-static TrackPiece* sDummyPieces[120];//10];
+static TrackPieceEx* sDummyPieces[120];//10];
 
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
@@ -177,7 +175,11 @@ void Game::Initialize(int arg)
 		mMap->mTiles[32 - 9][2 + i].y = 2;
 		mMap->mTiles[32 - 10][2 + i].y = 2;
 	}*/
-	for (int i = 0; i < 120; i++)
+	VecFx32 a = { 64 * FX32_ONE - 32 * FX32_ONE, 0, 2 * FX32_ONE - 32 * FX32_ONE };
+	VecFx32 b = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 10) * FX32_ONE - 32 * FX32_ONE };
+	sDummyPieces[0] = new FlexTrack(&a, &b);
+
+	/*for (int i = 0; i < 120; i++)
 	{
 		sDummyPieces[i] = new TrackPieceStraight1x1(32 + 32, 0, 2 + i, TRACKPIECE_ROT_90);
 		//mMap->AddTrackPiece(new TrackPieceStraight1x1(31 + 32, 0, 2 + i, TRACKPIECE_ROT_90));
@@ -194,19 +196,19 @@ void Game::Initialize(int arg)
 	for (int i = 0; i < 120; i++)
 	{
 		//mMap->AddTrackPiece(sDummyPieces[i]);
-	}
+	}*/
 
 	//mMap->AddSceneryObject(new RCT2Tree1(32 - 1, 1, 32 - 3, 0));
 
 	mTrain.firstPart = &mTrainPart;
 	mTrain.isDriving = FALSE;
-	mTrain.firstPart->pathWorker1 = new PathWorker(sDummyPieces[0], 0);
-	mTrain.firstPart->pathWorker2 = new PathWorker(sDummyPieces[0], FX32_ONE);
+	mTrain.firstPart->pathWorker1 = new PathWorker(sDummyPieces[0], 0, 0, mMap);
+	mTrain.firstPart->pathWorker2 = new PathWorker(sDummyPieces[0], 0, FX32_ONE, mMap);
 	mTrain.firstPart->next = NULL;
 
-	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/train.nsbmd", NULL, FALSE);
+	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL, FALSE);
 	NNS_G3dResDefaultSetup(mLocModel);
-	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/train.nsbtx", NULL, TRUE);
+	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL, TRUE);
 	NNS_G3dResDefaultSetup(mLocTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mLocModel), 0);
 	NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);
@@ -509,6 +511,15 @@ void Game::Render()
 	u16 keyData = PAD_Read();
 
 	HandlePickingLate();
+
+	if (keyData & PAD_BUTTON_B)
+	{
+		mTrain.isDriving = TRUE;
+		mTrain.isDrivingBackwards = FALSE;
+	}
+	else
+		mTrain.isDriving = FALSE;
+
 	/*if (keyData & PAD_BUTTON_A)
 	{
 		mTrain.isDriving = TRUE;
@@ -519,7 +530,7 @@ void Game::Render()
 		mTrain.isDriving = TRUE;
 		mTrain.isDrivingBackwards = TRUE;
 	}
-	else */mTrain.isDriving = FALSE;
+	else *///mTrain.isDriving = FALSE;
 	if (!mKeyTimer)
 	{
 		if (keyData & PAD_BUTTON_X)
@@ -530,6 +541,12 @@ void Game::Render()
 		if (keyData & PAD_BUTTON_Y)
 		{
 			mAntiAliasEnabled = !mAntiAliasEnabled;
+			mKeyTimer = 10;
+		}
+		if (keyData & PAD_BUTTON_SELECT)
+		{
+			mTrain.firstPart->pathWorker1 = new PathWorker(mMap->GetFirstTrackPiece(), 0, 0, mMap);
+			mTrain.firstPart->pathWorker2 = new PathWorker(mMap->GetFirstTrackPiece(), 0, FX32_ONE, mMap);
 			mKeyTimer = 10;
 		}
 	}
@@ -684,13 +701,35 @@ void Game::Render()
 			NNS_G3dGeTranslateVec(&mTrain.firstPart->position);
 			//calculate rotation matrix
 			VecFx32 up = { 0, FX32_ONE, 0 };
-			VecFx32 cam = { 0,0,0 };
 			VecFx32 dir = mTrain.firstPart->direction;
-			dir.z = -dir.z;
 
-			MtxFx43 rot2;
-			MTX_LookAt(&cam, &up, &dir, &rot2);
-			NNS_G3dGeMultMtx43(&rot2);
+			dir.y = -dir.y;
+
+			VecFx32 xaxis;
+			VEC_CrossProduct(&up, &dir, &xaxis);
+			VEC_Normalize(&xaxis, &xaxis);
+
+			VecFx32 yaxis;
+			VEC_CrossProduct(&dir, &xaxis, &yaxis);
+			VEC_Normalize(&yaxis, &yaxis);
+
+			MtxFx33 rot2;
+
+			rot2._00 = xaxis.x;
+			rot2._01 = yaxis.x;
+			rot2._02 = dir.x;
+
+			rot2._10 = xaxis.y;
+			rot2._11 = yaxis.y;
+			rot2._12 = dir.y;
+
+			rot2._20 = xaxis.z;
+			rot2._21 = yaxis.z;
+			rot2._22 = dir.z;
+
+			MTX_Inverse33(&rot2, &rot2);
+
+			NNS_G3dGeMultMtx33(&rot2);
 
 			NNS_G3dGeMtxMode(GX_MTXMODE_POSITION);
 			NNS_G3dGeScale(FX32_ONE / 7, FX32_ONE / 7, FX32_ONE / 7);

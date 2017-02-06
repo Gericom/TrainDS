@@ -32,12 +32,19 @@ void Train_UpdatePos(train_t* train)
 	VecFx32 dir;
 	VEC_Add(&tpos1, &tpos2, &tpos);
 	VEC_Add(&dir1, &dir2, &dir);
+	//dir.y = 0;
+	VEC_Normalize(&dir, &dir);
 	train->firstPart->position.x = (tpos.x + 1) >> 1;
 	train->firstPart->position.y = (tpos.y + 1) >> 1;
 	train->firstPart->position.z = (tpos.z + 1) >> 1;
-	train->firstPart->direction.x = (dir.x + 1) >> 1;
-	train->firstPart->direction.y = (dir.y + 1) >> 1;
-	train->firstPart->direction.z = (dir.z + 1) >> 1;
+	train->firstPart->direction = dir;
+	//train->firstPart->direction.x = (dir.x + 1) >> 1;
+	//train->firstPart->direction.y = (dir.y + 1) >> 1;
+	//train->firstPart->direction.z = (dir.z + 1) >> 1;
+
+
+
+	//ydirection
 }
 
 void Train_UpdateSound(train_t* train, LookAtCamera* camera)//, VecFx32* CamPos, VecFx32* CamDst, VecFx32* CamUp)
@@ -69,7 +76,7 @@ void Train_UpdateSound(train_t* train, LookAtCamera* camera)//, VecFx32* CamPos,
 		if(pan < -128) { pan = -128; }
 		if(pan > 127) { pan = 127; }
 
-		fx32 revdist = (FX_Mul((8 * FX32_ONE) - dist, 512) * 127) >> FX32_SHIFT;
+		fx32 revdist = (FX_Mul((16 * FX32_ONE) - dist, 256) * 127) >> FX32_SHIFT;
 		if(revdist < 0) revdist = 0;
 		if(revdist > 127) revdist = 127;
 

@@ -67,12 +67,6 @@
     <ClCompile Include="src\print.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\terrain\track\TrackPieceQuarterCircle2x2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\terrain\track\TrackPieceStraight1x1.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\terrain\scenery\RCT2Tree1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -153,15 +147,6 @@
     <ClInclude Include="src\engine\Quaternion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\terrain\track\TrackPiece.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\terrain\track\TrackPieceQuarterCircle2x2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\terrain\track\TrackPieceStraight1x1.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\menu\SimpleMenu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -208,6 +193,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\tools\AddTrackTool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\terrain\track\TrackPieceEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

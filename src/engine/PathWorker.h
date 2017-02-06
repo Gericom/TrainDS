@@ -3,12 +3,17 @@
 
 //typedef struct trackpiece_t;
 
-class TrackPiece;
+class Map;
+class TrackPieceEx;
 
 class PathWorker
 {
 private:
-	TrackPiece* mCurPiece;
+	TrackPieceEx* mCurPiece;
+	int mCurInPoint;
+
+	Map* mMap;
+
 	fx32 mCurDistance;
 	VecFx32 mCurPoint;
 	VecFx32 mCurDirection;
@@ -22,7 +27,7 @@ private:
 	void SetupPoint();
 	void CalculatePoint();
 public:
-	PathWorker(TrackPiece* curPiece, fx32 curDistance);
+	PathWorker(TrackPieceEx* curPiece, int curInPoint, fx32 curDistance, Map* map);
 	void Proceed(fx32 distance, VecFx32* point, VecFx32* direction);
 };
 

@@ -1,24 +1,52 @@
 #ifndef __FLEXTRACK_H__
 #define __FLEXTRACK_H__
 
-#include "TrackPiece.h"
+#include "TrackPieceEx.h"
 
-class FlexTrack : public TrackPiece
+class FlexTrack : public TrackPieceEx
 {
 public:
-	mapcoord_t mEndPosition;
+	VecFx32 mPoints[2];
+	TrackPieceEx* mConnections[2];
+	int mConnectionInPoints[2];
 public:
-	FlexTrack(fx32 x1, fx32 y1, fx32 z1, fx32 x2, fx32 y2, fx32 z2)
-		: TrackPiece(x1, y1, z1, 0)
+	FlexTrack(VecFx32* a, VecFx32* b)
 	{ 
-		mEndPosition.x = x2;
-		mEndPosition.y = y2;
-		mEndPosition.z = z2;
+		mPoints[0] = *a;
+		mPoints[1] = *b;
+		mConnections[0] = NULL;
+		mConnections[1] = NULL;
+		mConnectionInPoints[0] = -1;
+		mConnectionInPoints[1] = -1;
 	}
 
-	void Render(TerrainManager* terrainManager);
-	fx32 GetNextDistance(fx32 linDist);
-	void CalculatePoint(VecFx32* pStartPos, VecFx32* pEndPos, VecFx32* pNextDir, fx32 progress, VecFx32* pPos, VecFx32* pDir);
+	int GetNrConnectionPoints()
+	{
+		return 2;
+	}
+
+	void GetConnectionPoint(int id, VecFx32* dst)
+	{
+		*dst = mPoints[id];
+	}
+
+	int GetOutPointId(int inPoint)
+	{
+		if (inPoint == 0)
+			return 1;
+		else
+			return 0;
+	}
+
+	void GetConnnectedTrack(int id, TrackPieceEx* &track, int &inPoint)
+	{
+		track = mConnections[id];
+		inPoint = mConnectionInPoints[id];
+	}
+
+	void Render(Map* map, TerrainManager* terrainManager);
+	fx32 GetTrackLength(int inPoint);
+	void CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir, Map* map);
 };
 
 #endif
