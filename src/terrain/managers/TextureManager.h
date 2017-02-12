@@ -3,7 +3,10 @@
 
 class TextureManager
 {
+private:
 
+public:
+	//int RegisterTexture(
 };
 
 #endif

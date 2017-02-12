@@ -255,6 +255,15 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 			if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
 			mGhostPiece->Render(this, mTerrainManager);
 		}
+		trackPiece = NULL;
+		while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
+		{
+			trackPiece->RenderMarkers(this, mTerrainManager);
+		}
+		if (mGhostPiece != NULL)
+		{
+			mGhostPiece->RenderMarkers(this, mTerrainManager);
+		}
 		SceneryObject* sceneryObject = NULL;
 		while ((sceneryObject = (SceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
 		{
@@ -266,6 +275,9 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 			}
 		}
 	}
+	mTerrainManager->mTrackMarkerRotation += FX32_CONST(2);
+	if (mTerrainManager->mTrackMarkerRotation >= 360 * FX32_ONE)
+		mTerrainManager->mTrackMarkerRotation -= 360 * FX32_ONE;
 }
 
 #include <nitro/itcm_end.h>
@@ -441,14 +453,17 @@ fx32 Map::GetYOnMap(fx32 x, fx32 z)
 }
 
 //We should get rid of the flextrack in this method
-void Map::TrySnapGhostTrack()
+void Map::TrySnapGhostTrack(int inPoint, TrackPieceEx* ignore)
 {
 	if (mGhostPiece == NULL)
 		return;
-	VecFx32 ghostEnd = ((FlexTrack*)mGhostPiece)->mPoints[1];
+	VecFx32 ghostEnd;// = ((FlexTrack*)mGhostPiece)->mPoints[1];
+	mGhostPiece->GetConnectionPoint(inPoint, &ghostEnd);
 	TrackPieceEx* trackPiece = NULL;
 	while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 	{
+		if (trackPiece == ignore)
+			continue;
 		int nrConnectors = trackPiece->GetNrConnectionPoints();
 		for (int i = 0; i < nrConnectors; i++)
 		{
@@ -460,22 +475,10 @@ void Map::TrySnapGhostTrack()
 				FX_Mul(pos.z - ghostEnd.z, pos.z - ghostEnd.z);
 			if (sedist <= FX32_ONE >> 2)
 			{
-				((FlexTrack*)mGhostPiece)->mPoints[1] = pos;
-				((FlexTrack*)mGhostPiece)->mConnections[1] = trackPiece;
-				((FlexTrack*)mGhostPiece)->mConnectionInPoints[1] = i;
-
-				((FlexTrack*)trackPiece)->mConnections[i] = mGhostPiece;
-				((FlexTrack*)trackPiece)->mConnectionInPoints[i] = 1;
+				mGhostPiece->Connect(inPoint, trackPiece, i, true);
 				return;
 			}
 		}
 	}
-	if ((FlexTrack*)((FlexTrack*)mGhostPiece)->mConnections[1] != NULL)
-	{
-		((FlexTrack*)((FlexTrack*)mGhostPiece)->mConnections[1])->mConnections[((FlexTrack*)mGhostPiece)->mConnectionInPoints[1]] = NULL;
-		((FlexTrack*)((FlexTrack*)mGhostPiece)->mConnections[1])->mConnectionInPoints[((FlexTrack*)mGhostPiece)->mConnectionInPoints[1]] = -1;
-	}
-
-	((FlexTrack*)mGhostPiece)->mConnections[1] = NULL;
-	((FlexTrack*)mGhostPiece)->mConnectionInPoints[1] = -1;
+	mGhostPiece->Disconnect(inPoint);
 }

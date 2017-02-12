@@ -44,7 +44,33 @@ public:
 		inPoint = mConnectionInPoints[id];
 	}
 
+	void Connect(int id, TrackPieceEx* track, int inPoint, bool updatePos)
+	{
+		if (updatePos)
+			track->GetConnectionPoint(inPoint, &mPoints[id]);
+		//this is to prevent an endless loop
+		if (mConnections[id] == track && mConnectionInPoints[id] == inPoint)
+			return;
+		Disconnect(id);
+		mConnections[id] = track;
+		mConnectionInPoints[id] = inPoint;
+		mConnections[id]->Connect(inPoint, this, id, false);
+	}
+
+	void Disconnect(int id)
+	{
+		if (!mConnections[id])
+			return;
+		//this is to prevent an endless loop
+		TrackPieceEx* old = mConnections[id];
+		int old2 = mConnectionInPoints[id];
+		mConnections[id] = NULL;
+		mConnectionInPoints[id] = -1;
+		old->Disconnect(old2);
+	}
+
 	void Render(Map* map, TerrainManager* terrainManager);
+	void RenderMarkers(Map* map, TerrainManager* terrainManager);
 	fx32 GetTrackLength(int inPoint);
 	void CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir, Map* map);
 };

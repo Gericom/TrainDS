@@ -23,6 +23,9 @@
 #include "tools/AddTrackTool.h"
 #include "Game.h"
 
+#define SWAP_BUFFERS_SORTMODE	GX_SORTMODE_MANUAL //AUTO
+#define SWAP_BUFFERS_BUFFERMODE	GX_BUFFERMODE_Z
+
 //static tile_t sDummyMap[64][64];
 //static trackpiece_t sDummyPieces[8];
 static TrackPieceEx* sDummyPieces[120];//10];
@@ -90,16 +93,16 @@ void Game::Initialize(int arg)
 	G2_SetBG3Priority(3);
 
 	G3X_SetShading(GX_SHADING_HIGHLIGHT);
-	G3X_AntiAlias(TRUE);
-	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
+	G3X_AntiAlias(true);
+	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
 
-	G3X_AlphaTest(FALSE, 0);                   // AlphaTest OFF
-	G3X_AlphaBlend(TRUE);                      // AlphaTest ON
-	G3X_EdgeMarking(TRUE);
+	G3X_AlphaTest(false, 0);                   // AlphaTest OFF
+	G3X_AlphaBlend(true);                      // AlphaTest ON
+	G3X_EdgeMarking(true);
 
 	G3X_SetEdgeColorTable(&sEdgeMarkingColorTable[0]);
 
-	G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, FALSE);
+	G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, false);
 	G3_ViewPort(0, 0, 255, 191);
 
 	GX_SetDispSelect(GX_DISP_SELECT_SUB_MAIN);
@@ -206,9 +209,9 @@ void Game::Initialize(int arg)
 	mTrain.firstPart->pathWorker2 = new PathWorker(sDummyPieces[0], 0, FX32_ONE, mMap);
 	mTrain.firstPart->next = NULL;
 
-	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL, FALSE);
+	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL, false);
 	NNS_G3dResDefaultSetup(mLocModel);
-	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL, TRUE);
+	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL, true);
 	NNS_G3dResDefaultSetup(mLocTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mLocModel), 0);
 	NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);
@@ -216,7 +219,7 @@ void Game::Initialize(int arg)
 	NNS_G3dMdlSetMdlAmbAll(model, GX_RGB(15, 15, 15));
 	NNS_G3dMdlSetMdlSpecAll(model, GX_RGB(0, 0, 0));
 	NNS_G3dMdlSetMdlEmiAll(model, GX_RGB(0, 0, 0));
-	NNS_G3dMdlSetMdlFogEnableFlagAll(model, TRUE);
+	NNS_G3dMdlSetMdlFogEnableFlagAll(model, true);
 	NNSG3dResTex* tex = NNS_G3dGetTex(mLocTextures);
 	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mLocModel), tex);
 	NNS_G3dRenderObjInit(&mTrain.firstPart->renderObj, model);
@@ -224,7 +227,7 @@ void Game::Initialize(int arg)
 
 	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
-	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL, FALSE);
+	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL, false);
 	MI_CpuClear8(&mFont, sizeof(mFont));
 	NNS_G2dFontInitAuto(&mFont, mFontData);
 
@@ -613,11 +616,11 @@ void Game::Render()
 	if (mPickingState != PICKING_STATE_RENDERING)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
-		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, TRUE);
+		G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, true);
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
-		G3X_EdgeMarking(TRUE);
+		G3X_EdgeMarking(true);
 		G3X_AntiAlias(mAntiAliasEnabled);
-		G3X_SetFog(TRUE, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
+		G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
 		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
@@ -655,13 +658,13 @@ void Game::Render()
 	NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/GX_RGB(31, 31, 31));
 	if (mPickingState == PICKING_STATE_RENDERING)
 	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), false);
+		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), false);
 	}
 	else
 	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(30, 30, 30), GX_RGB(5, 5, 5), FALSE);
-		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(3, 3, 3), GX_RGB(0, 0, 0), FALSE);
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(30, 30, 30), GX_RGB(5, 5, 5), false);
+		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(3, 3, 3), GX_RGB(0, 0, 0), false);
 		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(20, 12, 3), GX_RGB(5, 5, 5), FALSE);
 		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(31, 26, 22), GX_RGB(0, 0, 0), FALSE);
 		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(31, 31, 31), FALSE);
@@ -772,7 +775,7 @@ void Game::Render()
 	NNS_G2dCharCanvasClear(&mCanvas, 0);
 	NNS_G2dTextCanvasDrawTextRect(
 		&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)result2);// (NNSG2dChar*)L"Tri's Test");
-	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_Z);
+	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
 	mSfxManager->Update();
 }
 

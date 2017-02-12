@@ -78,7 +78,7 @@ public:
 	bool ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecFx32* result);
 	fx32 GetYOnMap(fx32 x, fx32 z);
 
-	void TrySnapGhostTrack();
+	void TrySnapGhostTrack(int inPoint, TrackPieceEx* ignore = NULL);
 
 	//tempoarly
 	TrackPieceEx* GetFirstTrackPiece()

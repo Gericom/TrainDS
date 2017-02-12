@@ -185,13 +185,78 @@ void FlexTrack::Render(Map* map, TerrainManager* terrainManager)
 					G3_Vtx(normal.x >> 1, 0, normal.z >> 1);
 				}
 				G3_PopMtx(1);
-				if(i != (NR_POINTS - 1))
+				if (i != (NR_POINTS - 1))
 					dist += VEC_Distance(&points[i], &points[i + 1]);
 			}
 		}
 		G3_End();
 	}
 	G3_PopMtx(1);
+}
+
+void FlexTrack::RenderMarkers(Map* map, TerrainManager* terrainManager)
+{
+	texture_t* tex = terrainManager->GetTrackMarkerTexture();
+	G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
+		GX_TEXGEN_TEXCOORD,    // use texcoord
+		(GXTexSizeS)tex->nitroWidth,        // 16 pixels
+		(GXTexSizeT)tex->nitroHeight,        // 16 pixels
+		GX_TEXREPEAT_NONE,     // no repeat
+		GX_TEXFLIP_NONE,       // no flip
+		GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+		NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+	);
+	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
+	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 60, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+	G3_PushMtx();
+	{
+		G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
+		G3_MtxMode(GX_MTXMODE_TEXTURE);
+		G3_Translate((8 << tex->nitroWidth) * FX32_HALF, (8 << tex->nitroHeight) * FX32_HALF, 0);
+		G3_RotZ(FX_SinIdx(FX_DEG_TO_IDX(terrainManager->mTrackMarkerRotation)), FX_CosIdx(FX_DEG_TO_IDX(terrainManager->mTrackMarkerRotation)));
+		G3_Translate(-(8 << tex->nitroWidth) * FX32_HALF, -(8 << tex->nitroHeight) * FX32_HALF, 0);
+		{
+			MtxFx44 mtx;
+			MTX_Identity44(&mtx);
+			mtx._22 = 16 * FX32_ONE;
+			mtx._33 = 16 * FX32_ONE;
+			G3_MultMtx44(&mtx);
+		}
+		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+
+		G3_Begin(GX_BEGIN_QUADS);
+		{
+			G3_Color(GX_RGB(31, 31, 31));
+			for (int i = 0; i < 2; i++)
+			{
+				G3_PushMtx();
+				{
+					fx32 y = map->GetYOnMap(mPoints[i].x, mPoints[i].z);
+					G3_Translate(mPoints[i].x, y + 2 * (FX32_ONE / 16), mPoints[i].z);
+					//G3_TexCoord(0, 0);
+					//G3_Vtx(-normal.x >> 1, 0, -normal.z >> 1);
+					//G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * dist);
+					//G3_Vtx(normal.x >> 1, 0, normal.z >> 1);
+					G3_TexCoord(0, 0);
+					G3_Vtx(-FX32_HALF, 0, -FX32_HALF);
+					G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(-FX32_HALF, 0, FX32_HALF);
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(FX32_HALF, 0, FX32_HALF);
+					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
+					G3_Vtx(FX32_HALF, 0, -FX32_HALF);
+				}
+				G3_PopMtx(1);
+			}
+		}
+		G3_End();
+
+		G3_MtxMode(GX_MTXMODE_TEXTURE);
+		G3_Identity();
+		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+	}
+	G3_PopMtx(1);
+	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 }
 
 fx32 FlexTrack::GetTrackLength(int inPoint)
