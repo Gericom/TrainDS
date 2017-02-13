@@ -293,7 +293,7 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 2, /*64*//*18*//*24*/31 * 4096, 40960 * 4);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*/31 * 4096, 40960 * 4);
 	setup_normals();
 
 	mSfxManager = new SfxManager();
@@ -595,13 +595,13 @@ void Game::Render()
 	else
 	{
 		if (keyData & PAD_KEY_LEFT)
-			mCamera->MoveX(-FX32_ONE / 24);
+			mCamera->MoveX(-FX32_ONE / 50);// 24);
 		else if (keyData & PAD_KEY_RIGHT)
-			mCamera->MoveX(FX32_ONE / 24);
+			mCamera->MoveX(FX32_ONE / 50);// 24);
 		if (keyData & PAD_KEY_UP)
-			mCamera->MoveZ(FX32_ONE / 24);
+			mCamera->MoveZ(FX32_ONE / 50);// 24);
 		else if (keyData & PAD_KEY_DOWN)
-			mCamera->MoveZ(-FX32_ONE / 24);
+			mCamera->MoveZ(-FX32_ONE / 50);// 24);
 		if (keyData & PAD_BUTTON_L)
 			camRot.x -= FX32_ONE >> 1;
 		else if (keyData & PAD_BUTTON_R)
@@ -663,8 +663,8 @@ void Game::Render()
 	}
 	else
 	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(30, 30, 30), GX_RGB(5, 5, 5), false);
-		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(3, 3, 3), GX_RGB(0, 0, 0), false);
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)*/GX_RGB(8, 8, 8), false);
+		NNS_G3dGlbMaterialColorSpecEmi(/*GX_RGB(3, 3, 3)*/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), false);
 		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(20, 12, 3), GX_RGB(5, 5, 5), FALSE);
 		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(31, 26, 22), GX_RGB(0, 0, 0), FALSE);
 		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(31, 31, 31), FALSE);
@@ -735,7 +735,7 @@ void Game::Render()
 			NNS_G3dGeMultMtx33(&rot2);
 
 			NNS_G3dGeMtxMode(GX_MTXMODE_POSITION);
-			NNS_G3dGeScale(FX32_ONE / 7, FX32_ONE / 7, FX32_ONE / 7);
+			NNS_G3dGeScale(FX32_ONE / 13, FX32_ONE / 13, FX32_ONE / 13);
 			NNS_G3dGeMtxMode(GX_MTXMODE_POSITION_VECTOR);
 
 			if (mPickingState == PICKING_STATE_RENDERING)

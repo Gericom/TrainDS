@@ -15,13 +15,13 @@ void Train_UpdatePos(train_t* train)
 	VecFx32 dir2;
 	if (train->isDriving && !train->isDrivingBackwards)
 	{
-		train->firstPart->pathWorker1->Proceed(FX32_ONE / 24, &tpos1, &dir1);
-		train->firstPart->pathWorker2->Proceed(FX32_ONE / 24, &tpos2, &dir2);
+		train->firstPart->pathWorker1->Proceed(FX32_ONE / 60/*24*/, &tpos1, &dir1);
+		train->firstPart->pathWorker2->Proceed(FX32_ONE / 60, &tpos2, &dir2);
 	}
 	else if (train->isDriving && train->isDrivingBackwards)
 	{
-		train->firstPart->pathWorker1->Proceed(-FX32_ONE / 24, &tpos1, &dir1);
-		train->firstPart->pathWorker2->Proceed(-FX32_ONE / 24, &tpos2, &dir2);
+		train->firstPart->pathWorker1->Proceed(-FX32_ONE / 60, &tpos1, &dir1);
+		train->firstPart->pathWorker2->Proceed(-FX32_ONE / 60, &tpos2, &dir2);
 	}
 	else
 	{
@@ -32,7 +32,7 @@ void Train_UpdatePos(train_t* train)
 	VecFx32 dir;
 	VEC_Add(&tpos1, &tpos2, &tpos);
 	VEC_Add(&dir1, &dir2, &dir);
-	//dir.y = 0;
+	dir.y = 0;
 	VEC_Normalize(&dir, &dir);
 	train->firstPart->position.x = (tpos.x + 1) >> 1;
 	train->firstPart->position.y = (tpos.y + 1) >> 1;

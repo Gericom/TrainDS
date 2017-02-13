@@ -8,8 +8,8 @@
 
 void FreeRoamCamera::Apply()
 {
-	mPosition.x = FX_Mul(4 * mRotXCos, mRotYCos) + mDestination.x;
-	mPosition.y = (4 * mRotYSin) + mDestination.y;
-	mPosition.z = FX_Mul(4 * mRotXSin, mRotYCos) + mDestination.z;
+	mPosition.x = FX_Mul(2 * mRotXCos, mRotYCos) + mDestination.x;
+	mPosition.y = (2 * mRotYSin) + mDestination.y;
+	mPosition.z = FX_Mul(2 * mRotXSin, mRotYCos) + mDestination.z;
 	LookAtCamera::Apply();
 }

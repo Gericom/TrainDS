@@ -21,7 +21,7 @@ void PathWorker::CalculatePoint()
 
 void PathWorker::SetupPoint()
 {
-	mNextDistance = mCurPiece->GetTrackLength(mCurInPoint);
+	mNextDistance = mCurPiece->GetTrackLength(mMap, mCurInPoint);
 	/*fx32 xa = 0, za = 0;
 	TrackPiece* a = mCurPiece;
 	if(a->mRot == TRACKPIECE_ROT_0) za = FX32_HALF;

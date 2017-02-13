@@ -16,7 +16,7 @@ public:
 
 	virtual void Render(Map* map, TerrainManager* terrainManager) = 0;
 	virtual void RenderMarkers(Map* map, TerrainManager* terrainManager) = 0;
-	virtual fx32 GetTrackLength(int inPoint) = 0;
+	virtual fx32 GetTrackLength(Map* map, int inPoint) = 0;
 	virtual void CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir, Map* map) = 0;
 };
 

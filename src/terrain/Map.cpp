@@ -137,8 +137,8 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 						{
 							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_DIF_AMB, G3OP_SPE_EMI, G3OP_POLYGON_ATTR, G3OP_NOP);
 							{
-								reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(30, 30, 30), GX_RGB(5, 5, 5), FALSE);
-								reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(GX_RGB(3, 3, 3), GX_RGB(0, 0, 0), FALSE);
+								reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)*/GX_RGB(8, 8, 8), FALSE);
+								reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(/*GX_RGB(3, 3, 3)*/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), FALSE);
 								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 							}
 						}
@@ -473,7 +473,7 @@ void Map::TrySnapGhostTrack(int inPoint, TrackPieceEx* ignore)
 				FX_Mul(pos.x - ghostEnd.x, pos.x - ghostEnd.x) +
 				FX_Mul(pos.y - ghostEnd.y, pos.y - ghostEnd.y) +
 				FX_Mul(pos.z - ghostEnd.z, pos.z - ghostEnd.z);
-			if (sedist <= FX32_ONE >> 2)
+			if (sedist <= FX32_ONE / 16)//>> 2)
 			{
 				mGhostPiece->Connect(inPoint, trackPiece, i, true);
 				return;
