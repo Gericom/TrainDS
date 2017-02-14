@@ -30,7 +30,9 @@ Map::~Map()
 	delete mTerrainManager;
 }
 
-#define Y_OFFSET 40 //100
+#define Y_SCALE 512 //128
+
+#define Y_OFFSET 128 //40 //100
 
 #include <nitro/itcm_begin.h>
 
@@ -40,10 +42,10 @@ void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
 	{
 		for (int x = xstart; x < xend && x < 127; x++)
 		{
-			fx32 hl = (mVtx[y * 128 + x - 1] - Y_OFFSET) * 128; //TERRAIN(t, x - 1, z);
-			fx32 hr = (mVtx[y * 128 + x + 1] - Y_OFFSET) * 128; //TERRAIN(t, x + 1, z);
-			fx32 hd = (mVtx[(y + 1) * 128 + x] - Y_OFFSET) * 128; //TERRAIN(t, x, z + 1); /* Terrain expands towards -Z /
-			fx32 hu = (mVtx[(y - 1) * 128 + x] - Y_OFFSET) * 128; //TERRAIN(t, x, z - 1);
+			fx32 hl = (mVtx[y * 128 + x - 1] - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x - 1, z);
+			fx32 hr = (mVtx[y * 128 + x + 1] - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x + 1, z);
+			fx32 hd = (mVtx[(y + 1) * 128 + x] - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x, z + 1); /* Terrain expands towards -Z /
+			fx32 hu = (mVtx[(y - 1) * 128 + x] - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x, z - 1);
 			VecFx32 norm = { hl - hr, 2 * FX32_ONE, hd - hu };
 
 			VEC_Normalize(&norm, &norm);
@@ -76,7 +78,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 	G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 	G3_PushMtx();
 	{
-		G3_Scale(FX32_ONE, 128 * FX32_ONE / 64, FX32_ONE);
+		G3_Scale(FX32_ONE, Y_SCALE * FX32_ONE / 64, FX32_ONE);
 		int i = 0;
 		for (int y = zstart; y < zend && y < 127; y++)
 		{
@@ -311,25 +313,25 @@ bool Map::ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecF
 	VecFx32 a =
 	{
 		mapX * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[mapY * 128 + mapX] - Y_OFFSET) * 128,
+		(mVtx[mapY * 128 + mapX] - Y_OFFSET) * Y_SCALE,
 		mapY * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 b =
 	{
 		mapX * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[(mapY + 1) * 128 + mapX] - Y_OFFSET) * 128,
+		(mVtx[(mapY + 1) * 128 + mapX] - Y_OFFSET) * Y_SCALE,
 		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 c =
 	{
 		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[mapY * 128 + mapX + 1] - Y_OFFSET) * 128,
+		(mVtx[mapY * 128 + mapX + 1] - Y_OFFSET) * Y_SCALE,
 		mapY * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 d =
 	{
 		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[(mapY + 1) * 128 + mapX + 1] - Y_OFFSET) * 128,
+		(mVtx[(mapY + 1) * 128 + mapX + 1] - Y_OFFSET) * Y_SCALE,
 		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
 	};
 
@@ -395,25 +397,25 @@ fx32 Map::GetYOnMap(fx32 x, fx32 z)
 	VecFx32 a =
 	{
 		mapX * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[mapY * 128 + mapX] - Y_OFFSET) * 128,
+		(mVtx[mapY * 128 + mapX] - Y_OFFSET) * Y_SCALE,
 		mapY * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 b =
 	{
 		mapX * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[(mapY + 1) * 128 + mapX] - Y_OFFSET) * 128,
+		(mVtx[(mapY + 1) * 128 + mapX] - Y_OFFSET) * Y_SCALE,
 		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 c =
 	{
 		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[mapY * 128 + mapX + 1] - Y_OFFSET) * 128,
+		(mVtx[mapY * 128 + mapX + 1] - Y_OFFSET) * Y_SCALE,
 		mapY * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 d =
 	{
 		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[(mapY + 1) * 128 + mapX + 1] - Y_OFFSET) * 128,
+		(mVtx[(mapY + 1) * 128 + mapX + 1] - Y_OFFSET) * Y_SCALE,
 		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 ab, ac, abXac;
