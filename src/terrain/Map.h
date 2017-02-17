@@ -26,6 +26,7 @@ class Map
 {
 public:
 	uint8_t* mVtx;
+	uint8_t* mTextures;
 	VecFx10* mNormals;
 private:
 	TerrainManager* mTerrainManager;

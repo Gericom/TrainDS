@@ -79,6 +79,8 @@ void Game::Initialize(int arg)
 
 	//GX_SetBankForLCDC(GX_VRAM_LCDC_C);
 
+	GX_SetBankForLCDC(GX_VRAM_LCDC_D);
+
 	GX_SetBankForOBJ(GX_VRAM_OBJ_16_F);
 
 	G3X_Init();
@@ -309,6 +311,12 @@ void Game::RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg)
 	mPickingRequested = true;
 }
 
+void Game::HandlePickingVBlank()
+{
+	if (mPickingState == PICKING_STATE_CAPTURING)
+		mPickingResult = ((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256];
+}
+
 void Game::HandlePickingEarly()
 {
 	if (mPickingState == PICKING_STATE_RENDERING)
@@ -317,7 +325,7 @@ void Game::HandlePickingEarly()
 	}
 	else if (mPickingState == PICKING_STATE_CAPTURING)
 	{
-		if (mPickingCallback) mPickingCallback(mPickingCallbackArg, ((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256]);
+		if (mPickingCallback) mPickingCallback(mPickingCallbackArg, mPickingResult);//((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256]);
 		mPickingCallback = NULL;
 		mPickingState = PICKING_STATE_READY;
 	}
@@ -663,7 +671,7 @@ void Game::Render()
 	}
 	else
 	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)*/GX_RGB(8, 8, 8), false);
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)*/GX_RGB(10, 10, 10), false);
 		NNS_G3dGlbMaterialColorSpecEmi(/*GX_RGB(3, 3, 3)*/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), false);
 		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(20, 12, 3), GX_RGB(5, 5, 5), FALSE);
 		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(31, 26, 22), GX_RGB(0, 0, 0), FALSE);
@@ -781,21 +789,21 @@ void Game::Render()
 
 void Game::VBlank()
 {
+	//handle it as early as possible to prevent problems with the shared vram d
+	HandlePickingVBlank();
 	if (mPickingState == PICKING_STATE_RENDERING)
 	{
-		GX_SetBankForBG(GX_VRAM_BG_128_C);
-		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
+		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
 		GX_SetBankForLCDC(GX_VRAM_LCDC_D);
 		//Capture the picking data
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 	}
 	else
 	{
-		GX_SetBankForLCDC(GX_VRAM_LCDC_C);
+		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_3D);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
 		//capture to be able to react as fast as possible on a touch (we use this image to hide the picking)
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_C_0x00000, 16, 0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 	}
 	//mUIManager->VBlankProc();
 }

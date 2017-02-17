@@ -77,6 +77,9 @@ private:
 	void OnPenMove(int x, int y);
 	void OnPenUp(int x, int y);
 
+	picking_result_t mPickingResult;
+
+	void HandlePickingVBlank();
 	void HandlePickingEarly();
 	void HandlePickingLate();
 public:
