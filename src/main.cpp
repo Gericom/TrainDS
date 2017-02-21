@@ -190,6 +190,7 @@ static void Init()
 	OS_SetUserExceptionHandler(ExceptionHandler, NULL);
 	OS_InitTick();
 	OS_InitAlarm();//for frame interrupt
+	OS_InitVAlarm();
 	OS_InitThread();
 	TP_Init();
 	TP_GetUserInfo(&calibrate);

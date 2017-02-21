@@ -30,6 +30,8 @@
 //static trackpiece_t sDummyPieces[8];
 static TrackPieceEx* sDummyPieces[120];//10];
 
+uint8_t sVramCTexData[128 * 1024];
+
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
 	GX_RGB(31, 27, 12),
@@ -85,7 +87,7 @@ void Game::Initialize(int arg)
 
 	G3X_Init();
 	G3X_InitMtxStack();
-	GX_SetBankForTex(GX_VRAM_TEX_01_AB);
+	GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
 	GX_SetBankForTexPltt(GX_VRAM_TEXPLTT_0123_E);
 
 	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_3, GX_BG0_AS_3D);
@@ -300,6 +302,25 @@ void Game::Initialize(int arg)
 
 	mSfxManager = new SfxManager();
 	mDragTool = new AddTrackTool(this);
+
+	OS_CreateVAlarm(&mVRAMCopyVAlarm);
+	OS_SetPeriodicVAlarm(&mVRAMCopyVAlarm, 192 - 48, 5, Game::OnVRAMCopyVAlarm, this);
+}
+
+static int mVRAMReadyLine;
+
+static void OnVRAMCopyComplete(void* arg)
+{
+	mVRAMReadyLine = GX_GetVCount();
+	GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
+	//OS_Printf("%d", vcount);
+	//NOCASH_Printf("%d", vcount);
+}
+
+void Game::OnVRAMCopyVAlarm()
+{
+	GX_SetBankForLCDC(GX_VRAM_LCDC_C | GX_VRAM_LCDC_D);
+	MI_DmaCopy32Async(0, &sVramCTexData, (void*)HW_LCDC_VRAM_C, 128 * 1024, OnVRAMCopyComplete, NULL);
 }
 
 void Game::RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg)
@@ -771,12 +792,12 @@ void Game::Render()
 	}
 	G3_PopMtx(1);
 	mUIManager->Render();
-	char result[32];
-	MI_CpuClear8(result, 32);
-	OS_SPrintf(result, "%d; %d", G3X_GetVtxListRamCount(), G3X_GetPolygonListRamCount());
-	u16 result2[32];
-	MI_CpuClear8(result2, 64);
-	for (int i = 0; i < 32; i++)
+	char result[64];
+	MI_CpuClear8(result, sizeof(result));
+	OS_SPrintf(result, "%d;%d;%d", G3X_GetVtxListRamCount(), G3X_GetPolygonListRamCount(), mVRAMReadyLine);
+	u16 result2[64];
+	MI_CpuClear8(result2, sizeof(result2));
+	for (int i = 0; i < sizeof(result); i++)
 	{
 		result2[i] = result[i];
 	}
@@ -794,7 +815,6 @@ void Game::VBlank()
 	if (mPickingState == PICKING_STATE_RENDERING)
 	{
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
-		GX_SetBankForLCDC(GX_VRAM_LCDC_D);
 		//Capture the picking data
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 	}
@@ -811,4 +831,5 @@ void Game::VBlank()
 void Game::Finalize()
 {
 	//We don't have to free resources here, because that's done by using the group id
+	OS_CancelVAlarm(&mVRAMCopyVAlarm);
 }

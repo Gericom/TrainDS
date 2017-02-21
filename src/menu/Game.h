@@ -71,6 +71,8 @@ private:
 
 	DragTool* mDragTool;
 
+	OSVAlarm mVRAMCopyVAlarm;
+
 	//void Pick(int x, int y, PickingCallbackFunc callback);
 
 	void OnPenDown(int x, int y);
@@ -88,12 +90,19 @@ public:
 	Map* mMap;
 	SfxManager* mSfxManager;
 
+	void OnVRAMCopyVAlarm();
+
 public:
 	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mAntiAliasEnabled(TRUE), mKeyTimer(0), 
 		mPickingState(PICKING_STATE_READY), mPickingRequested(false) 
 	{ }
 
 	void Initialize(int arg);
+
+	static void OnVRAMCopyVAlarm(void* arg)
+	{
+		((Game*)arg)->OnVRAMCopyVAlarm();
+	}
 
 	static void OnPenDown(Menu* context, int x, int y)
 	{
