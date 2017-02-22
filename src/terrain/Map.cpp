@@ -9,6 +9,7 @@
 #include "terrain/track/FlexTrack.h"
 #include "terrain/scenery/SceneryObject.h"
 #include "terrain/scenery/RCT2Tree1.h"
+#include "managers/TerrainTextureManager.h"
 #include "Map.h"
 
 Map::Map()
@@ -20,60 +21,7 @@ Map::Map()
 	mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);
 	mTextures = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.tmap", NULL, false);
 
-	mTexArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.carc", NULL, FALSE);
-	NNS_FndMountArchive(&mTexArc, "mtx", mTexArcData);
-
-	int i = 0;
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/grass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/grass_b.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/grass_stripes.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/dry_grass_tufts.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/dry_longgrass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/dry_longgrass_b.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/dry_longgrass_tufts.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/gravel_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/gravel_b.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/concrete_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/concrete_overgrown.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/mud_overgrown.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/grass_a1.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/gravel_grass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/dry_goldgrass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/dry_longgrass_stripes.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/dry_greygrass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/grass_wlonggrass.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/gravel_c.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/mud_darkovergrown.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/grass_a3.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/graystone_crack.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/graystone.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/grass_lavender.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/grass_a2.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/grass_a_b.ntft");
-
-	for (int j = 0; j < i; j++)
-	{
-		for (int k = 0; k < 16 * 16; k++)
-		{
-			mTextureDatas[j][k] &= 0x7FFF;
-		}
-	}
-
-	//load rgb332 palette
-	uint16_t* rgb332pal = (uint16_t*)NNS_FndAllocFromExpHeapEx(gHeapHandle, 256 * 2, -32);
-	for (int i = 0; i < 255; i++)
-	{
-		int r = i & 0x7;
-		r = (r * 31 + 4) / 7;
-		int g = (i >> 3) & 0x7;
-		g = (g * 31 + 4) / 7;
-		int b = (i >> 6) & 0x3;
-		b = (b * 31 + 2) / 3;
-		rgb332pal[i] = GX_RGB(r, g, b);
-	}
-	mRGB332PlttKey = NNS_GfdAllocPlttVram(256 * 2, FALSE, 0);
-	Util_LoadPaletteWithKey(mRGB332PlttKey, rgb332pal);
-	NNS_FndFreeToExpHeap(gHeapHandle, rgb332pal);
+	mTerrainTextureManager = new TerrainTextureManager();
 
 	//mVtx = new uint8_t[128 * 128];
 	//MI_CpuFillFast(mVtx, 0x80808080, 128 * 128);
@@ -145,8 +93,6 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 		NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
 	);
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);*/
-	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(mRGB332PlttKey), GX_TEXFMT_PLTT256);
-	int texOffset = 0;
 	G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 	G3_PushMtx();
 	{
@@ -176,28 +122,14 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 					}*/
 					else if (mGridEnabled)
 						G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-
-					/*tex = mTerrainManager->GetTerrainTexture(mTextures[y * 128 + x]);
-					G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
-						GX_TEXGEN_NONE,    // use texcoord
-						(GXTexSizeS)tex->nitroWidth,        // 16 pixels
-						(GXTexSizeT)tex->nitroHeight,        // 16 pixels
-						GX_TEXREPEAT_ST,     // no repeat
-						GX_TEXFLIP_NONE,       // no flip
-						GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-						NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-					);
-					G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);*/
 					
 					if (!picking)
 					{
-						//MI_CpuCopyFast(mTextureDatas[mTextures[y * 128 + x]], &sVramCTexData[texOffset], 16 * 16 * 2);
-						gen_terrain_texture(
-							mTextureDatas[mTextures[y * 128 + x]],
-							mTextureDatas[mTextures[y * 128 + x + 1]],
-							mTextureDatas[mTextures[(y + 1) * 128 + x]],
-							mTextureDatas[mTextures[(y + 1) * 128 + x + 1]],
-							(uint16_t*)&sVramCTexData[texOffset]);
+						uint32_t texOffset = mTerrainTextureManager->GetTextureAddress(
+							mTextures[y * 128 + x],
+							mTextures[y * 128 + x + 1],
+							mTextures[(y + 1) * 128 + x],
+							mTextures[(y + 1) * 128 + x + 1]);
 						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
 							GX_TEXGEN_NONE,    // use texcoord
 							GX_TEXSIZE_S16,        // 16 pixels
@@ -205,13 +137,8 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 							GX_TEXREPEAT_ST,     // no repeat
 							GX_TEXFLIP_NONE,       // no flip
 							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-							256 * 1024 + texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+							texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
 						);
-						texOffset += 16 * 16 *2;
-						if (texOffset >= 128 * 1024)
-						{
-							while (1);
-						}
 					}
 
 /*#include <nitro/itcm_end.h>
@@ -315,6 +242,21 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 						);
 						G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 
+						/*uint32_t texOffset = mTerrainTextureManager->GetTextureAddress(
+							mTextures[y * 128 + x],
+							mTextures[y * 128 + x + 2],
+							mTextures[(y + 2) * 128 + x],
+							mTextures[(y + 2) * 128 + x + 2]);
+						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
+							GX_TEXGEN_NONE,    // use texcoord
+							GX_TEXSIZE_S16,        // 16 pixels
+							GX_TEXSIZE_T16,        // 16 pixels
+							GX_TEXREPEAT_ST,     // no repeat
+							GX_TEXFLIP_NONE,       // no flip
+							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+							texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+						);*/
+
 /*#include <nitro/itcm_end.h>
 						static u32 commandList2[] =
 						{
@@ -402,6 +344,20 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 							NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
 						);
 						G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
+						/*uint32_t texOffset = mTerrainTextureManager->GetTextureAddress(
+							mTextures[y * 128 + x],
+							mTextures[y * 128 + x + 4],
+							mTextures[(y + 4) * 128 + x],
+							mTextures[(y + 4) * 128 + x + 4]);
+						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
+							GX_TEXGEN_NONE,    // use texcoord
+							GX_TEXSIZE_S16,        // 16 pixels
+							GX_TEXSIZE_T16,        // 16 pixels
+							GX_TEXREPEAT_ST,     // no repeat
+							GX_TEXFLIP_NONE,       // no flip
+							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+							texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+						);*/
 
 						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
 						{

@@ -92,6 +92,9 @@
     <ClCompile Include="src\tools\AddTrackTool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\util.h">
@@ -197,6 +200,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\terrain\track\TrackPieceEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\terrain\managers\TerrainTextureManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

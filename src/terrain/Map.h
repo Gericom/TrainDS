@@ -4,6 +4,7 @@
 class TerrainManager;
 class TrackPieceEx;
 class SceneryObject;
+class TerrainTextureManager;
 
 /*typedef struct
 {
@@ -29,18 +30,13 @@ public:
 	uint8_t* mTextures;
 	VecFx10* mNormals;
 
-	uint16_t* mTextureDatas[26];
+	TerrainTextureManager* mTerrainTextureManager;
 private:
 	TerrainManager* mTerrainManager;
 	NNSFndList mTrackList;
 	TrackPieceEx* mGhostPiece;
 	NNSFndList mSceneryList;
 	bool mGridEnabled;
-
-	void* mTexArcData;
-	NNSFndArchive mTexArc;
-
-	NNSGfdPlttKey mRGB332PlttKey;
 
 	void RecalculateNormals(int xstart, int xend, int zstart, int zend);
 public:

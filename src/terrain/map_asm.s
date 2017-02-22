@@ -90,6 +90,24 @@ render_tile:
 	ldmfd sp!, {r4-r11}
 	bx lr
 
+.section .dtcm
+
+gen_terrain_texture_coeftable:
+ .set y, 0
+ .rept 16
+	.set x, 0
+	.rept 16
+		.byte x * y
+		.byte (15 - x) * y
+		.byte (15 - x) * (15 - y)
+		.byte x * (15 - y)
+		.set x, x + 1
+	.endr
+	.set y, y + 1
+ .endr
+
+.section .itcm
+
 //((15 - x)*(15 - y))*tl + (x*(15 - y))*tr + (y*(15 - x))*bl + (x*y)*br
 
 //void gen_terrain_texture(u16* tl, u16* tr, u16* bl, u16* br, u16* dst)
@@ -98,18 +116,19 @@ gen_terrain_texture:
 arg_dst	= 4 * 9
 	stmfd sp!, {r4-r11,lr}
 	ldr r4, [sp, #arg_dst]	//dst
-	//maybe I should combine those into one register
-	mov r6, #0	//y
+	ldr r5,= gen_terrain_texture_coeftable
+	mov r6, #256
 	gen_terrain_texture_yloop:
 	//{
-		mov r5, #0	//x
 		//gen_terrain_texture_xloop:
 		.rept 16
 		//{
 			//(x*y)*br
-			smulbb r7, r5, r6
+			ldr lr, [r5], #4
 
 			ldrh r8, [r3], #2
+
+			and r7, lr, #0xFF
 
 			and r12, r8, #0x1F
 			smulbb r9, r12, r7
@@ -122,10 +141,10 @@ arg_dst	= 4 * 9
 			smulbb r11, r8, r7
 
 			//(y*(15 - x))*bl
-			rsb lr, r5, #15
-			smulbb r7, lr, r6
-
 			ldrh r8, [r2], #2
+
+			mov r7, lr, lsr #8
+			and r7, r7, #0xFF
 
 			and r12, r8, #0x1F
 			smlabb r9, r12, r7, r9
@@ -138,37 +157,38 @@ arg_dst	= 4 * 9
 			smlabb r11, r8, r7, r11
 
 			//((15 - x)*(15 - y))*tl
-			rsb r12, r6, #15
-			smulbb r7, lr, r12
-
 			ldrh r8, [r0], #2
 
-			and lr, r8, #0x1F
-			smlabb r9, lr, r7, r9
+			and r7, lr, #0xFF0000
+
+			and r12, r8, #0x1F
+			smlabt r9, r12, r7, r9
 
 			mov r8, r8, lsr #5
-			and lr, r8, #0x1F
-			smlabb r10, lr, r7, r10
+			and r12, r8, #0x1F
+			smlabt r10, r12, r7, r10
 
 			mov r8, r8, lsr #5
-			smlabb r11, r8, r7, r11
+			smlabt r11, r8, r7, r11
 
 			//(x*(15 - y))*tr
-			smulbb r7, r5, r12
-
 			ldrh r8, [r1], #2
 
-			and lr, r8, #0x1F
-			smlabb r9, lr, r7, r9
+			mov r7, lr, lsr #24
+
+			and r12, r8, #0x1F
+			smlabb r9, r12, r7, r9
 
 			mov r8, r8, lsr #5
-			and lr, r8, #0x1F
-			smlabb r10, lr, r7, r10
+			and r12, r8, #0x1F
+			smlabb r10, r12, r7, r10
+
+			//prevent interlock
+			ldr lr,= 291
 
 			mov r8, r8, lsr #5
 			smlabb r11, r8, r7, r11
 
-			ldr lr,= 291
 			smulwb r9, r9, lr
 			smulwb r10, r10, lr
 			smulwb r11, r11, lr
@@ -177,14 +197,9 @@ arg_dst	= 4 * 9
 			orr r9, r9, r11, lsl #10
 			orr r9, r9, #0x8000
 			strh r9, [r4], #2
-
-			add r5, r5, #1
-			//cmp r5, #16
-			//blt gen_terrain_texture_xloop
 		//}
 		.endr
-		add r6, r6, #1
-		cmp r6, #16
-		blt gen_terrain_texture_yloop
+		subs r6, r6, #16
+		bgt gen_terrain_texture_yloop
 	//}
 	ldmfd sp!, {r4-r11,pc}

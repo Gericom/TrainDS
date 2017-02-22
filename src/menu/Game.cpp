@@ -10,6 +10,7 @@
 #include "terrain/track/TrackPieceEx.h"
 #include "terrain/track/FlexTrack.h"
 #include "terrain/scenery/RCT2Tree1.h"
+#include "terrain/managers/TerrainTextureManager.h"
 #include "engine/PathWorker.h"
 #include "vehicles/train.h"
 #include "ui/UIManager.h"
@@ -29,8 +30,6 @@
 //static tile_t sDummyMap[64][64];
 //static trackpiece_t sDummyPieces[8];
 static TrackPieceEx* sDummyPieces[120];//10];
-
-uint8_t sVramCTexData[128 * 1024];
 
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
@@ -309,18 +308,9 @@ void Game::Initialize(int arg)
 
 static int mVRAMReadyLine;
 
-static void OnVRAMCopyComplete(void* arg)
-{
-	mVRAMReadyLine = GX_GetVCount();
-	GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
-	//OS_Printf("%d", vcount);
-	//NOCASH_Printf("%d", vcount);
-}
-
 void Game::OnVRAMCopyVAlarm()
 {
-	GX_SetBankForLCDC(GX_VRAM_LCDC_C | GX_VRAM_LCDC_D);
-	MI_DmaCopy32Async(0, &sVramCTexData, (void*)HW_LCDC_VRAM_C, 128 * 1024, OnVRAMCopyComplete, NULL);
+	mMap->mTerrainTextureManager->UpdateVramC();
 }
 
 void Game::RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg)
