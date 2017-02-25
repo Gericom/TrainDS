@@ -93,6 +93,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 		NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
 	);
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);*/
+
 	G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 	G3_PushMtx();
 	{
@@ -131,7 +132,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 							mTextures[(y + 1) * 128 + x],
 							mTextures[(y + 1) * 128 + x + 1]);
 						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
-							GX_TEXGEN_NONE,    // use texcoord
+							GX_TEXGEN_TEXCOORD,    // use texcoord
 							GX_TEXSIZE_S16,        // 16 pixels
 							GX_TEXSIZE_T16,        // 16 pixels
 							GX_TEXREPEAT_ST,     // no repeat
@@ -230,9 +231,9 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 					fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_y, diff_y) + FX_Mul(diff_z, diff_z);
 					if (dist >= (6 * 6 * FX32_ONE) && dist <= (14 * 14 * FX32_ONE))
 					{
-						tex = mTerrainManager->GetTerrainTexture(mTextures[y * 128 + x]);
+						tex = mTerrainManager->GetTerrainTexture(mTextures[(y + 1) * 128 + x + 1]);
 						G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
-							GX_TEXGEN_NONE,    // use texcoord
+							GX_TEXGEN_TEXCOORD,    // use texcoord
 							(GXTexSizeS)tex->nitroWidth,        // 16 pixels
 							(GXTexSizeT)tex->nitroHeight,        // 16 pixels
 							GX_TEXREPEAT_ST,     // no repeat
@@ -333,9 +334,9 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 					fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_y, diff_y) + FX_Mul(diff_z, diff_z);
 					if (dist >= (10 * 10 * FX32_ONE))
 					{
-						tex = mTerrainManager->GetTerrainTexture(mTextures[y * 128 + x]);
+						tex = mTerrainManager->GetTerrainTexture(mTextures[(y + 2) * 128 + x + 2]);
 						G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
-							GX_TEXGEN_NONE,    // use texcoord
+							GX_TEXGEN_TEXCOORD,    // use texcoord
 							(GXTexSizeS)tex->nitroWidth,        // 16 pixels
 							(GXTexSizeT)tex->nitroHeight,        // 16 pixels
 							GX_TEXREPEAT_ST,     // no repeat

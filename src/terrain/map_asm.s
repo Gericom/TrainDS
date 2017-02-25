@@ -115,7 +115,7 @@ gen_terrain_texture_coeftable:
 gen_terrain_texture:
 arg_dst	= 4 * 9
 	stmfd sp!, {r4-r11,lr}
-	ldr r4, [sp, #arg_dst]	//dst
+	//ldr r4, [sp, #arg_dst]	//dst
 	ldr r5,= gen_terrain_texture_coeftable
 	mov r6, #256
 	gen_terrain_texture_yloop:
