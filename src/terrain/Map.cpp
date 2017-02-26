@@ -23,6 +23,9 @@ Map::Map()
 
 	mTerrainTextureManager = new TerrainTextureManager();
 
+	//mLodLevels = new uint8_t[128 * 128];
+	//MI_CpuFillFast(mLodLevels, 0xFFFFFFFF, 128 * 128);
+
 	//mVtx = new uint8_t[128 * 128];
 	//MI_CpuFillFast(mVtx, 0x80808080, 128 * 128);
 	mNormals = new VecFx10[128 * 128];
@@ -66,21 +69,9 @@ void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
 	}
 }
 
-//this should be cleaned up of course :S
-extern uint8_t sVramCTexData[128 * 1024];
-
 extern "C" void render_tile(VecFx10* pNorm, uint8_t* pVtx, int x, int y);
-extern "C" void gen_terrain_texture(u16* tl, u16* tr, u16* bl, u16* br, u16* dst);
 
-typedef struct
-{
-	u16 r : 5;
-	u16 g : 5;
-	u16 b : 5;
-	u16 : 1;
-} bgr555;
-
-void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos)
+void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos, VecFx32* camDir)
 {
 	texture_t* tex = mTerrainManager->GetTerrainTexture(0);
 	/*G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
@@ -94,22 +85,37 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 	);
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);*/
 
+	//fx32 d = -(camDir->x * camPos->x + camDir->y * camPos->y + camDir->z * camPos->z);
+
 	G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 	G3_PushMtx();
 	{
 		G3_Scale(FX32_ONE / 64 * FX32_ONE, Y_SCALE * FX32_ONE / 64, FX32_ONE / 64 * FX32_ONE);
 		G3_Translate(0, -Y_OFFSET * 64, 0);
+		//MI_CpuClearFast(mLodLevels, 128 * 128);
 		int i = 0;
 		for (int y = zstart; y < zend && y < 127; y++)
 		{
 			for (int x = xstart; x < xend && x < 127; x++)
 			{
-				fx32 diff_x = x * FX32_ONE + FX32_HALF - camPos->x - 32 * FX32_ONE;
-				fx32 diff_y = (mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y;
-				fx32 diff_z = y * FX32_ONE + FX32_HALF - camPos->z - 32 * FX32_ONE;
-				fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_y, diff_y) + FX_Mul(diff_z, diff_z);
-				if ((!picking && dist <= (8 * 8 * FX32_ONE)) || (picking && dist <= (20 * 20 * FX32_ONE)))
+				VecFx32 diff = {
+					x * FX32_ONE + FX32_HALF - camPos->x - 32 * FX32_ONE,
+					(mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y,
+					y * FX32_ONE + FX32_HALF - camPos->z - 32 * FX32_ONE
+				};
+
+				fx32 top = FX_Mul(camDir->x, diff.x) + FX_Mul(camDir->y, diff.y) + FX_Mul(camDir->z, diff.z);// +d; //VEC_DotProduct(camDir, &diff);*/
+				//if (top < 0) top = 0;
+				//fx32 dist = FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
+				//NOCASH_Printf("old: %d; new: %d", FX_Sqrt(dist), top);
+
+				//fx32 dist = FX_Mul(top, top);//FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
+				if ((!picking && top <= (10 * FX32_ONE)) || (picking && top <= (20 * FX32_ONE)))
 				{
+					//mLodLevels[y * 128 + x] = 1;
+					//mLodLevels[y * 128 + x + 1] = 1;
+					//mLodLevels[(y + 1) * 128 + x] = 1;
+					//mLodLevels[(y + 1) * 128 + x + 1] = 1;
 					if (picking)
 						G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
 					/*else if (selectedMapX == x && selectedMapZ == y)
@@ -221,16 +227,41 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 		if (!picking)
 		{
 			G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-			for (int y = zstart & ~1; y < (zend | 1) && y < 127; y += 2)
+			for (int y = zstart2 & ~1; y < (zend2 | 1) && y < 127; y += 2)
 			{
-				for (int x = xstart & ~1; x < (xend | 1) && x < 127; x += 2)
+				for (int x = xstart2 & ~1; x < (xend2 | 1) && x < 127; x += 2)
 				{
-					fx32 diff_x = x * FX32_ONE + FX32_ONE - camPos->x - 32 * FX32_ONE;
-					fx32 diff_y = (mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y;
-					fx32 diff_z = y * FX32_ONE + FX32_ONE - camPos->z - 32 * FX32_ONE;
-					fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_y, diff_y) + FX_Mul(diff_z, diff_z);
-					if (dist >= (6 * 6 * FX32_ONE) && dist <= (14 * 14 * FX32_ONE))
+					//fx32 diff_x = x * FX32_ONE + FX32_ONE - camPos->x - 32 * FX32_ONE;
+					//fx32 diff_y = (mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y;
+					//fx32 diff_z = y * FX32_ONE + FX32_ONE - camPos->z - 32 * FX32_ONE;
+					//fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_y, diff_y) + FX_Mul(diff_z, diff_z);
+
+					VecFx32 diff = {
+						x * FX32_ONE + FX32_ONE - camPos->x - 32 * FX32_ONE,
+						(mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y,
+						y * FX32_ONE + FX32_ONE - camPos->z - 32 * FX32_ONE
+					};
+
+					fx32 top = VEC_DotProduct(camDir, &diff);
+
+					//fx32 dist = FX_Mul(top, top);//FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
+					if (top >= /*(6 * 6 * FX32_ONE)*/(9 * FX32_ONE) && top <= (30 * FX32_ONE))
 					{
+						/*for (int y2 = 0; y2 < 3; y2++)
+						{
+							for (int x2 = 0; x2 < 3; x2++)
+							{
+								if (mLodLevels[(y + y2) * 128 + (x + x2)] & 1)
+									goto skip_tile;
+							}
+						}
+						for (int y2 = 0; y2 < 3; y2++)
+						{
+							for (int x2 = 0; x2 < 3; x2++)
+							{
+								mLodLevels[(y + y2) * 128 + (x + x2)] = 2;
+							}
+						}*/
 						tex = mTerrainManager->GetTerrainTexture(mTextures[(y + 1) * 128 + x + 1]);
 						G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
 							GX_TEXGEN_TEXCOORD,    // use texcoord
@@ -324,16 +355,32 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 					}
 				}
 			}
-			for (int y = zstart & ~3; y < (zend | 3) && y < 127; y += 4)
+			/*for (int y = zstart2 & ~3; y < (zend2 | 3) && y < 127; y += 4)
 			{
-				for (int x = xstart & ~3; x < (xend | 3) && x < 127; x += 4)
+				for (int x = xstart2 & ~3; x < (xend2 | 3) && x < 127; x += 4)
 				{
-					fx32 diff_x = x * FX32_ONE + 2 * FX32_ONE - camPos->x - 32 * FX32_ONE;
-					fx32 diff_y = (mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y;
-					fx32 diff_z = y * FX32_ONE + 2 * FX32_ONE - camPos->z - 32 * FX32_ONE;
-					fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_y, diff_y) + FX_Mul(diff_z, diff_z);
-					if (dist >= (10 * 10 * FX32_ONE))
+					//fx32 diff_x = x * FX32_ONE + 2 * FX32_ONE - camPos->x - 32 * FX32_ONE;
+					//fx32 diff_y = (mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y;
+					//fx32 diff_z = y * FX32_ONE + 2 * FX32_ONE - camPos->z - 32 * FX32_ONE;
+					//fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_y, diff_y) + FX_Mul(diff_z, diff_z);
+					VecFx32 diff = {
+						x * FX32_ONE + 2 * FX32_ONE - camPos->x - 32 * FX32_ONE,
+						(mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y,
+						y * FX32_ONE + 2 * FX32_ONE - camPos->z - 32 * FX32_ONE
+					};
+
+					fx32 top = VEC_DotProduct(camDir, &diff);
+
+					//fx32 dist = FX_Mul(top, top);//FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
+					if (top >= (30 * FX32_ONE))//(10 * 10 * FX32_ONE))
 					{
+						//for (int y2 = 0; y2 < 5; y2++)
+						//{
+						//	for (int x2 = 0; x2 < 5; x2++)
+						//	{
+						//		mLodLevels[(y + y2) * 128 + (x + x2)] |= 4;
+						//	}
+						//}
 						tex = mTerrainManager->GetTerrainTexture(mTextures[(y + 2) * 128 + x + 2]);
 						G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
 							GX_TEXGEN_TEXCOORD,    // use texcoord
@@ -358,7 +405,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 							GX_TEXFLIP_NONE,       // no flip
 							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
 							texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-						);*/
+						);/
 
 						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
 						{
@@ -387,7 +434,235 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 						}
 					}
 				}
-			}
+			}*/
+			G3_TexImageParam(GX_TEXFMT_NONE,       // use alpha texture
+				GX_TEXGEN_NONE,    // use texcoord
+				(GXTexSizeS)0,        // 16 pixels
+				(GXTexSizeT)0,        // 16 pixels
+				GX_TEXREPEAT_NONE,     // no repeat
+				GX_TEXFLIP_NONE,       // no flip
+				GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+				0     // the offset of the texture image
+			);
+			/*for (int y = zstart; y < zend && y < 127; y++)
+			{
+				int last = -1;
+				for (int x = xstart; x < xend && x < 127; x++)
+				{
+					bool contains2 = false;
+					bool contains1 = false;
+					bool contains0 = false;
+					for (int y2 = 0; y2 < 2; y2++)
+					{
+						for (int x2 = 0; x2 < 2; x2++)
+						{
+							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 2)
+								contains2 = true;
+							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 1)
+								contains1 = true;
+							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 0)
+								contains0 = true;
+						}
+					}
+					if (!contains0 && contains1 && !contains2)
+					{
+						//regular 1x1 square
+						if (last >= 0 && last != 1)
+						{
+							//mark this shit
+							G3_Begin(GX_BEGIN_TRIANGLES);
+							G3_Color(GX_RGB(31, 0, 0));
+							G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+							G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
+							G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
+							G3_End();
+						}
+						last = 1;
+					}
+					else if (!contains0 && !contains1 && contains2)
+					{
+						//part of regular 2x2 square
+						if (last >= 0 && last != 2)
+						{
+							//mark this shit
+							G3_Begin(GX_BEGIN_TRIANGLES);
+							G3_Color(GX_RGB(31, 0, 0));
+							G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+							G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
+							G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
+							G3_End();
+						}
+						last = 2;
+					}
+					else if (contains0 && !contains1 && !contains2)
+					{
+						//gap
+						last = 0;
+					}
+				}
+			}*/
+			/*for (int y = zstart & ~1; y < (zend | 1) && y < 127; y += 2)
+			{
+				for (int x = xstart & ~1; x < (xend | 1) && x < 127; x += 2)
+				{
+					bool contains1 = false;
+					bool contains2 = false;
+					for (int y2 = 0; y2 < 3; y2++)
+					{
+						for (int x2 = 0; x2 < 3; x2++)
+						{
+							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 1)
+								contains1 = true;
+							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 2)
+								contains2 = true;
+						}
+					}
+					if (!contains1 || !contains2)
+						continue;
+
+					//check if this 2x2 block has gaps
+					NOCASH_Printf("%d%d%d\n%d%d%d\n%d%d%d\n",
+							mLodLevels[y * 128 + x], mLodLevels[y * 128 + x + 1], mLodLevels[y * 128 + x + 2],
+							mLodLevels[(y + 1) * 128 + x], mLodLevels[(y + 1) * 128 + x + 1], mLodLevels[(y + 1) * 128 + x + 2],
+							mLodLevels[(y + 2) * 128 + x], mLodLevels[(y + 2) * 128 + x + 1], mLodLevels[(y + 2) * 128 + x + 2]
+						);
+
+					//if (mLodLevels[y * 128 + x] == 2 && mLodLevels[y * 128 + x + 1] == 1)
+					//{
+					//	NOCASH_Printf("x stitch");
+					//}
+
+					/*if (mLodLevels[y * 128 + x] == 3)
+					{
+						if (mLodLevels[y * 128 + x + 1] == 3)
+						{
+							G3_Begin(GX_BEGIN_TRIANGLES);
+							G3_Color(GX_RGB(31, 0, 0));
+							G3_Vtx10((x & ~1) << 6, mVtx[(y & ~1) * 128 + (x & ~1)] << 6, (y & ~1) << 6);
+							G3_Vtx10(((x & ~1) + 1) << 6, mVtx[(y & ~1) * 128 + (x & ~1) + 1] << 6, (y & ~1) << 6);
+							G3_Vtx10(((x & ~1) + 2) << 6, mVtx[(y & ~1) * 128 + (x & ~1) + 2] << 6, (y & ~1) << 6);
+							G3_End();
+						}
+						else if (mLodLevels[(y + 1) * 128 + x] == 3)
+						{
+							G3_Begin(GX_BEGIN_TRIANGLES);
+							G3_Color(GX_RGB(31, 0, 0));
+							G3_Vtx10((x & ~1) << 6, mVtx[(y & ~1) * 128 + (x & ~1)] << 6, (y & ~1) << 6);
+							G3_Vtx10((x & ~1) << 6, mVtx[((y & ~1) + 1) * 128 + (x & ~1)] << 6, ((y & ~1) + 1) << 6);
+							G3_Vtx10((x & ~1) << 6, mVtx[((y & ~1) + 2) * 128 + (x & ~1)] << 6, ((y & ~1) + 2) << 6);
+							G3_End();
+						}
+					}/
+					/*if (mLodLevels[y * 128 + x] == 2 && mLodLevels[(y + 1) * 128 + x + 1] != 2)
+					{
+						for (int x2 = x + 1, y2 = y + 1; x2 < xend && x2 < 127 && y2 < zend && y2 < 127; x2++, y2++)
+						{
+							if (mLodLevels[y2 * 128 + x2] != 0)
+							{
+								//NOCASH_Printf("xy stitch %d(%d)-%d(%d)", x, mLodLevels[y * 128 + x], x2, mLodLevels[y * 128 + x2]);
+
+								/*G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
+								G3_Color(GX_RGB(31, 0, 0));
+								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+								G3_Vtx10(x << 6, mVtx[y2 * 128 + x] << 6, y2 << 6);
+								G3_Vtx10(x2 << 6, mVtx[y * 128 + x2] << 6, y << 6);
+								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
+								G3_End();/
+								G3_Begin(GX_BEGIN_TRIANGLES);
+								G3_Color(GX_RGB(31, 0, 0));
+								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
+								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
+								G3_End();
+
+								break;
+							}
+						}
+					}
+					if (mLodLevels[y * 128 + x] == 2 && mLodLevels[(y - 1) * 128 + x - 1] != 2)
+					{
+						for (int x2 = x - 1, y2 = y - 1; x2 >= xstart && y2 >= zstart; x2--, y2--)
+						{
+							if (mLodLevels[y2 * 128 + x2] != 0)
+							{
+								//NOCASH_Printf("xy stitch %d(%d)-%d(%d)", x, mLodLevels[y * 128 + x], x2, mLodLevels[y * 128 + x2]);
+
+								/*G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
+								G3_Color(GX_RGB(31, 0, 0));
+								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
+								G3_Vtx10(x2 << 6, mVtx[y * 128 + x2] << 6, y << 6);
+								G3_Vtx10(x << 6, mVtx[y2 * 128 + x] << 6, y2 << 6);
+								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+								G3_End();/
+								G3_Begin(GX_BEGIN_TRIANGLES);
+								G3_Color(GX_RGB(31, 0, 0));
+								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
+								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
+								G3_End();
+
+								break;
+							}
+						}
+					}/
+					/*if (mLodLevels[y * 128 + x] == 2 && mLodLevels[y * 128 + x - 1] != 2)
+					{
+						for (int x2 = x - 1; x2 >= xstart; x2--)
+						{
+							if (mLodLevels[y * 128 + x2] != 0)
+							{
+								NOCASH_Printf("x stitch %d(%d)-%d(%d)", x, mLodLevels[y * 128 + x], x2, mLodLevels[y * 128 + x2]);
+
+								G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
+								G3_Color(GX_RGB(31, 0, 0));	
+								G3_Vtx10(x2 << 6, mVtx[y * 128 + x2] << 6, y << 6);
+								G3_Vtx10(x2 << 6, mVtx[(y + 1) * 128 + x2] << 6, (y + 1) << 6);
+								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+								G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
+								G3_End();
+
+								break;
+							}
+						}
+					}/
+					/*if (mLodLevels[y * 128 + x] == 2 && mLodLevels[(y + 1) * 128 + x] != 2)
+					{
+						for (int y2 = y + 1; y2 < zend && y2 < 127; y2++)
+						{
+							if (mLodLevels[y2 * 128 + x] != 0)
+							{
+								NOCASH_Printf("y stitch %d(%d)-%d(%d)", y, mLodLevels[y * 128 + x], y2, mLodLevels[y2 * 128 + x]);
+								G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
+								G3_Color(GX_RGB(31, 0, 0));
+								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+								G3_Vtx10(x << 6, mVtx[y2 * 128 + x] << 6, y2 << 6);
+								G3_Vtx10((x + 1) << 6, mVtx[y * 128 + x + 1] << 6, y << 6);
+								G3_Vtx10((x + 1) << 6, mVtx[y2 * 128 + x + 1] << 6, y2 << 6);
+								G3_End();
+								break;
+							}
+						}
+					}
+					if (mLodLevels[y * 128 + x] == 2 && mLodLevels[(y - 1) * 128 + x] != 2)
+					{
+						for (int y2 = y - 1; y2 >= zstart; y2--)
+						{
+							if (mLodLevels[y2 * 128 + x] != 0)
+							{
+								NOCASH_Printf("y stitch %d(%d)-%d(%d)", y, mLodLevels[y * 128 + x], y2, mLodLevels[y2 * 128 + x]);
+								G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
+								G3_Color(GX_RGB(31, 0, 0));
+								G3_Vtx10(x << 6, mVtx[y2 * 128 + x] << 6, y2 << 6);
+								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+								G3_Vtx10((x + 1) << 6, mVtx[y2 * 128 + x + 1] << 6, y2 << 6);
+								G3_Vtx10((x + 1) << 6, mVtx[y * 128 + x + 1] << 6, y << 6);	
+								G3_End();
+								break;
+							}
+						}
+					}/
+				}
+			}*/
 		}
 	}
 	G3_PopMtx(1);

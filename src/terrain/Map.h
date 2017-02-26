@@ -29,6 +29,7 @@ public:
 	uint8_t* mVtx;
 	uint8_t* mTextures;
 	VecFx10* mNormals;
+	//uint8_t* mLodLevels;
 
 	TerrainTextureManager* mTerrainTextureManager;
 private:
@@ -67,7 +68,7 @@ public:
 		NNS_FndAppendListObject(&mSceneryList, object);
 	}
 
-	void Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos);
+	void Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos, VecFx32* camDir);
 
 	bool GetGridEnabled()
 	{

@@ -296,7 +296,7 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*/31 * 4096, 40960 * 4);
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*//*31*/8 * 4096, 40960 * 4);
 	setup_normals();
 
 	mSfxManager = new SfxManager();
@@ -567,8 +567,11 @@ void Game::Render()
 		}
 		if (keyData & PAD_BUTTON_SELECT)
 		{
-			mTrain.firstPart->pathWorker1 = new PathWorker(mMap->GetFirstTrackPiece(), 0, 0, mMap);
-			mTrain.firstPart->pathWorker2 = new PathWorker(mMap->GetFirstTrackPiece(), 0, FX32_ONE, mMap);
+			if (mMap->GetFirstTrackPiece() != NULL)
+			{
+				mTrain.firstPart->pathWorker1 = new PathWorker(mMap->GetFirstTrackPiece(), 0, 0, mMap);
+				mTrain.firstPart->pathWorker2 = new PathWorker(mMap->GetFirstTrackPiece(), 0, FX32_ONE, mMap);
+			}
 			mKeyTimer = 10;
 		}
 	}
@@ -689,8 +692,9 @@ void Game::Render()
 		//NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(31, 31, 31), FALSE);
 		//NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(5, 5, 5), GX_RGB(0, 0, 0), FALSE);
 	}
-	NNS_G3dGlbFlushP();
-	NNS_G3dGeFlushBuffer();
+
+	//lod0
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*//*31*/10 * 4096, 40960 * 4);
 
 	VecFx32 bbmin, bbmax;
 	CalculateVisibleGrid(&bbmin, &bbmax);
@@ -705,6 +709,30 @@ void Game::Render()
 	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
 	zend = MATH_CLAMP(zend, 0, 128);
 
+	NOCASH_Printf("lod0: (%d-%d, %d-%d)", xstart, xend, zstart, zend);
+
+	//what actually visible is
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*/30 * 4096, 40960 * 4);
+
+	CalculateVisibleGrid(&bbmin, &bbmax);
+
+	int xstart2 = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	xstart2 = MATH_CLAMP(xstart2, 0, 128);
+	int zstart2 = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	zstart2 = MATH_CLAMP(zstart2, 0, 128);
+
+	int xend2 = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	xend2 = MATH_CLAMP(xend2, 0, 128);
+	int zend2 = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	zend2 = MATH_CLAMP(zend2, 0, 128);
+
+	NOCASH_Printf("lod1: (%d-%d, %d-%d)", xstart2, xend2, zstart2, zend2);
+
+
+
+	NNS_G3dGlbFlushP();
+	NNS_G3dGeFlushBuffer();
+
 	//NOCASH_Printf("x: %d; %d", xstart, xend);
 	//NOCASH_Printf("z: %d; %d", zstart, zend);
 
@@ -717,7 +745,9 @@ void Game::Render()
 
 	G3_PushMtx();
 	{
-		mMap->Render(xstart, xend, zstart, zend, mPickingState == PICKING_STATE_RENDERING, mSelectedMapX, mSelectedMapZ, &mCamera->mPosition);
+		VecFx32 camDir;
+		mCamera->GetLookDirection(&camDir);
+		mMap->Render(xstart, xend, zstart, zend, xstart2, xend2, zstart2, zend2, mPickingState == PICKING_STATE_RENDERING, mSelectedMapX, mSelectedMapZ, &mCamera->mPosition, &camDir);
 		NNS_G3dGePushMtx();
 		{
 			NNS_G3dGeTranslateVec(&mTrain.firstPart->position);
