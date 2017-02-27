@@ -3,8 +3,9 @@
 Static	main
 {
 	Address		0x02000000
-	Object		$(OBJS_STATIC)
-	Library		$(LLIBS)
+	#Object		$(OBJS_STATIC)
+	Object		*
+	Library		*	#$(LLIBS)
 	#Object		GROUP(ROOT)
 	StackSize	0	1024
 }
@@ -26,4 +27,16 @@ Property
 	OverlayDefs		%_defs
 	OverlayTable	%_table
 	Surffix			.sbin
+}
+
+Overlay videoplayer_itcm
+{
+	After		ITCM
+	Object		"* (.videoplayer_itcm)#" "* (.videoplayer_itcm.bss)#"
+}
+
+Overlay rendering_itcm
+{
+	After		ITCM
+	Object		"* (.rendering_itcm)#" "* (.rendering_itcm.bss)#"
 }

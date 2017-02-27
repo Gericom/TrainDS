@@ -7,6 +7,7 @@
 #include "menu/TitleMenu.h"
 #include "menu/Depot.h"
 #include "menu/Game.h"
+#include "menu/VideoPlayer.h"
 
 #define	DEFAULT_DMA_NUMBER		1
 
@@ -229,6 +230,12 @@ static void Init()
 }
 #include <nitro/codereset.h>
 
+void OnIntroVideoFinish()
+{
+	//TitleMenu::GotoMenu();
+	Game::GotoMenu();
+}
+
 void NitroMain ()
 {
 	Init();
@@ -243,7 +250,8 @@ void NitroMain ()
 	NNS_FndSetGroupIDForExpHeap(gHeapHandle, MENU_PRIVATE_HEAP_GROUP_ID);//This is to be able to simply free all resources used by the menu after it is closed
 	//Game loop
 	//Should handle switching menu's and deallocating the shit they didn't (and don't have to) clean up
-	Game::GotoMenu();
+	//Game::GotoMenu();
+	VideoPlayer::GotoMenu("/data/intro.vx2", true, OnIntroVideoFinish);
 	while (gNextMenuCreateFunc)
 	{
 		NNS_FndSetGroupIDForExpHeap(gHeapHandle, 0);

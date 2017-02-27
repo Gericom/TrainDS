@@ -2,6 +2,7 @@
 #include <nnsys/fnd.h>
 #include "core.h"
 #include "util.h"
+#include "overlay.h"
 #include "TerrainTextureManager.h"
 
 #define TEXTURE_CACHE_BLOCK_TAG_EMPTY	0xFFFFFFFF
@@ -56,7 +57,7 @@ TerrainTextureManager::TerrainTextureManager()
 
 extern "C" void gen_terrain_texture(u16* tl, u16* tr, u16* bl, u16* br, u16* dst);
 
-#include <nitro/itcm_begin.h>
+#pragma RENDERING_OVERLAY_BEGIN
 /*uint32_t TerrainTextureManager::GetTextureAddress(int tl, int tr, int bl, int br)
 {
 	mResourceCounter++;
@@ -120,25 +121,25 @@ asm uint32_t TerrainTextureManager::GetTextureAddress(int tl, int tr, int bl, in
 
 	add r9, r0, #offsetof_mCacheBlocks
 	mov r12, #256
-@loop:
+loop:
 	ldr r10, [r9], #8
 	teq r10, r6
 	subnes r12, r12, #1
-	bgt @loop
+	bgt loop
 	cmp r12, #0
-	bne @tag_found
+	bne tag_found
 
 	mvn r5, #1
 	mvn r8, #0x80000000
 	add r9, r0, #(offsetof_mCacheBlocks + 4)
 	mov r12, #256
-@loop2:
+loop2:
 	ldr r10, [r9], #8
 	cmp r10, r8
 		movlt r8, r10
 		movlt r5, r12
 	subs r12, r12, #1
-	bgt @loop2
+	bgt loop2
 	rsb r5, r5, #256
 	add r12, r0, #offsetof_mCacheBlocks
 	add r12, r12, r5, lsl #3
@@ -158,14 +159,14 @@ asm uint32_t TerrainTextureManager::GetTextureAddress(int tl, int tr, int bl, in
 	mov r0, r5, lsl #9
 	add r0, r0, #(256 * 1024)
 	ldmfd sp!, { r4 - r11,pc }
-@tag_found:
+tag_found:
 	rsb r12, r12, #256
 	str r7, [r9, #-4]
 	mov r12, r12, lsl #9
 	add r0, r12, #(256 * 1024)
 	ldmfd sp!, { r4 - r11,pc }
 }
-#include <nitro/itcm_end.h>
+#pragma RENDERING_OVERLAY_END
 
 static void OnVRAMCopyComplete(void* arg)
 {

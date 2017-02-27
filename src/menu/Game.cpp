@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "core.h"
 #include "util.h"
+#include "overlay.h"
 #include "Menu.h"
 #include "terrain/terrain.h"
 #include "terrain/Map.h"
@@ -68,6 +69,9 @@ static const GXRgb sToonTable[32] =
 
 void Game::Initialize(int arg)
 {
+	//load overlay
+	LOAD_OVERLAY_ITCM(rendering_itcm);
+
 	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
 	MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
 	(void)GX_DisableBankForLCDC();

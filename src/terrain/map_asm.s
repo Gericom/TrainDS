@@ -1,4 +1,4 @@
-.section .itcm
+.section .rendering_itcm //.itcm
 .arm
 
 #define G3OP_NOP                0x00   /* Nop            */
@@ -106,7 +106,7 @@ gen_terrain_texture_coeftable:
 	.set y, y + 1
  .endr
 
-.section .itcm
+.section .rendering_itcm //.itcm
 
 //((15 - x)*(15 - y))*tl + (x*(15 - y))*tr + (y*(15 - x))*bl + (x*y)*br
 

@@ -18,6 +18,7 @@
     <None Include=".gitignore" />
     <None Include="build.ps1" />
     <None Include="src\terrain\map_asm.s" />
+    <None Include="src\videoplayer\yuv2rgb_new.s" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core.cpp">
@@ -93,6 +94,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\terrain\managers\TerrainTextureManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\menu\VideoPlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\videoplayer\DecodeARMv5Stride256VXS2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\videoplayer\Vx2Tables.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -203,6 +213,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\terrain\managers\TerrainTextureManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\menu\VideoPlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\videoplayer\DecodeARMv5Stride256VXS2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\videoplayer\Vx2Tables.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\videoplayer\yuv2rgb_new.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\overlay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

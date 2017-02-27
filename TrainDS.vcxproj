@@ -58,6 +58,7 @@
     <None Include=".gitignore" />
     <None Include="build.ps1" />
     <None Include="src\terrain\map_asm.s" />
+    <None Include="src\videoplayer\yuv2rgb_new.s" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\engine\FreeRoamCamera.cpp" />
@@ -67,6 +68,7 @@
     <ClCompile Include="src\inih\ini.c" />
     <ClCompile Include="src\inih\INIReader.cpp" />
     <ClCompile Include="src\menu\Depot.cpp" />
+    <ClCompile Include="src\menu\VideoPlayer.cpp" />
     <ClCompile Include="src\print.cpp" />
     <ClCompile Include="src\terrain\managers\SfxManager.cpp" />
     <ClCompile Include="src\terrain\managers\TerrainTextureManager.cpp" />
@@ -85,6 +87,8 @@
     <ClCompile Include="src\ui\UIManager.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\vehicles\train.cpp" />
+    <ClCompile Include="src\videoplayer\DecodeARMv5Stride256VXS2.cpp" />
+    <ClCompile Include="src\videoplayer\Vx2Tables.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\engine\Camera.h" />
@@ -97,6 +101,8 @@
     <ClInclude Include="src\inih\INIReader.h" />
     <ClInclude Include="src\menu\Depot.h" />
     <ClInclude Include="src\menu\SimpleMenu.h" />
+    <ClInclude Include="src\menu\VideoPlayer.h" />
+    <ClInclude Include="src\overlay.h" />
     <ClInclude Include="src\print.h" />
     <ClInclude Include="src\terrain\managers\ParticleManager.h" />
     <ClInclude Include="src\terrain\managers\SeqArcSfx.h" />
@@ -123,6 +129,9 @@
     <ClInclude Include="src\ui\UISlice.h" />
     <ClInclude Include="src\util.h" />
     <ClInclude Include="src\vehicles\train.h" />
+    <ClInclude Include="src\videoplayer\DecodeARMv5Stride256VXS2.h" />
+    <ClInclude Include="src\videoplayer\Vx2Tables.h" />
+    <ClInclude Include="src\videoplayer\yuv2rgb_new.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

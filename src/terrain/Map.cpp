@@ -3,6 +3,7 @@
 #include <nnsys/g3d.h>
 #include "core.h"
 #include "util.h"
+#include "overlay.h"
 #include "terrain.h"
 #include "TerrainManager.h"
 #include "terrain/track/TrackPieceEx.h"
@@ -41,7 +42,7 @@ Map::~Map()
 
 #define Y_OFFSET 128 //40 //100
 
-#include <nitro/itcm_begin.h>
+#pragma RENDERING_OVERLAY_BEGIN
 
 void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
 {
@@ -708,7 +709,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 		mTerrainManager->mTrackMarkerRotation -= 360 * FX32_ONE;
 }
 
-#include <nitro/itcm_end.h>
+#pragma RENDERING_OVERLAY_END
 
 static fx32 sign(VecFx32* p1, VecFx32* p2, VecFx32* p3)
 {

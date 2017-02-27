@@ -62,7 +62,7 @@ public:
 
 	static void GotoMenu()
 	{
-		gNextMenuArg = 0;
+		gNextMenuArg = TITLEMENU_ARG_DONT_PLAY_INTRO;
 		gNextMenuCreateFunc = CreateMenu;
 	}
 
