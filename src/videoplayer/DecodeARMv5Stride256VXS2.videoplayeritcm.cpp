@@ -3,9 +3,9 @@
 #include "DecodeARMv5Stride256VXS2.h"
 
 //#include <nitro/itcm_begin.h>
-#include "overlay.h"
+//#include "overlay.h"
 
-#pragma VIDEOPLAYER_OVERLAY_BEGIN
+//#pragma VIDEOPLAYER_OVERLAY_BEGIN
 
  uint8_t DecodeARMv5Stride256VXS2[26048]  __attribute__ ((aligned (32))) = {
 	0xB7, 0x05, 0x00, 0xEA, 0x00, 0x01, 0x00, 0x00, 0x35, 0x20, 0x20, 0x20,
@@ -2181,5 +2181,5 @@
 	0x0E, 0xF0, 0xA0, 0xE1, 0x00, 0x47, 0x11, 0x00
 };
 
-#pragma VIDEOPLAYER_OVERLAY_END
+//#pragma VIDEOPLAYER_OVERLAY_END
 //#include <nitro/itcm_end.h>

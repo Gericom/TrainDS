@@ -2,6 +2,22 @@
 #define __VIDEOPLAYER_H__
 #include "Menu.h"
 
+#define FRAME_RATE	(20)
+#define PLAY_RATE	(FRAME_RATE)		//Makes it possible to test higher framerates without skipping audio (because the audiorate is increased aswell)
+
+#define AUDIO_BLOCK_SIZE	(32768)// * 10 / FRAME_RATE)
+
+#define NR_WAVE_DATA_BUFFERS	(4)
+
+#define WAVE_DATA_BUFFER_LENGTH		(AUDIO_BLOCK_SIZE * NR_WAVE_DATA_BUFFERS)
+
+#define FRAME_SIZE	(256 * 192)
+
+#define NR_FRAME_BLOCKS		(10)
+
+//shows a red bottom screen when no frames are available in time
+//#define DEBUG_FRAME_TIMEINGS
+
 typedef void (*onvideofinish_callback_t)();
 
 typedef struct

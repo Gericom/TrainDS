@@ -1,5 +1,5 @@
 //.section .itcm
-.section .videoplayer_itcm
+//.section .videoplayeritcm
 
 DITHER_COEF_OFFSET = 0
 

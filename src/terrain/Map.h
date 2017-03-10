@@ -23,6 +23,10 @@ typedef uint16_t picking_result_t;
 #define PICKING_TYPE(result) (((result) >> 12) & 7)
 #define PICKING_IDX(result) ((result) & 0xFFF)
 
+#define Y_SCALE 768 //128
+
+#define Y_OFFSET 128 //40 //100
+
 class Map
 {
 public:

@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "core.h"
 #include "util.h"
-#include "overlay.h"
 #include "Menu.h"
 #include "terrain/terrain.h"
 #include "terrain/Map.h"

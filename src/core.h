@@ -6,6 +6,15 @@
 #include "../resources/sound/sdat/sound_data.sadl"
 #include "print.h"
 
+#define LOAD_OVERLAY_ITCM(name)	\
+	do {	\
+		int default_dma = FS_GetDefaultDMA();	\
+		FS_SetDefaultDMA(FS_DMA_NOT_USE);	\
+		FS_EXTERN_OVERLAY(name);	\
+		FS_LoadOverlay(MI_PROCESSOR_ARM9, FS_OVERLAY_ID(name));	\
+		FS_SetDefaultDMA(default_dma);	\
+	} while (false);
+
 //fix error in include (; removed)
 #undef GX_FX32_FX10_MAX
 #undef GX_FX32_FX10_MIN

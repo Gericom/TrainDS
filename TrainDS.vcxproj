@@ -57,8 +57,9 @@
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="build.ps1" />
+    <None Include="src\terrain\map_asm.renderingitcm.s" />
     <None Include="src\terrain\map_asm.s" />
-    <None Include="src\videoplayer\yuv2rgb_new.s" />
+    <None Include="src\videoplayer\yuv2rgb_new.videoplayeritcm.s" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\engine\FreeRoamCamera.cpp" />
@@ -69,15 +70,18 @@
     <ClCompile Include="src\inih\INIReader.cpp" />
     <ClCompile Include="src\menu\Depot.cpp" />
     <ClCompile Include="src\menu\VideoPlayer.cpp" />
+    <ClCompile Include="src\menu\VideoPlayer.videoplayeritcm.cpp" />
     <ClCompile Include="src\print.cpp" />
     <ClCompile Include="src\terrain\managers\SfxManager.cpp" />
     <ClCompile Include="src\terrain\managers\TerrainTextureManager.cpp" />
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager.renderingitcm.cpp" />
     <ClCompile Include="src\terrain\Map.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\menu\Game.cpp" />
     <ClCompile Include="src\menu\Menu.cpp" />
     <ClCompile Include="src\menu\TitleMenu.cpp" />
+    <ClCompile Include="src\terrain\Map.renderingitcm.cpp" />
     <ClCompile Include="src\terrain\scenery\RCT2Tree1.cpp" />
     <ClCompile Include="src\terrain\terrain.cpp" />
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
@@ -87,7 +91,7 @@
     <ClCompile Include="src\ui\UIManager.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\vehicles\train.cpp" />
-    <ClCompile Include="src\videoplayer\DecodeARMv5Stride256VXS2.cpp" />
+    <ClCompile Include="src\videoplayer\DecodeARMv5Stride256VXS2.videoplayeritcm.cpp" />
     <ClCompile Include="src\videoplayer\Vx2Tables.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -102,7 +106,6 @@
     <ClInclude Include="src\menu\Depot.h" />
     <ClInclude Include="src\menu\SimpleMenu.h" />
     <ClInclude Include="src\menu\VideoPlayer.h" />
-    <ClInclude Include="src\overlay.h" />
     <ClInclude Include="src\print.h" />
     <ClInclude Include="src\terrain\managers\ParticleManager.h" />
     <ClInclude Include="src\terrain\managers\SeqArcSfx.h" />
