@@ -4,7 +4,8 @@
 class TerrainManager;
 class TrackPieceEx;
 class SceneryObject;
-class TerrainTextureManager;
+class TerrainTextureManager16;
+class TerrainTextureManager8;
 
 /*typedef struct
 {
@@ -33,9 +34,11 @@ public:
 	uint8_t* mVtx;
 	uint8_t* mTextures;
 	VecFx10* mNormals;
+	uint32_t* mTexAddresses;
 	//uint8_t* mLodLevels;
 
-	TerrainTextureManager* mTerrainTextureManager;
+	TerrainTextureManager16* mTerrainTextureManager16;
+	TerrainTextureManager8* mTerrainTextureManager8;
 private:
 	TerrainManager* mTerrainManager;
 	NNSFndList mTrackList;
@@ -72,7 +75,7 @@ public:
 		NNS_FndAppendListObject(&mSceneryList, object);
 	}
 
-	void Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos, VecFx32* camDir);
+	void Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos, VecFx32* camDir, int lodLevel);
 
 	bool GetGridEnabled()
 	{

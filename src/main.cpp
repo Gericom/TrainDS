@@ -250,8 +250,8 @@ void NitroMain ()
 	NNS_FndSetGroupIDForExpHeap(gHeapHandle, MENU_PRIVATE_HEAP_GROUP_ID);//This is to be able to simply free all resources used by the menu after it is closed
 	//Game loop
 	//Should handle switching menu's and deallocating the shit they didn't (and don't have to) clean up
-	//Game::GotoMenu();
-	VideoPlayer::GotoMenu("/data/intro.vx2", true, OnIntroVideoFinish);
+	Game::GotoMenu();
+	//VideoPlayer::GotoMenu("/data/intro.vx2", true, OnIntroVideoFinish);
 	while (gNextMenuCreateFunc)
 	{
 		NNS_FndSetGroupIDForExpHeap(gHeapHandle, 0);

@@ -94,16 +94,10 @@
     <ClCompile Include="src\tools\AddTrackTool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\terrain\managers\TerrainTextureManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\menu\VideoPlayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\videoplayer\Vx2Tables.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\terrain\managers\TerrainTextureManager.renderingitcm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\terrain\Map.renderingitcm.cpp">
@@ -113,6 +107,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\menu\VideoPlayer.videoplayeritcm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager16.renderingitcm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager8.renderingitcm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -222,9 +228,6 @@
     <ClInclude Include="src\terrain\track\TrackPieceEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\terrain\managers\TerrainTextureManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\menu\VideoPlayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -235,6 +238,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\videoplayer\yuv2rgb_new.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\terrain\managers\TerrainTextureManager16.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\terrain\managers\TerrainTextureManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\terrain\managers\TerrainTextureManager8.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

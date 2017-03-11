@@ -73,8 +73,10 @@
     <ClCompile Include="src\menu\VideoPlayer.videoplayeritcm.cpp" />
     <ClCompile Include="src\print.cpp" />
     <ClCompile Include="src\terrain\managers\SfxManager.cpp" />
-    <ClCompile Include="src\terrain\managers\TerrainTextureManager.cpp" />
-    <ClCompile Include="src\terrain\managers\TerrainTextureManager.renderingitcm.cpp" />
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager16.cpp" />
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager16.renderingitcm.cpp" />
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager8.cpp" />
+    <ClCompile Include="src\terrain\managers\TerrainTextureManager8.renderingitcm.cpp" />
     <ClCompile Include="src\terrain\Map.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -112,6 +114,8 @@
     <ClInclude Include="src\terrain\managers\Sfx.h" />
     <ClInclude Include="src\terrain\managers\SfxManager.h" />
     <ClInclude Include="src\terrain\managers\TerrainTextureManager.h" />
+    <ClInclude Include="src\terrain\managers\TerrainTextureManager16.h" />
+    <ClInclude Include="src\terrain\managers\TerrainTextureManager8.h" />
     <ClInclude Include="src\terrain\managers\TextureManager.h" />
     <ClInclude Include="src\terrain\Map.h" />
     <ClInclude Include="src\core.h" />

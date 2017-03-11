@@ -9,7 +9,8 @@
 #include "terrain/track/FlexTrack.h"
 #include "terrain/scenery/SceneryObject.h"
 #include "terrain/scenery/RCT2Tree1.h"
-#include "managers/TerrainTextureManager.h"
+#include "managers/TerrainTextureManager16.h"
+#include "managers/TerrainTextureManager8.h"
 #include "Map.h"
 
 void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
@@ -40,7 +41,7 @@ void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
 
 extern "C" void render_tile(VecFx10* pNorm, uint8_t* pVtx, int x, int y);
 
-void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos, VecFx32* camDir)
+void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos, VecFx32* camDir, int lodLevel)
 {
 	texture_t* tex = mTerrainManager->GetTerrainTexture(0);
 	/*G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
@@ -62,139 +63,146 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 		G3_Scale(FX32_ONE / 64 * FX32_ONE, Y_SCALE * FX32_ONE / 64, FX32_ONE / 64 * FX32_ONE);
 		G3_Translate(0, -Y_OFFSET * 64, 0);
 		//MI_CpuClearFast(mLodLevels, 128 * 128);
-		int i = 0;
-		for (int y = zstart; y < zend && y < 127; y++)
+		if (lodLevel == 0)
 		{
-			for (int x = xstart; x < xend && x < 127; x++)
+			int i = 0;
+			for (int y = zstart; y < zend && y < 127; y++)
 			{
-				VecFx32 diff = {
-					x * FX32_ONE + FX32_HALF - camPos->x - 32 * FX32_ONE,
-					(mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y,
-					y * FX32_ONE + FX32_HALF - camPos->z - 32 * FX32_ONE
-				};
-
-				fx32 top = FX_Mul(camDir->x, diff.x) + FX_Mul(camDir->y, diff.y) + FX_Mul(camDir->z, diff.z);// +d; //VEC_DotProduct(camDir, &diff);*/
-				//if (top < 0) top = 0;
-				//fx32 dist = FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
-				//NOCASH_Printf("old: %d; new: %d", FX_Sqrt(dist), top);
-
-				//fx32 dist = FX_Mul(top, top);//FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
-				if ((!picking && top <= (10 * FX32_ONE)) || (picking && top <= (20 * FX32_ONE)))
+				for (int x = xstart; x < xend && x < 127; x++)
 				{
-					//mLodLevels[y * 128 + x] = 1;
-					//mLodLevels[y * 128 + x + 1] = 1;
-					//mLodLevels[(y + 1) * 128 + x] = 1;
-					//mLodLevels[(y + 1) * 128 + x + 1] = 1;
-					if (picking)
-						G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
-					/*else if (selectedMapX == x && selectedMapZ == y)
-					{
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_DIF_AMB, G3OP_SPE_EMI, G3OP_POLYGON_ATTR, G3OP_NOP);
-						{
-							reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-							reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
-							reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-						}
-					}*/
-					else if (mGridEnabled)
-						G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-					
-					if (!picking)
-					{
-						uint32_t texOffset = mTerrainTextureManager->GetTextureAddress(
-							mTextures[y * 128 + x],
-							mTextures[y * 128 + x + 1],
-							mTextures[(y + 1) * 128 + x],
-							mTextures[(y + 1) * 128 + x + 1]);
-						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
-							GX_TEXGEN_TEXCOORD,    // use texcoord
-							GX_TEXSIZE_S16,        // 16 pixels
-							GX_TEXSIZE_T16,        // 16 pixels
-							GX_TEXREPEAT_ST,     // no repeat
-							GX_TEXFLIP_NONE,       // no flip
-							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-							texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-						);
-					}
-
-/*#include <nitro/itcm_end.h>
-					static u32 commandList[] =
-					{
-						GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10),
-						GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP),
-						GX_PACK_TEXCOORD_PARAM(0, 0),
-						0,
-						0,
-						GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD),
-						GX_PACK_TEXCOORD_PARAM(0, 16 * FX32_ONE),
-						0,
-						0,
-						GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 0),
-						GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL),
-						0,
-						0,
-						GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 16 * FX32_ONE),
-						0,
-						GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP),
-						0
+					VecFx32 diff = {
+						x * FX32_ONE + FX32_HALF - camPos->x - 32 * FX32_ONE,
+						(mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y,
+						y * FX32_ONE + FX32_HALF - camPos->z - 32 * FX32_ONE
 					};
-#include <nitro/itcm_begin.h>
 
-					commandList[3] = mNormals[y * 128 + x];
-					commandList[4] = GX_PACK_VTX10_PARAM(x << 6, (mVtx[y * 128 + x] - Y_OFFSET) << 6, y << 6);
-					commandList[7] = mNormals[(y + 1) * 128 + x];
-					commandList[8] = GX_PACK_VTX10_PARAM(x << 6, (mVtx[(y + 1) * 128 + x] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
-					commandList[11] = mNormals[y * 128 + (x + 1)];
-					commandList[12] = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[y * 128 + (x + 1)] - Y_OFFSET) << 6, y << 6);
-					commandList[14] = mNormals[(y + 1) * 128 + (x + 1)];
-					commandList[16] = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
+					fx32 top = FX_Mul(camDir->x, diff.x) + FX_Mul(camDir->y, diff.y) + FX_Mul(camDir->z, diff.z);// +d; //VEC_DotProduct(camDir, &diff);*/
+					//if (top < 0) top = 0;
+					//fx32 dist = FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
+					//NOCASH_Printf("old: %d; new: %d", FX_Sqrt(dist), top);
 
-					//MI_CpuSend32(&commandList[0], &reg_G3X_GXFIFO, sizeof(commandList));
-					MI_SendGXCommandFast(3, &commandList[0], sizeof(commandList));*/
-
-					//TODO: Include the loop in this function:
-					render_tile(&mNormals[y * 128 + x], &mVtx[y * 128 + x], x, y);
-					/*reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
+					//fx32 dist = FX_Mul(top, top);//FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
+					if ((!picking && top <= (10 * FX32_ONE)) || (picking && top <= (20 * FX32_ONE)))
 					{
-						reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
-						reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 0);
-						reg_G3X_GXFIFO = mNormals[y * 128 + x];
-						reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, (mVtx[y * 128 + x] - Y_OFFSET) << 6, y << 6);
-					}*/
-					//reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD);
-					//{
-					//	reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 16 * FX32_ONE);
-					//	reg_G3X_GXFIFO = mNormals[(y + 1) * 128 + x];
-					//	reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, (mVtx[(y + 1) * 128 + x] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
-					//	reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 0);
-					//}
-					//reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL);
-					//{						
-					//	reg_G3X_GXFIFO = mNormals[y * 128 + (x + 1)];
-					//	reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[y * 128 + (x + 1)] - Y_OFFSET) << 6, y << 6);
-					//	reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 16 * FX32_ONE);
-					//	reg_G3X_GXFIFO = mNormals[(y + 1) * 128 + (x + 1)];
-					//}
-					//reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP);
-					//{
-					//	reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
-					//}
-
-					/*if (!picking && selectedMapX == x && selectedMapZ == y)
-					{
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_DIF_AMB, G3OP_SPE_EMI, G3OP_POLYGON_ATTR, G3OP_NOP);
+						//mLodLevels[y * 128 + x] = 1;
+						//mLodLevels[y * 128 + x + 1] = 1;
+						//mLodLevels[(y + 1) * 128 + x] = 1;
+						//mLodLevels[(y + 1) * 128 + x + 1] = 1;
+						if (picking)
+							G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
+						/*else if (selectedMapX == x && selectedMapZ == y)
 						{
-							reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)/GX_RGB(10, 10, 10), FALSE);
-							reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(/*GX_RGB(3, 3, 3)/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), FALSE);
-							reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_DIF_AMB, G3OP_SPE_EMI, G3OP_POLYGON_ATTR, G3OP_NOP);
+							{
+								reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
+								reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
+								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+							}
+						}*/
+						else if (mGridEnabled)
+							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+
+						if (!picking)
+						{
+							uint32_t texOffset = mTerrainTextureManager16->GetTextureAddress(
+								mTextures[y * 128 + x],
+								mTextures[y * 128 + x + 1],
+								mTextures[(y + 1) * 128 + x],
+								mTextures[(y + 1) * 128 + x + 1],
+								mTexAddresses[y * 128 + x]);
+							mTexAddresses[y * 128 + x] = texOffset;
+							G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
+								GX_TEXGEN_TEXCOORD,    // use texcoord
+								GX_TEXSIZE_S16,        // 16 pixels
+								GX_TEXSIZE_T16,        // 16 pixels
+								GX_TEXREPEAT_NONE,     // no repeat
+								GX_TEXFLIP_NONE,       // no flip
+								GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+								texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+							);
 						}
-					}*/
+
+						/*#include <nitro/itcm_end.h>
+											static u32 commandList[] =
+											{
+												GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10),
+												GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP),
+												GX_PACK_TEXCOORD_PARAM(0, 0),
+												0,
+												0,
+												GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD),
+												GX_PACK_TEXCOORD_PARAM(0, 16 * FX32_ONE),
+												0,
+												0,
+												GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 0),
+												GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL),
+												0,
+												0,
+												GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 16 * FX32_ONE),
+												0,
+												GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP),
+												0
+											};
+						#include <nitro/itcm_begin.h>
+
+											commandList[3] = mNormals[y * 128 + x];
+											commandList[4] = GX_PACK_VTX10_PARAM(x << 6, (mVtx[y * 128 + x] - Y_OFFSET) << 6, y << 6);
+											commandList[7] = mNormals[(y + 1) * 128 + x];
+											commandList[8] = GX_PACK_VTX10_PARAM(x << 6, (mVtx[(y + 1) * 128 + x] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
+											commandList[11] = mNormals[y * 128 + (x + 1)];
+											commandList[12] = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[y * 128 + (x + 1)] - Y_OFFSET) << 6, y << 6);
+											commandList[14] = mNormals[(y + 1) * 128 + (x + 1)];
+											commandList[16] = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
+
+											//MI_CpuSend32(&commandList[0], &reg_G3X_GXFIFO, sizeof(commandList));
+											MI_SendGXCommandFast(3, &commandList[0], sizeof(commandList));*/
+
+											//TODO: Include the loop in this function:
+						render_tile(&mNormals[y * 128 + x], &mVtx[y * 128 + x], x, y);
+						/*reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
+						{
+							reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
+							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 0);
+							reg_G3X_GXFIFO = mNormals[y * 128 + x];
+							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, (mVtx[y * 128 + x] - Y_OFFSET) << 6, y << 6);
+						}*/
+						//reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD);
+						//{
+						//	reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 16 * FX32_ONE);
+						//	reg_G3X_GXFIFO = mNormals[(y + 1) * 128 + x];
+						//	reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, (mVtx[(y + 1) * 128 + x] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
+						//	reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 0);
+						//}
+						//reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL);
+						//{						
+						//	reg_G3X_GXFIFO = mNormals[y * 128 + (x + 1)];
+						//	reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[y * 128 + (x + 1)] - Y_OFFSET) << 6, y << 6);
+						//	reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 16 * FX32_ONE);
+						//	reg_G3X_GXFIFO = mNormals[(y + 1) * 128 + (x + 1)];
+						//}
+						//reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP);
+						//{
+						//	reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
+						//}
+
+						/*if (!picking && selectedMapX == x && selectedMapZ == y)
+						{
+							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_DIF_AMB, G3OP_SPE_EMI, G3OP_POLYGON_ATTR, G3OP_NOP);
+							{
+								reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)/GX_RGB(10, 10, 10), FALSE);
+								reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(/*GX_RGB(3, 3, 3)/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), FALSE);
+								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+							}
+						}*/
+					}
+					i++;
 				}
-				i++;
 			}
 		}
-		if (!picking)
+		//if (!picking)
+		if(lodLevel == 1)
 		{
+			//int count = 0;
 			G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 			for (int y = zstart2 & ~1; y < (zend2 | 1) && y < 127; y += 2)
 			{
@@ -211,10 +219,10 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 						y * FX32_ONE + FX32_ONE - camPos->z - 32 * FX32_ONE
 					};
 
-					fx32 top = VEC_DotProduct(camDir, &diff);
+					fx32 top = FX_Mul(camDir->x, diff.x) + FX_Mul(camDir->y, diff.y) + FX_Mul(camDir->z, diff.z);////VEC_DotProduct(camDir, &diff);
 
 					//fx32 dist = FX_Mul(top, top);//FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
-					if (top >= /*(6 * 6 * FX32_ONE)*/(9 * FX32_ONE) && top <= (30 * FX32_ONE))
+					if (top >= /*(6 * 6 * FX32_ONE)*/(8 * FX32_ONE) && top <= (35 * FX32_ONE))
 					{
 						/*for (int y2 = 0; y2 < 3; y2++)
 						{
@@ -231,7 +239,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 								mLodLevels[(y + y2) * 128 + (x + x2)] = 2;
 							}
 						}*/
-						tex = mTerrainManager->GetTerrainTexture(mTextures[(y + 1) * 128 + x + 1]);
+						/*tex = mTerrainManager->GetTerrainTexture(mTextures[(y + 1) * 128 + x + 1]);
 						G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
 							GX_TEXGEN_TEXCOORD,    // use texcoord
 							(GXTexSizeS)tex->nitroWidth,        // 16 pixels
@@ -241,22 +249,24 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
 							NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
 						);
-						G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
+						G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);*/
 
-						/*uint32_t texOffset = mTerrainTextureManager->GetTextureAddress(
+						uint32_t texOffset = mTerrainTextureManager8->GetTextureAddress(
 							mTextures[y * 128 + x],
 							mTextures[y * 128 + x + 2],
 							mTextures[(y + 2) * 128 + x],
-							mTextures[(y + 2) * 128 + x + 2]);
+							mTextures[(y + 2) * 128 + x + 2],
+							mTexAddresses[y * 128 + x]);
+						mTexAddresses[y * 128 + x] = texOffset;
 						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
 							GX_TEXGEN_NONE,    // use texcoord
-							GX_TEXSIZE_S16,        // 16 pixels
-							GX_TEXSIZE_T16,        // 16 pixels
-							GX_TEXREPEAT_ST,     // no repeat
+							GX_TEXSIZE_S8,        // 16 pixels
+							GX_TEXSIZE_T8,        // 16 pixels
+							GX_TEXREPEAT_NONE,     // no repeat
 							GX_TEXFLIP_NONE,       // no flip
 							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
 							texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-						);*/
+						);
 
 /*#include <nitro/itcm_end.h>
 						static u32 commandList2[] =
@@ -305,22 +315,26 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 						}
 						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD);
 						{
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, (8 << tex->nitroHeight) * FX32_ONE * 2);
+							//reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, (8 << tex->nitroHeight) * FX32_ONE * 2);
+							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 8 * FX32_ONE);
 							reg_G3X_GXFIFO = mNormals[(y + 2) * 128 + x];
 							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, mVtx[(y + 2) * 128 + x] << 6, (y << 6) + (2 << 6));
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, 0);
+							//reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, 0);
+							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(8 * FX32_ONE, 0);
 						}
 						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL);
 						{
 							reg_G3X_GXFIFO = mNormals[y * 128 + (x + 2)];
 							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (2 << 6), mVtx[y * 128 + (x + 2)] << 6, y << 6);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, (8 << tex->nitroHeight) * FX32_ONE * 2);
+							//reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, (8 << tex->nitroHeight) * FX32_ONE * 2);
+							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(8 * FX32_ONE, 8 * FX32_ONE);
 							reg_G3X_GXFIFO = mNormals[(y + 2) * 128 + (x + 2)];
 						}
 						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP);
 						{
 							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (2 << 6), mVtx[(y + 2) * 128 + (x + 2)] << 6, (y << 6) + (2 << 6));
 						}
+						//count++;
 					}
 				}
 			}
@@ -361,7 +375,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 							NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
 						);
 						G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
-						/*uint32_t texOffset = mTerrainTextureManager->GetTextureAddress(
+						/*uint32_t texOffset = mTerrainTextureManager16->GetTextureAddress(
 							mTextures[y * 128 + x],
 							mTextures[y * 128 + x + 4],
 							mTextures[(y + 4) * 128 + x],
@@ -404,7 +418,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 					}
 				}
 			}*/
-			G3_TexImageParam(GX_TEXFMT_NONE,       // use alpha texture
+			/*G3_TexImageParam(GX_TEXFMT_NONE,       // use alpha texture
 				GX_TEXGEN_NONE,    // use texcoord
 				(GXTexSizeS)0,        // 16 pixels
 				(GXTexSizeT)0,        // 16 pixels
@@ -412,7 +426,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 				GX_TEXFLIP_NONE,       // no flip
 				GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
 				0     // the offset of the texture image
-			);
+			);*/
 			/*for (int y = zstart; y < zend && y < 127; y++)
 			{
 				int last = -1;
@@ -632,6 +646,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 					}/
 				}
 			}*/
+			//OS_Printf("%d\n", count);
 		}
 	}
 	G3_PopMtx(1);

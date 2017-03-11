@@ -2,11 +2,9 @@
 #include <nnsys/fnd.h>
 #include "core.h"
 #include "util.h"
-#include "TerrainTextureManager.h"
+#include "TerrainTextureManager16.h"
 
-#define TEXTURE_CACHE_BLOCK_TAG_EMPTY	0xFFFFFFFF
-
-TerrainTextureManager::TerrainTextureManager()
+TerrainTextureManager16::TerrainTextureManager16()
 {
 	mTexArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.carc", NULL, FALSE);
 	NNS_FndMountArchive(&mTexArc, "mtx", mTexArcData);
@@ -56,12 +54,12 @@ TerrainTextureManager::TerrainTextureManager()
 
 static void OnVRAMCopyComplete(void* arg)
 {
-	GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
+	GX_SetBankForTex(GX_VRAM_TEX_01_AC);
 }
 
-void TerrainTextureManager::UpdateVramC()
+void TerrainTextureManager16::UpdateVramC()
 {
 	//maybe we should flush the cache here?!
-	GX_SetBankForLCDC(GX_VRAM_LCDC_C | GX_VRAM_LCDC_D);
+	GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_C);
 	MI_DmaCopy32Async(0, &mVramCTexData, (void*)HW_LCDC_VRAM_C, 128 * 1024, OnVRAMCopyComplete, NULL);
 }

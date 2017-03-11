@@ -73,6 +73,8 @@ private:
 
 	OSVAlarm mVRAMCopyVAlarm;
 
+	int mRenderState;
+
 	//void Pick(int x, int y, PickingCallbackFunc callback);
 
 	void OnPenDown(int x, int y);

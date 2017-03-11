@@ -9,7 +9,8 @@
 #include "terrain/track/FlexTrack.h"
 #include "terrain/scenery/SceneryObject.h"
 #include "terrain/scenery/RCT2Tree1.h"
-#include "managers/TerrainTextureManager.h"
+#include "managers/TerrainTextureManager16.h"
+#include "managers/TerrainTextureManager8.h"
 #include "Map.h"
 
 Map::Map()
@@ -21,7 +22,10 @@ Map::Map()
 	mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);
 	mTextures = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.tmap", NULL, false);
 
-	mTerrainTextureManager = new TerrainTextureManager();
+	mTerrainTextureManager16 = new TerrainTextureManager16();
+	mTerrainTextureManager8 = new TerrainTextureManager8();
+	mTexAddresses = new uint32_t[128 * 128];
+	MI_CpuClearFast(mTexAddresses, 128 * 128 * 4);
 
 	//mLodLevels = new uint8_t[128 * 128];
 	//MI_CpuFillFast(mLodLevels, 0xFFFFFFFF, 128 * 128);

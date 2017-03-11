@@ -185,3 +185,99 @@ arg_dst	= 4 * 9
 		bgt gen_terrain_texture_yloop
 	//}
 	ldmfd sp!, {r4-r11,pc}
+
+.pool
+
+//void gen_terrain_texture(u16* tl, u16* tr, u16* bl, u16* br, u16* dst)
+.global gen_terrain_texture_8
+gen_terrain_texture_8:
+arg_dst	= 4 * 9
+	stmfd sp!, {r4-r11,lr}
+	//ldr r4, [sp, #arg_dst]	//dst
+	ldr r5,= gen_terrain_texture_8_coeftable
+	mov r6, #64
+	gen_terrain_texture_8_yloop:
+	//{
+		//gen_terrain_texture_xloop:
+		.rept 8
+		//{
+			//(x*y)*br
+			ldr lr, [r5], #4
+
+			ldrh r8, [r3], #2
+
+			and r7, lr, #0xFF
+
+			and r12, r8, #0x1F
+			smulbb r9, r12, r7
+
+			mov r8, r8, lsr #5
+			and r12, r8, #0x1F
+			smulbb r10, r12, r7
+
+			mov r8, r8, lsr #5
+			smulbb r11, r8, r7
+
+			//(y*(15 - x))*bl
+			ldrh r8, [r2], #2
+
+			mov r7, lr, lsr #8
+			and r7, r7, #0xFF
+
+			and r12, r8, #0x1F
+			smlabb r9, r12, r7, r9
+
+			mov r8, r8, lsr #5
+			and r12, r8, #0x1F
+			smlabb r10, r12, r7, r10
+
+			mov r8, r8, lsr #5
+			smlabb r11, r8, r7, r11
+
+			//((15 - x)*(15 - y))*tl
+			ldrh r8, [r0], #2
+
+			and r7, lr, #0xFF0000
+
+			and r12, r8, #0x1F
+			smlabt r9, r12, r7, r9
+
+			mov r8, r8, lsr #5
+			and r12, r8, #0x1F
+			smlabt r10, r12, r7, r10
+
+			mov r8, r8, lsr #5
+			smlabt r11, r8, r7, r11
+
+			//(x*(15 - y))*tr
+			ldrh r8, [r1], #2
+
+			mov r7, lr, lsr #24
+
+			and r12, r8, #0x1F
+			smlabb r9, r12, r7, r9
+
+			mov r8, r8, lsr #5
+			and r12, r8, #0x1F
+			smlabb r10, r12, r7, r10
+
+			//prevent interlock
+			ldr lr,= 1337
+
+			mov r8, r8, lsr #5
+			smlabb r11, r8, r7, r11
+
+			smulwb r9, r9, lr
+			smulwb r10, r10, lr
+			smulwb r11, r11, lr
+
+			orr r9, r9, r10, lsl #5
+			orr r9, r9, r11, lsl #10
+			orr r9, r9, #0x8000
+			strh r9, [r4], #2
+		//}
+		.endr
+		subs r6, r6, #8
+		bgt gen_terrain_texture_8_yloop
+	//}
+	ldmfd sp!, {r4-r11,pc}

@@ -75,7 +75,8 @@ void Core_Init()
 	//Should I do this different?
 	mSzWork = NNS_GfdGetLnkTexVramManagerWorkSize(4096);
 	mPMgrWork = NNS_FndAllocFromExpHeapEx(gHeapHandle, mSzWork, 16);
-	NNS_GfdInitLnkTexVramManager(256 * 1024, 128 * 1024, mPMgrWork, mSzWork, TRUE);
+	//NNS_GfdInitLnkTexVramManager(256 * 1024, 128 * 1024, mPMgrWork, mSzWork, TRUE);
+	NNS_GfdInitLnkTexVramManager(/*256*/128 * 1024, 0, mPMgrWork, mSzWork, TRUE);
 
 	uint32_t szWork = NNS_GfdGetLnkPlttVramManagerWorkSize(4096);
 	void* pMgrWork = NNS_FndAllocFromExpHeapEx(gHeapHandle, szWork, 16);
