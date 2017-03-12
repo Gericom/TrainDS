@@ -70,37 +70,36 @@ asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, i
 
 	ldr r11, [sp, #arg_oldTexKey]
 	cmp r11, #0
-	beq @notexkey
+	beq notexkey
 	sub r9, r11, #(128 * 1024)
-	add r9, r0, r9, lsr #6
-	add r9, r9, #offsetof_mCacheBlocks
-	ldr r8, [r9]
+	add r9, r0, r9, lsr #4
+	ldr r8, [r9, #offsetof_mCacheBlocks]!
 	cmp r8, r6
-	beq @tag_found_old
+	beq tag_found_old
 
-@notexkey:
+notexkey:
 	add r9, r0, #offsetof_mCacheBlocks
 	add r8, r9, #(1024 * 8)
 	str r6, [r8], #8
-@loop:	
+loop:	
 	ldr r10, [r9], #8
 	teq r10, r6
-	bne @loop
+	bne loop
 
 	cmp r9, r8
-	bne @tag_found
+	bne tag_found
 
 	mvn r5, #1
 	mvn r8, #0x80000000
 	add r9, r0, #(offsetof_mCacheBlocks + 4)
 	mov r12, #1024
-@loop2:
+loop2:
 	ldr r10, [r9], #8
 	cmp r10, r8
 		movlt r8, r10
 		movlt r5, r12
 	subs r12, r12, #1
-	bgt @loop2
+	bgt loop2
 	rsb r5, r5, #1024
 	add r12, r0, #offsetof_mCacheBlocks
 	add r12, r12, r5, lsl #3
@@ -122,7 +121,7 @@ asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, i
 	mov r0, r5, lsl #7
 	add r0, r0, #(128 * 1024)
 	ldmfd sp!, { r4 - r11,pc }
-@tag_found:
+tag_found:
 	sub r12, r8, r9
 	rsb r12, r12, #(1024 * 8)
 	str r7, [r9, #-4]
@@ -130,7 +129,7 @@ asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, i
 	add r0, r12, #(128 * 1024)
 	ldmfd sp!, { r4 - r11,pc }
 
-@tag_found_old:
+tag_found_old:
 	str r7, [r9, #4]
 	mov r0, r11
 	ldmfd sp!, { r4 - r11,pc }

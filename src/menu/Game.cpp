@@ -648,9 +648,9 @@ void Game::Render()
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
 		if(mRenderState == 0)
-			G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, true);
+			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31, 0x7fff, 0, true);
 		else
-			G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), /*31*/0, 0x7fff, 0, false);
+			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), /*31*/0, 0x7fff, 0, false);
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(true);
 		G3X_AntiAlias(mAntiAliasEnabled);
@@ -660,7 +660,7 @@ void Game::Render()
 			G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0x800);
 			//G3X_SetFog(/*true*/false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
 		//G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
-		G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31);
+		G3X_SetFogColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
 		{

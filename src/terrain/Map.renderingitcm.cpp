@@ -56,7 +56,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);*/
 
 	//fx32 d = -(camDir->x * camPos->x + camDir->y * camPos->y + camDir->z * camPos->z);
-
+	int count = 0;
 	G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 	G3_PushMtx();
 	{
@@ -194,6 +194,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 							}
 						}*/
+						count++;
 					}
 					i++;
 				}
@@ -334,7 +335,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 						{
 							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (2 << 6), mVtx[(y + 2) * 128 + (x + 2)] << 6, (y << 6) + (2 << 6));
 						}
-						//count++;
+						count++;
 					}
 				}
 			}
@@ -646,10 +647,10 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 					}/
 				}
 			}*/
-			//OS_Printf("%d\n", count);
 		}
 	}
 	G3_PopMtx(1);
+	OS_Printf("%d\n", count);
 	if (!picking)
 	{
 		TrackPieceEx* trackPiece = NULL;

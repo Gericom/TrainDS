@@ -68,7 +68,7 @@ TerrainTextureManager8::TerrainTextureManager8()
 						b += (color >> 10) & 0x1F;
 					}
 				}
-				int dither = ditherTable[y * 4 + x];
+				int dither = 8;//ditherTable[y * 4 + x];
 				r = (r + dither) >> 4;
 				if (r > 31)
 					r = 31;
