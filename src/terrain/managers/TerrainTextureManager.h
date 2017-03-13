@@ -13,6 +13,7 @@ protected:
 	};
 	uint32_t mResourceCounter;
 public:
+	virtual ~TerrainTextureManager() { }
 	virtual uint32_t GetTextureAddress(int tl, int tr, int bl, int br, uint32_t oldTexKey) = 0;
 	virtual void UpdateVramC() = 0;
 };

@@ -334,7 +334,7 @@ void Game::RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg)
 void Game::HandlePickingVBlank()
 {
 	if (mPickingState == PICKING_STATE_CAPTURING)
-		mPickingResult = ((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256];
+		mPickingResult = ((picking_result_t*)HW_LCDC_VRAM_B)[mPickingPointX + mPickingPointY * 256]; ;// ((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256];
 }
 
 void Game::HandlePickingEarly()
@@ -353,7 +353,7 @@ void Game::HandlePickingEarly()
 
 void Game::HandlePickingLate()
 {
-	if (mPickingState == PICKING_STATE_READY && mPickingRequested)
+	if (mPickingState == PICKING_STATE_READY && mRenderState == 0 && mPickingRequested)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT & ~REG_G3X_DISP3DCNT_TME_MASK;
 		G3X_SetClearColor(0, /*31*/0, 0x7fff, 0, FALSE);
@@ -746,14 +746,19 @@ void Game::Render()
 	NOCASH_Printf("lod1: (%d-%d, %d-%d)", xstart2, xend2, zstart2, zend2);
 
 	//test
-	if (mRenderState == 0)
+	if (mPickingState != PICKING_STATE_RENDERING)
 	{
-		NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * 4096, 35 * 4096, 40960 * 4);
+		if (mRenderState == 0)
+		{
+			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * 4096, 35 * 4096, 40960 * 4);
+		}
+		else
+		{
+			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 10 * 4096, 40960 * 4);
+		}
 	}
 	else
-	{
-		NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 10 * 4096, 40960 * 4);
-	}
+		NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 35 * 4096, 40960 * 4);
 
 
 
@@ -894,49 +899,60 @@ void Game::VBlank()
 		//GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
 		//GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_AB, GX_CAPTURE_SRCA_3D, GX_CAPTURE_SRCB_VRAM_0x18000, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 8);
 	//}
-	if (mRenderState == 0)
+	if (mPickingState == PICKING_STATE_RENDERING)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
-		//GX_SetBankForBG(GX_VRAM_BG_96_EFG);
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
-		//reg_GX_DISPCNT = (reg_GX_DISPCNT & ~REG_GX_DISPCNT_VRAM_MASK) | (3 << REG_GX_DISPCNT_VRAM_SHIFT);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG0);// | GX_PLANEMASK_OBJ);
+		//Capture the picking data
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
-		//MI_HBlankDmaCopy32(0, (void*)HW_LCDC_VRAM_D, mFrameCopy, 256 * 2);
-		//MI_StopDma(0);
-		//reg_MI_DMA0SAD = HW_LCDC_VRAM_D;
-		//reg_MI_DMA0DAD = HW_BG_VRAM;//(uint32_t)&mFrameCopy[0];
-		//reg_MI_DMA0CNT = (MI_DMA_ENABLE | MI_DMA_TIMING_H_BLANK | MI_DMA_SRC_INC | MI_DMA_DEST_INC | MI_DMA_CONTINUOUS_ON | MI_DMA_32BIT_BUS | ((256 * 2) / 4));
-		//MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_HBCOPY32(size));
-		//MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_D, mFrameCopy, sizeof(mFrameCopy), NULL, NULL);
 	}
 	else
 	{
-		//MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_D, (void*)HW_BG_VRAM, 256 * 192 * 2, NULL, NULL);
-		//MI_StopDma(0);
-		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_D);
-		//GX_SetBankForBG(GX_VRAM_BG_96_EFG);
-		GX_SetBankForBG(GX_VRAM_BG_128_B);
-		//MI_DmaCopy32Async(3, (void*)HW_LCDC_VRAM_D, mFrameCopy, sizeof(mFrameCopy), NULL, NULL);
-		//MI_DispMemDmaCopy(0, mFrameCopy);
-		//GX_SetGraphicsMode(GX_DISPMODE_MMEM, GX_BGMODE_0, GX_BG0_AS_3D);
-		//reg_GX_DISPCNT = (reg_GX_DISPCNT & ~REG_GX_DISPCNT_VRAM_MASK) | (3 << REG_GX_DISPCNT_VRAM_SHIFT);
-		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
-		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
-		G2_SetBG3Priority(3);
-		G2_SetBG0Priority(0);
+		if (mRenderState == 0)
+		{
+			GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
+			//GX_SetBankForBG(GX_VRAM_BG_96_EFG);
+			GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
+			//reg_GX_DISPCNT = (reg_GX_DISPCNT & ~REG_GX_DISPCNT_VRAM_MASK) | (3 << REG_GX_DISPCNT_VRAM_SHIFT);
+			GX_SetVisiblePlane(GX_PLANEMASK_BG0);// | GX_PLANEMASK_OBJ);
+			GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+			//MI_HBlankDmaCopy32(0, (void*)HW_LCDC_VRAM_D, mFrameCopy, 256 * 2);
+			//MI_StopDma(0);
+			//reg_MI_DMA0SAD = HW_LCDC_VRAM_D;
+			//reg_MI_DMA0DAD = HW_BG_VRAM;//(uint32_t)&mFrameCopy[0];
+			//reg_MI_DMA0CNT = (MI_DMA_ENABLE | MI_DMA_TIMING_H_BLANK | MI_DMA_SRC_INC | MI_DMA_DEST_INC | MI_DMA_CONTINUOUS_ON | MI_DMA_32BIT_BUS | ((256 * 2) / 4));
+			//MIi_DmaSetParams(dmaNo, (u32)src, (u32)dest, MI_CNT_HBCOPY32(size));
+			//MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_D, mFrameCopy, sizeof(mFrameCopy), NULL, NULL);
+		}
+		else
+		{
+			//MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_D, (void*)HW_BG_VRAM, 256 * 192 * 2, NULL, NULL);
+			//MI_StopDma(0);
+			GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_D);
+			//GX_SetBankForBG(GX_VRAM_BG_96_EFG);
+			GX_SetBankForBG(GX_VRAM_BG_128_B);
+			//MI_DmaCopy32Async(3, (void*)HW_LCDC_VRAM_D, mFrameCopy, sizeof(mFrameCopy), NULL, NULL);
+			//MI_DispMemDmaCopy(0, mFrameCopy);
+			//GX_SetGraphicsMode(GX_DISPMODE_MMEM, GX_BGMODE_0, GX_BG0_AS_3D);
+			//reg_GX_DISPCNT = (reg_GX_DISPCNT & ~REG_GX_DISPCNT_VRAM_MASK) | (3 << REG_GX_DISPCNT_VRAM_SHIFT);
+			GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
+			GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
+			G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+			G2_SetBG3Priority(3);
+			G2_SetBG0Priority(0);
 
-		//GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
-		//GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_AB, GX_CAPTURE_SRCA_3D, GX_CAPTURE_SRCB_VRAM_0x00000, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 16);
-		//GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_AB, GX_CAPTURE_SRCA_3D, GX_CAPTURE_SRCB_VRAM_0x18000, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+			//GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
+			GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+			//GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_AB, GX_CAPTURE_SRCA_3D, GX_CAPTURE_SRCB_VRAM_0x00000, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 16);
+			//GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_AB, GX_CAPTURE_SRCA_3D, GX_CAPTURE_SRCB_VRAM_0x18000, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		}
+		mRenderState = !mRenderState;
 	}
-	mRenderState = !mRenderState;
 }
 
 void Game::Finalize()
 {
 	//We don't have to free resources here, because that's done by using the group id
 	OS_CancelVAlarm(&mVRAMCopyVAlarm);
+	delete mMap;
 }

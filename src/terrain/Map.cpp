@@ -39,6 +39,12 @@ Map::Map()
 Map::~Map()
 {
 	delete mTerrainManager;
+	NNS_FndFreeToExpHeap(gHeapHandle, mVtx);
+	NNS_FndFreeToExpHeap(gHeapHandle, mTextures);
+	delete mTerrainTextureManager16;
+	delete mTerrainTextureManager8;
+	delete mTexAddresses;
+	delete mNormals;
 }
 
 

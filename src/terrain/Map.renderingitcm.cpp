@@ -63,7 +63,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 		G3_Scale(FX32_ONE / 64 * FX32_ONE, Y_SCALE * FX32_ONE / 64, FX32_ONE / 64 * FX32_ONE);
 		G3_Translate(0, -Y_OFFSET * 64, 0);
 		//MI_CpuClearFast(mLodLevels, 128 * 128);
-		if (lodLevel == 0)
+		if (lodLevel == 0 || picking)
 		{
 			int i = 0;
 			for (int y = zstart; y < zend && y < 127; y++)
@@ -201,7 +201,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 			}
 		}
 		//if (!picking)
-		if(lodLevel == 1)
+		if(lodLevel == 1 && !picking)
 		{
 			//int count = 0;
 			G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);

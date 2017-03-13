@@ -6,58 +6,17 @@
 
 extern "C" void gen_terrain_texture_8(u16* tl, u16* tr, u16* bl, u16* br, u16* dst);
 
-/*uint32_t TerrainTextureManager16::GetTextureAddress(int tl, int tr, int bl, int br)
-{
-	mResourceCounter++;
-	uint32_t tag = tl | (tr << 8) | (bl << 16) | (br << 24);
-	//is it in the cache?
-	int oldest = -1;
-	int oldestcnt = 0x7FFFFFFF;
-	texture_cache_block_t* pBlock = &mCacheBlocks[0];
-	int j = 0;
-	while(true)
-	{
-		if (pBlock->tag == tag)
-			goto found;
-		if (pBlock->last_accessed < oldestcnt)
-		{
-			oldest = j;
-			oldestcnt = pBlock->last_accessed;
-		}
-		j++;
-		pBlock++;
-		if (j == 256)
-			break;
-	}
-	//not found
-	gen_terrain_texture(
-		mTextureDatas[tl],
-		mTextureDatas[tr],
-		mTextureDatas[bl],
-		mTextureDatas[br],
-		(uint16_t*)&mVramCTexData[oldest * 16 * 16 * 2]);
-	mCacheBlocks[oldest].last_accessed = mResourceCounter;
-	mCacheBlocks[oldest].tag = tag;
-	return 256 * 1024 + oldest * 16 * 16 * 2;
-found:
-	pBlock->last_accessed = mResourceCounter;
-	return 256 * 1024 + j * 16 * 16 * 2;
-}*/
-
-#pragma access_errors off
-enum
-{ 
-	offsetof_mResourceCounter = offsetof(TerrainTextureManager8, mResourceCounter),
-	offsetof_mCacheBlocks = offsetof(TerrainTextureManager8, mCacheBlocks),
-	offsetof_mTextureDatas = offsetof(TerrainTextureManager8, mTextureDatas),
-	offsetof_mVramCTexData = offsetof(TerrainTextureManager8, mVramCTexData)
-};
-#pragma access_errors reset
-
 asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, int br, uint32_t oldTexKey)
 {
 #define arg_br (4 * 9)
 #define arg_oldTexKey (4 * 10)
+	enum
+	{
+		offsetof_mResourceCounter = offsetof(TerrainTextureManager8, mResourceCounter),
+		offsetof_mCacheBlocks = offsetof(TerrainTextureManager8, mCacheBlocks),
+		offsetof_mTextureDatas = offsetof(TerrainTextureManager8, mTextureDatas),
+		offsetof_mVramCTexData = offsetof(TerrainTextureManager8, mVramCTexData)
+	};
 	stmfd sp!, { r4 - r11,lr }
 	ldr r4, [sp, #arg_br]
 	ldr r7, [r0, #offsetof_mResourceCounter]

@@ -16,6 +16,11 @@ private:
 	NNSFndArchive mTexArc;
 public:
 	TerrainTextureManager8();
+	~TerrainTextureManager8()
+	{
+		NNS_FndUnmountArchive(&mTexArc);
+		NNS_FndFreeToExpHeap(gHeapHandle, mTexArcData);
+	}
 	uint32_t GetTextureAddress(int tl, int tr, int bl, int br, uint32_t oldTexKey);
 	void UpdateVramC();
 };
