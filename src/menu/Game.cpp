@@ -23,6 +23,7 @@
 #include "terrain/managers/SfxManager.h"
 #include "tools/DragTool.h"
 #include "tools/AddTrackTool.h"
+#include "vehicles/Wagon.h"
 #include "Game.h"
 
 #define SWAP_BUFFERS_SORTMODE	GX_SORTMODE_MANUAL //AUTO
@@ -216,7 +217,7 @@ void Game::Initialize(int arg)
 	mTrain.firstPart->pathWorker2 = new PathWorker(sDummyPieces[0], 0, FX32_ONE, mMap);
 	mTrain.firstPart->next = NULL;
 
-	mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/low.nsbmd", NULL, false);
+	/*mLocModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/low.nsbmd", NULL, false);
 	NNS_G3dResDefaultSetup(mLocModel);
 	NNSG3dResFileHeader* mLocTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/a3/low.nsbtx", NULL, true);
 	NNS_G3dResDefaultSetup(mLocTextures);
@@ -230,7 +231,13 @@ void Game::Initialize(int arg)
 	NNSG3dResTex* tex = NNS_G3dGetTex(mLocTextures);
 	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mLocModel), tex);
 	NNS_G3dRenderObjInit(&mTrain.firstPart->renderObj, model);
-	NNS_FndFreeToExpHeap(gHeapHandle, mLocTextures);
+	NNS_FndFreeToExpHeap(gHeapHandle, mLocTextures);*/
+	mWagon = new Wagon(mMap, "a3");
+	mWagon->PutOnTrack(sDummyPieces[0]);
+	mWagon->Update();
+
+	VecFx32 center;
+	mWagon->GetCenterPos(&center);
 
 	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
@@ -269,7 +276,8 @@ void Game::Initialize(int arg)
 	//mCamera->mTrain = &mTrain;
 	Train_UpdatePos(&mTrain);
 	mCamera = new FreeRoamCamera();
-	mCamera->mDestination = mTrain.firstPart->position;
+	//mCamera->mDestination = mTrain.firstPart->position;
+	mWagon->GetCenterPos(&mCamera->mDestination);
 	mCamera->mDestination.x -= 32 * FX32_ONE;
 	mCamera->mDestination.z -= 32 * FX32_ONE;
 	VecFx32 camRot = { 0, 22 * FX32_ONE, 0 };
@@ -545,11 +553,13 @@ void Game::Render()
 
 	if (keyData & PAD_BUTTON_B)
 	{
-		mTrain.isDriving = TRUE;
-		mTrain.isDrivingBackwards = FALSE;
+		mWagon->mDriving = true;
+		//mTrain.isDriving = TRUE;
+		//mTrain.isDrivingBackwards = FALSE;
 	}
 	else
-		mTrain.isDriving = FALSE;
+		mWagon->mDriving = false;
+		//mTrain.isDriving = FALSE;
 
 	/*if (keyData & PAD_BUTTON_A)
 	{
@@ -578,8 +588,9 @@ void Game::Render()
 		{
 			if (mMap->GetFirstTrackPiece() != NULL)
 			{
-				mTrain.firstPart->pathWorker1 = new PathWorker(mMap->GetFirstTrackPiece(), 0, 0, mMap);
-				mTrain.firstPart->pathWorker2 = new PathWorker(mMap->GetFirstTrackPiece(), 0, FX32_ONE, mMap);
+				mWagon->PutOnTrack(mMap->GetFirstTrackPiece());
+				//mTrain.firstPart->pathWorker1 = new PathWorker(mMap->GetFirstTrackPiece(), 0, 0, mMap);
+				//mTrain.firstPart->pathWorker2 = new PathWorker(mMap->GetFirstTrackPiece(), 0, FX32_ONE, mMap);
 			}
 			mKeyTimer = 10;
 		}
@@ -671,7 +682,8 @@ void Game::Render()
 		G3X_SetFogTable(&fog_table[0]);
 		G3X_SetToonTable(&sToonTable[0]);
 	}
-	Train_UpdatePos(&mTrain);
+	mWagon->Update();
+	//Train_UpdatePos(&mTrain);
 #ifdef FIRST_PERSON
 	mCamera->mPosition.x = tpos.x - 8 * FX32_ONE;// + 0.4 * dir.x;
 	mCamera->mPosition.y = tpos.y + FX32_HALF + (FX32_HALF >> 1);// + 0.4 * dir.y;
@@ -682,7 +694,7 @@ void Game::Render()
 #endif
 	mCamera->Apply();
 
-	Train_UpdateSound(&mTrain, mCamera);
+	//Train_UpdateSound(&mTrain, mCamera);
 
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 	/*VecFx32 vec = { FX32_CONST(0), FX32_CONST(-1), FX32_CONST(-1) };
@@ -780,7 +792,8 @@ void Game::Render()
 		VecFx32 camDir;
 		mCamera->GetLookDirection(&camDir);
 		mMap->Render(xstart, xend, zstart, zend, xstart2, xend2, zstart2, zend2, mPickingState == PICKING_STATE_RENDERING, mSelectedMapX, mSelectedMapZ, &mCamera->mPosition, &camDir, 1 - mRenderState);
-		NNS_G3dGePushMtx();
+		mWagon->Render();
+		/*NNS_G3dGePushMtx();
 		{
 			NNS_G3dGeTranslateVec(&mTrain.firstPart->position);
 			//calculate rotation matrix
@@ -840,7 +853,7 @@ void Game::Render()
 			NNS_G3dDraw(&mTrain.firstPart->renderObj);
 		}
 		NNS_G3dGePopMtx(1);
-		NNS_G3dGeFlushBuffer();
+		NNS_G3dGeFlushBuffer();*/
 	}
 	G3_PopMtx(1);
 	mUIManager->Render();

@@ -13,6 +13,7 @@ class LookAtCamera;
 class ThirdPersonCamera;
 class FreeRoamCamera;
 class DragTool;
+class Wagon;
 
 class Game : public SimpleMenu
 {
@@ -30,6 +31,8 @@ private:
 	NNSG3dResFileHeader* mLocModel;
 	train_t mTrain;
 	train_part_t mTrainPart;
+
+	Wagon* mWagon;
 
 	int mPickingPointX;
 	int mPickingPointY;
@@ -74,8 +77,6 @@ private:
 	OSVAlarm mVRAMCopyVAlarm;
 
 	int mRenderState;
-
-	//void Pick(int x, int y, PickingCallbackFunc callback);
 
 	void OnPenDown(int x, int y);
 	void OnPenMove(int x, int y);

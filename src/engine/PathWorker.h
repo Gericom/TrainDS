@@ -29,6 +29,13 @@ private:
 public:
 	PathWorker(TrackPieceEx* curPiece, int curInPoint, fx32 curDistance, Map* map);
 	void Proceed(fx32 distance, VecFx32* point, VecFx32* direction);
+	void GetCurrent(VecFx32* point, VecFx32* direction)
+	{
+		if (point)
+			*point = mCurPoint;
+		if (direction)
+			*direction = mCurDirection;
+	}
 };
 
 #endif

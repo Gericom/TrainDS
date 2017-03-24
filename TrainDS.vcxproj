@@ -93,6 +93,7 @@
     <ClCompile Include="src\ui\UIManager.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\vehicles\train.cpp" />
+    <ClCompile Include="src\vehicles\Wagon.cpp" />
     <ClCompile Include="src\videoplayer\DecodeARMv5Stride256VXS2.videoplayeritcm.cpp" />
     <ClCompile Include="src\videoplayer\Vx2Tables.cpp" />
   </ItemGroup>
@@ -136,6 +137,8 @@
     <ClInclude Include="src\ui\UISlice.h" />
     <ClInclude Include="src\util.h" />
     <ClInclude Include="src\vehicles\train.h" />
+    <ClInclude Include="src\vehicles\Vehicle.h" />
+    <ClInclude Include="src\vehicles\Wagon.h" />
     <ClInclude Include="src\videoplayer\DecodeARMv5Stride256VXS2.h" />
     <ClInclude Include="src\videoplayer\Vx2Tables.h" />
     <ClInclude Include="src\videoplayer\yuv2rgb_new.h" />

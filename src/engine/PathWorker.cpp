@@ -60,12 +60,13 @@ PathWorker::PathWorker(TrackPieceEx* curPiece, int curInPoint, fx32 curDistance,
 	mCurDistance = curDistance;
 	mMap = map;
 	SetupPoint();
-	CalculatePoint();
+	//CalculatePoint();
+	Proceed(0, NULL, NULL);
 }
 
 void PathWorker::Proceed(fx32 distance, VecFx32* point, VecFx32* direction)
 {
-	if(distance != 0)
+	//if(distance != 0)
 	{
 		mCurDistance += distance;
 		while(mCurDistance > 0 && mNextDistance >= 0 && mCurDistance > mNextDistance)
@@ -91,6 +92,8 @@ void PathWorker::Proceed(fx32 distance, VecFx32* point, VecFx32* direction)
 		}*/
 		CalculatePoint();
 	}
-	*point = mCurPoint;
-	*direction = mCurDirection;
+	if(point)
+		*point = mCurPoint;
+	if(direction)
+		*direction = mCurDirection;
 }

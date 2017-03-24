@@ -121,6 +121,9 @@
     <ClCompile Include="src\terrain\managers\TerrainTextureManager8.renderingitcm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\vehicles\Wagon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\util.h">
@@ -247,6 +250,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\terrain\managers\TerrainTextureManager8.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\vehicles\Vehicle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\vehicles\Wagon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
