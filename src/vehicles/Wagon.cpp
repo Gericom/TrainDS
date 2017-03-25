@@ -5,13 +5,16 @@
 #include "inih/INIReader.h"
 #include "engine/PathWorker.h"
 #include "terrain/Map.h"
+#include "terrain/GameController.h"
+#include "terrain/managers/SeqArcSfx.h"
+#include "terrain/managers/SfxManager.h"
 #include "Vehicle.h"
 #include "Wagon.h"
 
 #define GEN_FILE_PATH(wagonName, fileName, dst) OS_SPrintf((dst), "/data/wagons/%s/%s", (wagonName), (fileName))
 
-Wagon::Wagon(Map* map, char* name)
-	: Vehicle(map), mOnTrack(false), mDriving(false)
+Wagon::Wagon(GameController* gameController, char* name)
+	: Vehicle(gameController), mOnTrack(false), mDriving(false), mSfx(NULL)
 {
 	STD_StrCpy(mDirName, name);
 	//read the ini file
@@ -72,12 +75,12 @@ void Wagon::PutOnTrack(TrackPieceEx* track)
 		fx32 dist = VEC_Distance(&mBack, &mBogeys[i].position) / 13;
 		if (mBogeys[i].pathWorker)
 			delete mBogeys[i].pathWorker;
-		mBogeys[i].pathWorker = new PathWorker(track, 0, dist, mMap);
+		mBogeys[i].pathWorker = new PathWorker(track, 0, dist, mGameController->mMap);
 	}
 	mOnTrack = true;
 }
 
-void Wagon::GetCenterPos(VecFx32* dst)
+void Wagon::GetPosition(VecFx32* dst)
 {
 	VecFx32 center = { 0, 0, 0 };
 	if (mOnTrack)
@@ -133,7 +136,8 @@ void Wagon::Render()
 	{
 		//calculate centerpos
 		VecFx32 center;
-		GetCenterPos(&center);
+		GetPosition(&center);
+		center.y += (FX32_ONE / 32);//offset of the track from the terrain, to put the wheels on and not through the track
 		NNS_G3dGeTranslateVec(&center);
 
 		//NNS_G3dRenderObjResetCallBack(&mRenderObj);
@@ -222,6 +226,12 @@ void Wagon::Update()
 		return;
 	if (mDriving)
 	{
+		if (!mSfx)
+		{
+			mSfx = new SeqArcSfx(SEQ_TRAIN, TRAIN_TRACK);
+			mSfx->mParent = this;
+			mGameController->mSfxManager->StartSfx(mSfx);
+		}
 		for (int i = 0; i < mNrBogeys; i++)
 		{
 			mBogeys[i].pathWorker->Proceed(FX32_ONE / 60, NULL, NULL);
@@ -229,10 +239,10 @@ void Wagon::Update()
 	}
 	else
 	{
-		for (int i = 0; i < mNrBogeys; i++)
+		if (mSfx)
 		{
-			//isn't this bullshit?
-			mBogeys[i].pathWorker->Proceed(0, NULL, NULL);
+			mGameController->mSfxManager->StopSfx(mSfx, 8);
+			mSfx = NULL;
 		}
 	}
 }

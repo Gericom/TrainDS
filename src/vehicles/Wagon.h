@@ -1,11 +1,13 @@
 #ifndef __WAGON_H__
 #define __WAGON_H__
+#include <nnsys/g3d.h>
 
 #include "Vehicle.h"
 
 class Map;
 class TrackPieceEx;
 class PathWorker;
+class Sfx;
 
 class Wagon : public Vehicle
 {
@@ -32,12 +34,14 @@ private:
 	NNSG3dRenderObj mRenderObj;
 
 	bool mOnTrack;
+
+	Sfx* mSfx;
 public:
-	Wagon(Map* map, char* name);
+	Wagon(GameController* gameController, char* name);
 	void PutOnTrack(TrackPieceEx* track);
 	void Render();
 	void Update();
-	void GetCenterPos(VecFx32* dst);
+	void GetPosition(VecFx32* dst);
 };
 
 #endif

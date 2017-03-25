@@ -6,7 +6,7 @@
 class TerrainTextureManager8 : public TerrainTextureManager
 {
 private:
-	texture_cache_block_t mCacheBlocks[/*1024*/1025] ATTRIBUTE_ALIGN(32);
+	texture_cache_block_t mCacheBlocks[/*1024*//*1025*/513] ATTRIBUTE_ALIGN(32);
 
 	uint8_t mVramCTexData[128 * 1024] ATTRIBUTE_ALIGN(32);
 

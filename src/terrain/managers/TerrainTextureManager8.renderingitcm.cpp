@@ -31,14 +31,14 @@ asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, i
 	cmp r11, #0
 	beq notexkey
 	sub r9, r11, #(128 * 1024)
-	add r9, r0, r9, lsr #4
+	add r9, r0, r9, lsr #5 //#4
 	ldr r8, [r9, #offsetof_mCacheBlocks]!
 	cmp r8, r6
 	beq tag_found_old
 
 notexkey:
 	add r9, r0, #offsetof_mCacheBlocks
-	add r8, r9, #(1024 * 8)
+	add r8, r9, #(512 * 8) //#(1024 * 8)
 	str r6, [r8], #8
 loop:	
 	ldr r10, [r9], #8
@@ -51,7 +51,7 @@ loop:
 	mvn r5, #1
 	mvn r8, #0x80000000
 	add r9, r0, #(offsetof_mCacheBlocks + 4)
-	mov r12, #1024
+	mov r12, #512 //#1024
 loop2:
 	ldr r10, [r9], #8
 	cmp r10, r8
@@ -59,12 +59,12 @@ loop2:
 		movlt r5, r12
 	subs r12, r12, #1
 	bgt loop2
-	rsb r5, r5, #1024
+	rsb r5, r5, #512 //#1024
 	add r12, r0, #offsetof_mCacheBlocks
 	add r12, r12, r5, lsl #3
 	strd r6, [r12]
 
-	add r12, r0, r5, lsl #7
+	add r12, r0, r5, lsl #8 //#7
 
 	ldr r11,= offsetof_mTextureDatas
 	add lr, r0, r11
@@ -77,14 +77,14 @@ loop2:
 	add r4, r12, r11//#offsetof_mVramCTexData
 
 	bl gen_terrain_texture_8
-	mov r0, r5, lsl #7
+	mov r0, r5, lsl #8 //#7
 	add r0, r0, #(128 * 1024)
 	ldmfd sp!, { r4 - r11,pc }
 tag_found:
 	sub r12, r8, r9
-	rsb r12, r12, #(1024 * 8)
+	rsb r12, r12, #(512 * 8) //#(1024 * 8)
 	str r7, [r9, #-4]
-	mov r12, r12, lsl #4
+	mov r12, r12, lsl #5 //#4
 	add r0, r12, #(128 * 1024)
 	ldmfd sp!, { r4 - r11,pc }
 

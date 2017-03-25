@@ -25,7 +25,7 @@ void RCT2Tree1::Render(TerrainManager* terrainManager)
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 	G3_PushMtx();
 	{
-		G3_Translate(mPosition.x * FX32_ONE + FX32_HALF, mPosition.y * TILE_HEIGHT/* + (FX32_ONE >> 4)*/, mPosition.z * FX32_ONE + FX32_HALF);
+		G3_Translate(mPosition.x * FX32_ONE + FX32_HALF, mPosition.y * 1/* + (FX32_ONE >> 4)*/, mPosition.z * FX32_ONE + FX32_HALF);
 		Util_SetupBillboardYMatrix();
 		const VecFx32 vtx[4] =
 		{

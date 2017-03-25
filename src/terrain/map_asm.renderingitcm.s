@@ -195,11 +195,11 @@ arg_dst	= 4 * 9
 	stmfd sp!, {r4-r11,lr}
 	//ldr r4, [sp, #arg_dst]	//dst
 	ldr r5,= gen_terrain_texture_8_coeftable
-	mov r6, #64
+	mov r6, #128
 	gen_terrain_texture_8_yloop:
 	//{
 		//gen_terrain_texture_xloop:
-		.rept 8
+		.rept 16
 		//{
 			//(x*y)*br
 			ldr lr, [r5], #4
@@ -262,7 +262,7 @@ arg_dst	= 4 * 9
 			smlabb r10, r12, r7, r10
 
 			//prevent interlock
-			ldr lr,= 1337
+			ldr lr,= 624 //1337
 
 			mov r8, r8, lsr #5
 			smlabb r11, r8, r7, r11
@@ -277,7 +277,7 @@ arg_dst	= 4 * 9
 			strh r9, [r4], #2
 		//}
 		.endr
-		subs r6, r6, #8
+		subs r6, r6, #16
 		bgt gen_terrain_texture_8_yloop
 	//}
 	ldmfd sp!, {r4-r11,pc}

@@ -1,6 +1,8 @@
 #ifndef __LOOKATCAMERA_H__
 #define __LOOKATCAMERA_H__
 
+#include "Camera.h"
+
 class LookAtCamera : public Camera
 {
 public:

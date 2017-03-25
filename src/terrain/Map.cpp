@@ -3,7 +3,6 @@
 #include <nnsys/g3d.h>
 #include "core.h"
 #include "util.h"
-#include "terrain.h"
 #include "TerrainManager.h"
 #include "terrain/track/TrackPieceEx.h"
 #include "terrain/track/FlexTrack.h"

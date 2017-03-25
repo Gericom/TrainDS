@@ -2,14 +2,16 @@
 #define __THIRDPERSONCAMERA_H__
 #include "LookAtCamera.h"
 #include "Quaternion.h"
-#include "vehicles/train.h"
+#include "WorldObject.h"
+
+#if 0
 
 //A camera that looks at the locomotive of a train
 class ThirdPersonCamera : public LookAtCamera
 {
 public:
 	ThirdPersonCamera()
-		: mRadius(2.5 * FX32_ONE), mTheta(0), mPhi(0), mTrain(NULL)
+		: mRadius(2.5 * FX32_ONE), mTheta(0), mPhi(0), mObject(NULL)
 	{
 		//mRotation = Quaternion();
 		//mRotation.Identity();
@@ -18,7 +20,7 @@ public:
 		//mDirection.z = 0;//FX32_ONE;
 	}
 
-	train_t* mTrain;
+	WorldObject* mObject;
 	fx32 mRadius;
 	fx32 mTheta;//inclination
 	fx32 mPhi;//azimuth
@@ -40,5 +42,6 @@ public:
 
 	void Apply();
 };
+#endif
 
 #endif

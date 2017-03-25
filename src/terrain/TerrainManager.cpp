@@ -2,7 +2,6 @@
 #include <nnsys/gfd.h>
 #include "core.h"
 #include "util.h"
-#include "terrain.h"
 #include "TerrainManager.h"
 
 TerrainManager::TerrainManager()

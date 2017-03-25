@@ -1,11 +1,12 @@
 #include <nitro.h>
 #include <nnsys/g3d.h>
 #include "core.h"
-#include "vehicles/train.h"
 #include "Camera.h"
 #include "LookAtCamera.h"
 #include "ThirdPersonCamera.h"
 #include "Quaternion.h"
+
+#if 0
 
 void ThirdPersonCamera::Apply()
 {
@@ -82,3 +83,5 @@ void ThirdPersonCamera::Apply()
     mUp.z = -FX_Mul( sinz, siny );*/
 	LookAtCamera::Apply();
 }
+
+#endif

@@ -1,10 +1,8 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 #include "SimpleMenu.h"
-#include "vehicles/train.h"
-#include "terrain/terrain.h"
-#include "terrain/Map.h"
-#include "terrain/managers/SfxManager.h"
+#include "terrain/TerrainManager.h"
+#include "terrain/GameController.h"
 
 class TerrainManager;
 class UIManager;
@@ -27,12 +25,6 @@ private:
 		PICKING_STATE_RENDERING,
 		PICKING_STATE_CAPTURING
 	};
-
-	NNSG3dResFileHeader* mLocModel;
-	train_t mTrain;
-	train_part_t mTrainPart;
-
-	Wagon* mWagon;
 
 	int mPickingPointX;
 	int mPickingPointY;
@@ -88,10 +80,7 @@ private:
 	void HandlePickingEarly();
 	void HandlePickingLate();
 public:
-	FreeRoamCamera*/*ThirdPersonCamera**/ mCamera;
-
-	Map* mMap;
-	SfxManager* mSfxManager;
+	GameController* mGameController;
 
 	void OnVRAMCopyVAlarm();
 

@@ -3,7 +3,6 @@
 #include <nnsys/g3d.h>
 #include "core.h"
 #include "util.h"
-#include "terrain.h"
 #include "TerrainManager.h"
 #include "terrain/track/TrackPieceEx.h"
 #include "terrain/track/FlexTrack.h"
@@ -259,9 +258,18 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 							mTextures[(y + 2) * 128 + x + 2],
 							mTexAddresses[y * 128 + x]);
 						mTexAddresses[y * 128 + x] = texOffset;
-						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
+						/*G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
 							GX_TEXGEN_NONE,    // use texcoord
 							GX_TEXSIZE_S8,        // 16 pixels
+							GX_TEXSIZE_T8,        // 16 pixels
+							GX_TEXREPEAT_NONE,     // no repeat
+							GX_TEXFLIP_NONE,       // no flip
+							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+							texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+						);*/
+						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
+							GX_TEXGEN_NONE,    // use texcoord
+							GX_TEXSIZE_S16,        // 16 pixels
 							GX_TEXSIZE_T8,        // 16 pixels
 							GX_TEXREPEAT_NONE,     // no repeat
 							GX_TEXFLIP_NONE,       // no flip
@@ -321,14 +329,14 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 							reg_G3X_GXFIFO = mNormals[(y + 2) * 128 + x];
 							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, mVtx[(y + 2) * 128 + x] << 6, (y << 6) + (2 << 6));
 							//reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, 0);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(8 * FX32_ONE, 0);
+							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 0);
 						}
 						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL);
 						{
 							reg_G3X_GXFIFO = mNormals[y * 128 + (x + 2)];
 							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (2 << 6), mVtx[y * 128 + (x + 2)] << 6, y << 6);
 							//reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, (8 << tex->nitroHeight) * FX32_ONE * 2);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(8 * FX32_ONE, 8 * FX32_ONE);
+							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 8 * FX32_ONE);
 							reg_G3X_GXFIFO = mNormals[(y + 2) * 128 + (x + 2)];
 						}
 						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP);

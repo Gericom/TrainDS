@@ -1,20 +1,22 @@
 #ifndef __VEHICLE_H__
 #define __VEHICLE_H__
 
-class Map;
+#include "engine/WorldObject.h"
 
-class Vehicle
+class GameController;
+
+class Vehicle : public WorldObject
 {
 protected:
-	Map* mMap;
+	GameController* mGameController;
 
 public:
-	Vehicle(Map* map)
-		: mMap(map) { }
+	Vehicle(GameController* gameController)
+		: mGameController(gameController) { }
 	virtual void Render() = 0;
 	virtual void Update() = 0;
 
-	virtual void GetCenterPos(VecFx32* dst) = 0;
+	virtual void GetPosition(VecFx32* dst) = 0;
 };
 
 #endif
