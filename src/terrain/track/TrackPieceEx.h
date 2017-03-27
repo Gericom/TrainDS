@@ -1,6 +1,8 @@
 #ifndef __TRACKPIECEEX_H__
 #define __TRACKPIECEEX_H__
 
+class TerrainManager;
+
 class TrackPieceEx
 {
 	friend class Map;

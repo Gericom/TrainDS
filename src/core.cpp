@@ -63,6 +63,8 @@ NNSSndHeapHandle gSndHeapHandle;
 static uint32_t mSzWork;
 static void* mPMgrWork;
 
+volatile TPData gTPData;
+
 void Core_Init()
 {
 	NNS_SndInit();
@@ -81,6 +83,8 @@ void Core_Init()
 	uint32_t szWork = NNS_GfdGetLnkPlttVramManagerWorkSize(4096);
 	void* pMgrWork = NNS_FndAllocFromExpHeapEx(gHeapHandle, szWork, 16);
 	NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
+
+	TP_RequestAutoSamplingStart(192, 1, (TPData*)&gTPData, 1);
 }
 
 uint16_t gKeys;

@@ -65,6 +65,9 @@ static const GXRgb sToonTable[32] =
 //#define FIRST_PERSON
 //#define TOP_VIEW
 
+#define VIEW_ANGLE_SIN	FX32_SIN30
+#define VIEW_ANGLE_COS	FX32_COS30
+
 void Game::Initialize(int arg)
 {
 	//load overlay
@@ -194,7 +197,7 @@ void Game::Initialize(int arg)
 	#endif
 	#endif*/
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*//*31*/8 * 4096, 40960 * 4);
+	NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*//*31*/8 * 4096, 40960 * 4);
 
 	mDragTool = new AddTrackTool(this);
 
@@ -512,9 +515,9 @@ void Game::Render()
 		G3X_EdgeMarking(true);
 		G3X_AntiAlias(mAntiAliasEnabled);
 		if (mRenderState == 0)
-			G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0x800);
+			G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0xC00);
 		else
-			G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0x800);
+			G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0xC00);
 			//G3X_SetFog(/*true*/false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
 		//G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
 		G3X_SetFogColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31);
@@ -565,7 +568,7 @@ void Game::Render()
 	}
 
 	//lod0
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*//*31*/10 * 4096, 40960 * 4);
+	/*NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, /*64//*18//*24//*31/10 * 4096, 40960 * 4);
 
 	VecFx32 bbmin, bbmax;
 	CalculateVisibleGrid(&bbmin, &bbmax);
@@ -583,7 +586,7 @@ void Game::Render()
 	NOCASH_Printf("lod0: (%d-%d, %d-%d)", xstart, xend, zstart, zend);
 
 	//what actually visible is
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*/35 * 4096, 40960 * 4);
+	NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, /*64//*18//*24//*35/50 * 4096, 40960 * 4);
 
 	CalculateVisibleGrid(&bbmin, &bbmax);
 
@@ -597,24 +600,35 @@ void Game::Render()
 	int zend2 = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
 	zend2 = MATH_CLAMP(zend2, 0, 128);
 
-	NOCASH_Printf("lod1: (%d-%d, %d-%d)", xstart2, xend2, zstart2, zend2);
+	NOCASH_Printf("lod1: (%d-%d, %d-%d)", xstart2, xend2, zstart2, zend2);*/
 
 	//test
 	if (mPickingState != PICKING_STATE_RENDERING)
 	{
 		if (mRenderState == 0)
 		{
-			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * 4096, 35 * 4096, 40960 * 4);
+			NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 8 * 4096, /*35*/50 * 4096, 40960 * 4);
 		}
 		else
 		{
-			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 10 * 4096, 40960 * 4);
+			NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, 10 * 4096, 40960 * 4);
 		}
 	}
 	else
-		NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 35 * 4096, 40960 * 4);
+		NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, 35 * 4096, 40960 * 4);
 
+	VecFx32 bbmin, bbmax;
+	CalculateVisibleGrid(&bbmin, &bbmax);
 
+	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	xstart = MATH_CLAMP(xstart, 0, 128);
+	int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	zstart = MATH_CLAMP(zstart, 0, 128);
+
+	int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	xend = MATH_CLAMP(xend, 0, 128);
+	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	zend = MATH_CLAMP(zend, 0, 128);
 
 	NNS_G3dGlbFlushP();
 	NNS_G3dGeFlushBuffer();
@@ -633,7 +647,7 @@ void Game::Render()
 	{
 		VecFx32 camDir;
 		mGameController->mCamera->GetLookDirection(&camDir);
-		mGameController->mMap->Render(xstart, xend, zstart, zend, xstart2, xend2, zstart2, zend2, mPickingState == PICKING_STATE_RENDERING, mSelectedMapX, mSelectedMapZ, &mGameController->mCamera->mPosition, &camDir, 1 - mRenderState);
+		mGameController->mMap->Render(xstart, xend, zstart, zend, mPickingState == PICKING_STATE_RENDERING, mSelectedMapX, mSelectedMapZ, &mGameController->mCamera->mPosition, &camDir, 1 - mRenderState);
 		mGameController->mWagon->Render();
 	}
 	G3_PopMtx(1);

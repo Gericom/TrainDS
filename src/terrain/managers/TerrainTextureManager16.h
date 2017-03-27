@@ -8,8 +8,10 @@ class TerrainTextureManager16 : public TerrainTextureManager
 private:
 	texture_cache_block_t mCacheBlocks[257] ATTRIBUTE_ALIGN(32);
 
+public:
 	uint16_t* mTextureDatas[26] ATTRIBUTE_ALIGN(32);
 
+private:
 	void* mTexArcData;
 	NNSFndArchive mTexArc;
 

@@ -24,9 +24,9 @@ void UIManager::AddSlice(UISlice* slice)
 
 void UIManager::ProcessInput()
 {
-	TPData raw_point;
+	TPData raw_point = gTPData;
 	TPData disp_point;
-	while (TP_RequestRawSampling(&raw_point) != 0);
+	//while (TP_RequestRawSampling(&raw_point) != 0);
 	TP_GetCalibratedPoint(&disp_point, &raw_point);
 	if (raw_point.validity && !mLastTouchState.touch && disp_point.touch)
 		return;//this will yield invalid results!
