@@ -10,7 +10,7 @@
 
 	<body>
 		<letter>
-			abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+      <![CDATA[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()~`":;'<>,./?{}[]-+_=×¥äåé®þüúíóöáß´æ©ñµç¿¡²³¤€¼½¾‘’ÄÅÉÞÜÚÍÓÖÁ§ÐØÆ¢Ñ]]>
 		</letter>
 	</body>
 

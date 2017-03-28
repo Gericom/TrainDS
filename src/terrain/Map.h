@@ -31,10 +31,20 @@ typedef uint16_t picking_result_t;
 class Map
 {
 public:
-	uint8_t* mVtx;
-	uint8_t* mTextures;
-	VecFx10* mNormals;
-	uint32_t* mTexAddresses;
+	struct hvtx_t
+	{
+		VecFx10 normal;
+		uint8_t y;
+		uint8_t tex;
+		uint16_t texAddress;
+	};
+
+	hvtx_t* mHMap;
+
+	//uint8_t* mVtx;
+	//uint8_t* mTextures;
+	//VecFx10* mNormals;
+	//uint32_t* mTexAddresses;
 	//uint8_t* mLodLevels;
 
 	TerrainTextureManager16* mTerrainTextureManager16;

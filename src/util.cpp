@@ -4,7 +4,7 @@
 #include "core.h"
 #include "util.h"
 
-void* Util_LoadFileToBuffer(char* path, uint32_t* size, BOOL tempoarly)
+void* Util_LoadFileToBuffer(char* path, uint32_t* size, bool tempoarly)
 {
 	FSFile file;
 	FS_InitFile(&file);
@@ -18,7 +18,7 @@ void* Util_LoadFileToBuffer(char* path, uint32_t* size, BOOL tempoarly)
 	return buffer;
 }
 
-void* Util_LoadLZ77FileToBuffer(char* path, uint32_t* size, BOOL tempoarly)
+void* Util_LoadLZ77FileToBuffer(char* path, uint32_t* size, bool tempoarly)
 {
 	FSFile file;
 	FS_InitFile(&file);

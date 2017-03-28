@@ -26,6 +26,16 @@ private:
 		PICKING_STATE_CAPTURING
 	};
 
+	enum FrameType
+	{
+		//regular rendering, these frames should always appear in pairs
+		FRAME_TYPE_MAIN_FAR,	//for the far part
+		FRAME_TYPE_MAIN_NEAR,	//for the near part
+		//injected frames
+		FRAME_TYPE_MAIN_PICKING,//for picking
+		FRAME_TYPE_SUB			//for sub screen 3d
+	};
+
 	int mPickingPointX;
 	int mPickingPointY;
 	int mPickingXStart;

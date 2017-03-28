@@ -18,32 +18,57 @@ Map::Map()
 	NNS_FND_INIT_LIST(&mTrackList, TrackPieceEx, mLink);
 	NNS_FND_INIT_LIST(&mSceneryList, SceneryObject, mLink);
 	mTerrainManager = new TerrainManager();
-	mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);
-	mTextures = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.tmap", NULL, false);
+
+	mHMap = new hvtx_t[128 * 128];
+
+	uint8_t* vtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, true);
+	for (int y = 0; y < 128; y++)
+	{
+		for (int x = 0; x < 128; x++)
+		{
+			mHMap[y * 128 + x].y = vtx[y * 128 + x];
+		}
+	}
+	NNS_FndFreeToExpHeap(gHeapHandle, vtx);
+
+	uint8_t* tex = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.tmap", NULL, true);
+	for (int y = 0; y < 128; y++)
+	{
+		for (int x = 0; x < 128; x++)
+		{
+			mHMap[y * 128 + x].tex = tex[y * 128 + x];
+			mHMap[y * 128 + x].texAddress = 0;
+		}
+	}
+	NNS_FndFreeToExpHeap(gHeapHandle, tex);
+
+	//mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);
+	//mTextures = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.tmap", NULL, false);
 
 	mTerrainTextureManager16 = new TerrainTextureManager16();
 	mTerrainTextureManager8 = new TerrainTextureManager8();
-	mTexAddresses = new uint32_t[128 * 128];
-	MI_CpuClearFast(mTexAddresses, 128 * 128 * 4);
+	//mTexAddresses = new uint32_t[128 * 128];
+	//MI_CpuClearFast(mTexAddresses, 128 * 128 * 4);
 
 	//mLodLevels = new uint8_t[128 * 128];
 	//MI_CpuFillFast(mLodLevels, 0xFFFFFFFF, 128 * 128);
 
 	//mVtx = new uint8_t[128 * 128];
 	//MI_CpuFillFast(mVtx, 0x80808080, 128 * 128);
-	mNormals = new VecFx10[128 * 128];
+	//mNormals = new VecFx10[128 * 128];
 	RecalculateNormals(0, 127, 0, 127);
 }
 
 Map::~Map()
 {
 	delete mTerrainManager;
-	NNS_FndFreeToExpHeap(gHeapHandle, mVtx);
-	NNS_FndFreeToExpHeap(gHeapHandle, mTextures);
+	//NNS_FndFreeToExpHeap(gHeapHandle, mVtx);
+	//NNS_FndFreeToExpHeap(gHeapHandle, mTextures);
 	delete mTerrainTextureManager16;
 	delete mTerrainTextureManager8;
-	delete mTexAddresses;
-	delete mNormals;
+	//delete mTexAddresses;
+	//delete mNormals;
+	delete mHMap;
 }
 
 
@@ -77,25 +102,25 @@ bool Map::ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecF
 	VecFx32 a =
 	{
 		mapX * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[mapY * 128 + mapX] - Y_OFFSET) * Y_SCALE,
+		(mHMap[mapY * 128 + mapX].y - Y_OFFSET) * Y_SCALE,
 		mapY * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 b =
 	{
 		mapX * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[(mapY + 1) * 128 + mapX] - Y_OFFSET) * Y_SCALE,
+		(mHMap[(mapY + 1) * 128 + mapX].y - Y_OFFSET) * Y_SCALE,
 		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 c =
 	{
 		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[mapY * 128 + mapX + 1] - Y_OFFSET) * Y_SCALE,
+		(mHMap[mapY * 128 + mapX + 1].y - Y_OFFSET) * Y_SCALE,
 		mapY * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 d =
 	{
 		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[(mapY + 1) * 128 + mapX + 1] - Y_OFFSET) * Y_SCALE,
+		(mHMap[(mapY + 1) * 128 + mapX + 1].y - Y_OFFSET) * Y_SCALE,
 		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
 	};
 
@@ -161,25 +186,25 @@ fx32 Map::GetYOnMap(fx32 x, fx32 z)
 	VecFx32 a =
 	{
 		mapX * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[mapY * 128 + mapX] - Y_OFFSET) * Y_SCALE,
+		(mHMap[mapY * 128 + mapX].y - Y_OFFSET) * Y_SCALE,
 		mapY * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 b =
 	{
 		mapX * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[(mapY + 1) * 128 + mapX] - Y_OFFSET) * Y_SCALE,
+		(mHMap[(mapY + 1) * 128 + mapX].y - Y_OFFSET) * Y_SCALE,
 		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 c =
 	{
 		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[mapY * 128 + mapX + 1] - Y_OFFSET) * Y_SCALE,
+		(mHMap[mapY * 128 + mapX + 1].y - Y_OFFSET) * Y_SCALE,
 		mapY * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 d =
 	{
 		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
-		(mVtx[(mapY + 1) * 128 + mapX + 1] - Y_OFFSET) * Y_SCALE,
+		(mHMap[(mapY + 1) * 128 + mapX + 1].y - Y_OFFSET) * Y_SCALE,
 		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
 	};
 	VecFx32 ab, ac, abXac;

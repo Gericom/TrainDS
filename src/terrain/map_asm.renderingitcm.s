@@ -48,43 +48,96 @@
 
 #define G3OP_DUMMY_COMMAND      0xFF   /* Dummy command */
 
-//void render_tile(pNorm, pVtx, x, y)
+//void render_tile(pVtx, x, y)
 .global render_tile
 render_tile:
 	stmfd sp!, {r4-r11}
-	ldr r4,= G3OP_BEGIN | (G3OP_TEXCOORD << 8) | (G3OP_NORMAL << 16) | (G3OP_VTX_10 << 24)
-	mov r5, #2 //GX_BEGIN_TRIANGLE_STRIP
-	mov r6, #0
-	ldr r7, [r0]
-	ldrb r8, [r1]
-	orr r2, r2, r3, lsl #20
-	orr r8, r2, r8, lsl #10
+	orr r10, r1, r2, lsl #20
+	ldr r1,= G3OP_BEGIN | (G3OP_TEXCOORD << 8) | (G3OP_NORMAL << 16) | (G3OP_VTX_10 << 24)
+	mov r2, #2 //GX_BEGIN_TRIANGLE_STRIP
+	mov r3, #0
+	ldmia r0, {r4, r5, r6, r7}
+	and r5, r5, #0xFF
+	orr r5, r10, r5, lsl #10
+	ldr r8,= G3OP_TEXCOORD | (G3OP_NORMAL << 8) | (G3OP_VTX_10 << 16) | (G3OP_TEXCOORD << 24)
+	mov r9, #0x01000000
 
-	ldr r9,= G3OP_TEXCOORD | (G3OP_NORMAL << 8) | (G3OP_VTX_10 << 16) | (G3OP_TEXCOORD << 24)
-	mov r10, #0x01000000
-	ldr r11, [r0, #(128 << 2)]
-	ldrb r12, [r1, #128]
-	orr r12, r2, r12, lsl #10
-	add r12, r12, #(1 << 20)
+	ldr r12,= 0x04000400
+	stmia r12, {r1-r5,r8,r9}
 
-	ldr r3,= 0x04000400
-	stmia r3, {r4-r12}
+	add r2, r0, #(128 * 8)
+	ldmia r2, {r2, r3, r9, r11}
+	and r3, r3, #0xFF
+	orr r3, r10, r3, lsl #10
+	add r3, r3, #(1 << 20)
 
 	mov r4, #0x00000100
-	ldr r5,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_TEXCOORD << 16) | (G3OP_NORMAL << 24)
-	ldr r6, [r0, #4]
-	ldrb r7, [r1, #1]
-	add r2, r2, #1
-	orr r7, r2, r7, lsl #10
-	orr r8, r4, #0x01000000		//=0x01000100
-	ldr r9, [r0, #((128 << 2) + 4)]
 
-	ldr r10,= G3OP_VTX_10 | (G3OP_END << 8) | (G3OP_NOP << 16) | (G3OP_NOP << 24)
-	ldrb r11, [r1, #(128 + 1)]
-	orr r11, r2, r11, lsl #10
+	ldr r5,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_TEXCOORD << 16) | (G3OP_NORMAL << 24)
+	and r7, r7, #0xFF
+	add r10, r10, #1
+	orr r7, r10, r7, lsl #10
+
+	orr r8, r4, #0x01000000		//=0x01000100
+
+	and r11, r11, #0xFF
+	orr r11, r10, r11, lsl #10
 	add r11, r11, #(1 << 20)
 
-	stmia r3, {r4-r11}
+	ldr r10,= G3OP_VTX_10 | (G3OP_END << 8) | (G3OP_NOP << 16) | (G3OP_NOP << 24)
+
+	stmia r12, {r2-r11}
+
+	ldmfd sp!, {r4-r11}
+	bx lr
+
+//void render_tile2x2(pVtx, x, y)
+.global render_tile2x2
+render_tile2x2:
+	stmfd sp!, {r4-r11}
+	orr r10, r1, r2, lsl #20
+	ldr r1,= G3OP_BEGIN | (G3OP_TEXCOORD << 8) | (G3OP_NORMAL << 16) | (G3OP_VTX_10 << 24)
+	mov r2, #2 //GX_BEGIN_TRIANGLE_STRIP
+	mov r3, #0
+	ldmia r0, {r4, r5}
+
+	add r6, r0, #(2 * 8)
+	ldmia r6, {r6, r7}
+
+	and r5, r5, #0xFF
+	orr r5, r10, r5, lsl #10
+	ldr r8,= G3OP_TEXCOORD | (G3OP_NORMAL << 8) | (G3OP_VTX_10 << 16) | (G3OP_TEXCOORD << 24)
+	mov r9, #0x00800000
+
+	ldr r12,= 0x04000400
+	stmia r12, {r1-r5,r8,r9}
+
+	add r9, r0, #(2 * 128 * 8)
+	ldmia r9, {r2, r3}
+
+	add r9, r9, #(2 * 8)
+	ldmia r9, {r9, r11}
+
+	and r3, r3, #0xFF
+	orr r3, r10, r3, lsl #10
+	add r3, r3, #(2 << 20)
+
+	mov r4, #0x00000100
+
+	ldr r5,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_TEXCOORD << 16) | (G3OP_NORMAL << 24)
+	and r7, r7, #0xFF
+	add r10, r10, #2
+	orr r7, r10, r7, lsl #10
+
+	orr r8, r4, #0x00800000		//=0x00800100
+
+	and r11, r11, #0xFF
+	orr r11, r10, r11, lsl #10
+	add r11, r11, #(2 << 20)
+
+	ldr r10,= G3OP_VTX_10 | (G3OP_END << 8) | (G3OP_NOP << 16) | (G3OP_NOP << 24)
+
+	stmia r12, {r2-r11}
 
 	ldmfd sp!, {r4-r11}
 	bx lr
