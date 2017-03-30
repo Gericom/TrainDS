@@ -33,20 +33,7 @@ Wagon::Wagon(GameController* gameController, char* name)
 	mBack.x = FX_F32_TO_FX32(iniReader.GetReal("back", "x", 0));
 	mBack.y = FX_F32_TO_FX32(iniReader.GetReal("back", "y", 0));
 	mBack.z = FX_F32_TO_FX32(iniReader.GetReal("back", "z", 0));
-	//bogeys
-	mNrBogeys = iniReader.GetInteger("wagon", "bogeycount", 0);
-	char bogeySectionName[8];
-	for (int i = 0; i < mNrBogeys; i++)
-	{
-		OS_SPrintf(bogeySectionName, "bogey%d", i);
-		mBogeys[i].position.x = FX_F32_TO_FX32(iniReader.GetReal(bogeySectionName, "x", 0));
-		mBogeys[i].position.y = FX_F32_TO_FX32(iniReader.GetReal(bogeySectionName, "y", 0));
-		mBogeys[i].position.z = FX_F32_TO_FX32(iniReader.GetReal(bogeySectionName, "z", 0));
-		MI_CpuClear8(&mBogeys[i].nodeName, sizeof(mBogeys[i].nodeName));
-		const char* bogeyName = iniReader.Get(bogeySectionName, "name", "").c_str();
-		STD_StrCpy((char*)&mBogeys[i].nodeName, bogeyName);
-		mBogeys[i].pathWorker = NULL;
-	}
+
 	//load model
 	GEN_FILE_PATH(name, "low.nsbmd", path);
 	mModelData = (NNSG3dResFileHeader*)Util_LoadFileToBuffer(path, NULL, false);
@@ -65,9 +52,27 @@ Wagon::Wagon(GameController* gameController, char* name)
 	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mModelData), tex);
 	NNS_G3dRenderObjInit(&mRenderObj, model);
 	NNS_FndFreeToExpHeap(gHeapHandle, mTextures);
+	NNS_G3dRenderObjSetUserPtr(&mRenderObj, this);
+	NNS_G3dRenderObjSetCallBack(&mRenderObj, Wagon::StaticModifyBogeyRotation, NULL, NNS_G3D_SBC_NODEDESC, NNS_G3D_SBC_CALLBACK_TIMING_B);
+
+	//bogeys
+	mNrBogeys = iniReader.GetInteger("wagon", "bogeycount", 0);
+	char bogeySectionName[8];
+	for (int i = 0; i < mNrBogeys; i++)
+	{
+		OS_SPrintf(bogeySectionName, "bogey%d", i);
+		mBogeys[i].position.x = FX_F32_TO_FX32(iniReader.GetReal(bogeySectionName, "x", 0));
+		mBogeys[i].position.y = FX_F32_TO_FX32(iniReader.GetReal(bogeySectionName, "y", 0));
+		mBogeys[i].position.z = FX_F32_TO_FX32(iniReader.GetReal(bogeySectionName, "z", 0));
+		MI_CpuClear8(&mBogeys[i].nodeName, sizeof(mBogeys[i].nodeName));
+		const char* bogeyName = iniReader.Get(bogeySectionName, "name", "").c_str();
+		STD_StrCpy((char*)&mBogeys[i].nodeName, bogeyName);
+		mBogeys[i].pathWorker = NULL;
+		mBogeys[i].jointId = NNS_G3dGetNodeIdxByName(NNS_G3dGetNodeInfo(model), &mBogeys[i].nodeName.resName);
+	}
 }
 
-void Wagon::PutOnTrack(TrackPieceEx* track)
+void Wagon::PutOnTrack(TrackPieceEx* track, fx32 offset)
 {
 	for (int i = 0; i < mNrBogeys; i++)
 	{
@@ -75,7 +80,7 @@ void Wagon::PutOnTrack(TrackPieceEx* track)
 		fx32 dist = VEC_Distance(&mBack, &mBogeys[i].position) / 13;
 		if (mBogeys[i].pathWorker)
 			delete mBogeys[i].pathWorker;
-		mBogeys[i].pathWorker = new PathWorker(track, 0, dist, mGameController->mMap);
+		mBogeys[i].pathWorker = new PathWorker(track, 0, offset + dist, mGameController->mMap);
 	}
 	mOnTrack = true;
 }
@@ -98,33 +103,29 @@ void Wagon::GetPosition(VecFx32* dst)
 	*dst = center;
 }
 
-static void scaleArm(NNSG3dRS* rs)
+void Wagon::ModifyBogeyRotation(NNSG3dRS* rs)
 {
-	int jntID;
-
-	NNS_G3D_GET_JNTID(NNS_G3dRenderObjGetResMdl(NNS_G3dRSGetRenderObj(rs)),
-		&jntID,
-		"bogey0");
-	if (NNS_G3dRSGetCurrentNodeDescID(rs) == jntID)
+	for (int i = 0; i < mNrBogeys; i++)
 	{
-		NNSG3dJntAnmResult* jntResult;
-		jntResult = NNS_G3dRSGetJntAnmResult(rs);
+		if (NNS_G3dRSGetCurrentNodeDescID(rs) == mBogeys[i].jointId)
+		{
+			NNSG3dJntAnmResult* jntResult;
+			jntResult = NNS_G3dRSGetJntAnmResult(rs);
 
 #pragma cplusplus off
-		jntResult->flag &= ~NNS_G3D_JNTANM_RESULTFLAG_ROT_ZERO;
-		//jntResult->flag &= ~NNS_G3D_JNTANM_RESULTFLAG_TRANS_ZERO;
+			jntResult->flag &= ~NNS_G3D_JNTANM_RESULTFLAG_ROT_ZERO;
 #pragma cplusplus reset
-		MTX_RotY33(&jntResult->rot, FX32_SIN45, FX32_COS45);
-		
-		//jntResult->scale.x = 2 * FX32_ONE;
-		//jntResult->scale.y = 2 * FX32_ONE;
-		//jntResult->scale.z = 2 * FX32_ONE;
+			VecFx32 dir = mBogeys[i].direction;
+			dir.y = 0;
+			VEC_Normalize(&dir, &dir);
 
-		//
-		// If the callback does not need to be used for anything other than
-		// the above, the impact on performance can be reduced somewhat by  resetting.
-		//
-		NNS_G3dRSResetCallBack(rs, NNS_G3D_SBC_NODEDESC);
+			fx16 bogeyrot = FX_Atan2(dir.z, dir.x);
+
+			fx16 actrot = (bogeyrot - mCurRot) + FX_DEG_TO_RAD(90);
+
+			MTX_RotY33(&jntResult->rot, FX_SinIdx(FX_RAD_TO_IDX(actrot)), FX_CosIdx(FX_RAD_TO_IDX(actrot)));
+			return;
+		}
 	}
 }
 
@@ -140,14 +141,12 @@ void Wagon::Render()
 		center.y += (FX32_ONE / 32);//offset of the track from the terrain, to put the wheels on and not through the track
 		NNS_G3dGeTranslateVec(&center);
 
-		//NNS_G3dRenderObjResetCallBack(&mRenderObj);
-		//NNS_G3dRenderObjSetCallBack(&mRenderObj, scaleArm, NULL, NNS_G3D_SBC_NODEDESC, NNS_G3D_SBC_CALLBACK_TIMING_B);
-
 		VecFx32 dir = { 0, 0, 0 };
 		VecFx32 tmp;
 		for (int i = 0; i < mNrBogeys; i++)
 		{
 			mBogeys[i].pathWorker->GetCurrent(NULL, &tmp);
+			mBogeys[i].direction = tmp;
 			//int node = NNS_G3dGetNodeIdxByName(NNS_G3dGetNodeInfo(mRenderObj.resMdl), &mBogeys[i].nodeName.resName);
 			VEC_Add(&dir, &tmp, &dir);
 		}
@@ -156,8 +155,20 @@ void Wagon::Render()
 		dir.z /= mNrBogeys;
 		dir.y = 0;
 		VEC_Normalize(&dir, &dir);
+
+		fx16 trainrot = FX_Atan2(dir.z, dir.x);
+		//OS_Printf("trainrot: %d\n", FX_RAD_TO_DEG(trainrot) / FX32_ONE);
+		mCurRot = trainrot;
+
+		//just why...
+		MtxFx33 rotmtx;
+		MTX_RotY33(&rotmtx, FX_SinIdx(FX_RAD_TO_IDX(-trainrot)), FX_CosIdx(FX_RAD_TO_IDX(-trainrot)));
+		NNS_G3dGeMultMtx33(&rotmtx);
+		MTX_RotY33(&rotmtx, FX32_SIN90, FX32_COS90);
+		NNS_G3dGeMultMtx33(&rotmtx);
+
 		//calculate rotation matrix
-		VecFx32 up = { 0, FX32_ONE, 0 };
+		/*VecFx32 up = { 0, FX32_ONE, 0 };
 
 		dir.y = -dir.y;
 
@@ -185,11 +196,9 @@ void Wagon::Render()
 
 		MTX_Inverse33(&rot2, &rot2);
 
-		NNS_G3dGeMultMtx33(&rot2);
+		NNS_G3dGeMultMtx33(&rot2);*/
 
-		NNS_G3dGeMtxMode(GX_MTXMODE_POSITION);
 		NNS_G3dGeScale(FX32_ONE / 13, FX32_ONE / 13, FX32_ONE / 13);
-		NNS_G3dGeMtxMode(GX_MTXMODE_POSITION_VECTOR);
 
 		/*if (mPickingState == PICKING_STATE_RENDERING)
 		{

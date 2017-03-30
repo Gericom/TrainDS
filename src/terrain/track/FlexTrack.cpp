@@ -140,14 +140,16 @@ void FlexTrack::Render(Map* map, TerrainManager* terrainManager)
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 	VecFx32 points[NR_POINTS];
 	VecFx32 normals[NR_POINTS];
+
+	VecFx32 a = mPoints[0];
+	if (mConnections[0] != NULL)
+		mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
+	VecFx32 b = mPoints[1];
+	if (mConnections[1] != NULL)
+		mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
+
 	for (int i = 0; i < NR_POINTS; i++)
 	{
-		VecFx32 a = mPoints[0];
-		if (mConnections[0] != NULL)
-			mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
-		VecFx32 b = mPoints[1];
-		if (mConnections[1] != NULL)
-			mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
 		/*if (i == 0 && mConnections[0] == NULL)
 		{
 			points[i] = mPoints[0];
@@ -268,16 +270,17 @@ fx32 FlexTrack::GetTrackLength(Map* map, int inPoint)
 	//VecFx32 diff;
 	//VEC_Subtract(&mPoints[0], &mPoints[1], &diff);
 	//return VEC_Mag(&diff);
+	VecFx32 a = mPoints[0];
+	if (mConnections[0] != NULL)
+		mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
+	VecFx32 b = mPoints[1];
+	if (mConnections[1] != NULL)
+		mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
+
 	VecFx32 prev;
 	fx32 len = 0;
 	for (int i = 0; i < NR_POINTS; i++)
 	{
-		VecFx32 a = mPoints[0];
-		if (mConnections[0] != NULL)
-			mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
-		VecFx32 b = mPoints[1];
-		if (mConnections[1] != NULL)
-			mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
 		VecFx32 point;
 		cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (NR_POINTS - 1), &point);
 		point.y = map->GetYOnMap(point.x, point.z);

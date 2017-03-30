@@ -89,6 +89,9 @@ void Game::Initialize(int arg)
 
 	GX_SetBankForOBJ(GX_VRAM_OBJ_16_F);
 
+	GX_SetBankForSubBG(GX_VRAM_SUB_BG_32_H);
+	GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_16_I);
+
 	G3X_Init();
 	G3X_InitMtxStack();
 	GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
@@ -97,6 +100,7 @@ void Game::Initialize(int arg)
 	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_3, GX_BG0_AS_3D);
 	GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
 	GXS_SetGraphicsMode(GX_BGMODE_0);
+	GXS_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
 	G2_SetBG0Priority(3);
 	G2_SetBG3Priority(3);
 
@@ -118,13 +122,47 @@ void Game::Initialize(int arg)
 	NNS_GfdResetLnkTexVramState();
 	NNS_GfdResetLnkPlttVramState();
 
+	NNS_G2dInitOamManagerModule();
+	NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_SUB);
+
+	mCellDataSub = Util_LoadFileToBuffer("/data/game/OBJ.NCER", NULL, FALSE);
+	NNS_G2dGetUnpackedCellBank(mCellDataSub, &mCellDataSubBank);
+
+	NNSG2dCharacterData* mCharDataSubUnpacked;
+	void* mCharDataSub = Util_LoadFileToBuffer("/data/game/IngameOBJ.NCGR", NULL, TRUE);
+	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
+	NNS_G2dInitImageProxy(&mImageProxy);
+	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImageProxy);
+	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
+
+	NNSG2dPaletteData* mPalDataSubUnpacked;
+	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameOBJ.NCLR", NULL, TRUE);
+	NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
+	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
+	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImagePaletteProxy);
+	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
+
+	NNSG2dScreenData* mScreenDataSubUnpacked;
+	void* mScreenDataSub = Util_LoadFileToBuffer("/data/game/BG.NSCR", NULL, TRUE);
+	NNS_G2dGetUnpackedScreenData(mScreenDataSub, &mScreenDataSubUnpacked);
+	mCharDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCGR", NULL, TRUE);
+	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
+	mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCLR", NULL, TRUE);
+	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
+	NNS_G2dBGSetup(NNS_G2D_BGSELECT_SUB0, mScreenDataSubUnpacked, mCharDataSubUnpacked, mPalDataSubUnpacked, GX_BG_SCRBASE_0x0800, GX_BG_CHARBASE_0x00000);
+	NNS_FndFreeToExpHeap(gHeapHandle, mScreenDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
+
+	MI_CpuClear8(&mTmpSubOamBuffer[0], sizeof(mTmpSubOamBuffer));
+
 	mGameController = new GameController();
 
-	VecFx32 a = { 64 * FX32_ONE - 32 * FX32_ONE, 0, 2 * FX32_ONE - 32 * FX32_ONE };
-	VecFx32 b = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 10) * FX32_ONE - 32 * FX32_ONE };
+	VecFx32 a = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 24) * FX32_ONE - 32 * FX32_ONE };
+	VecFx32 b = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 20 + 24) * FX32_ONE - 32 * FX32_ONE };
 	sDummyPieces[0] = new FlexTrack(&a, &b);
 
-	mGameController->mWagon->PutOnTrack(sDummyPieces[0]);
+	mGameController->mWagon->PutOnTrack(sDummyPieces[0], 10 * FX32_ONE);
 
 	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
@@ -137,8 +175,6 @@ void Game::Initialize(int arg)
 	NNS_G2dCharCanvasClear(&mCanvas, 0);
 	NNS_G2dTextCanvasDrawTextRect(
 		&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Tri's Test");
-
-	NNS_G2dInitOamManagerModule();
 
 	for(int i = 0; i < 16; i++)
 		((uint16_t*)HW_OBJ_PLTT)[i] = 0x7FFF;
@@ -667,12 +703,40 @@ void Game::Render()
 	//	&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)result2);// (NNSG2dChar*)L"Tri's Test");
 	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
 	mGameController->Update();
+	//sub screen oam
+	NNSG2dFVec2 trans;
+	u16 numOamDrawn = 0;
+	const NNSG2dCellData* pButton = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 0);
+	trans.x = 14 * FX32_ONE;
+	trans.y = 144 * FX32_ONE;
+	numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, pButton, NULL, &trans, -1, FALSE);
+	trans.x = 106 * FX32_ONE;
+	trans.y = 144 * FX32_ONE;
+	numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, pButton, NULL, &trans, -1, FALSE);
+	trans.x = 174 * FX32_ONE;
+	trans.y = 144 * FX32_ONE;
+	numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, pButton, NULL, &trans, -1, FALSE);
+	const NNSG2dCellData* pPane = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 1);
+	trans.x = 92 * FX32_ONE;
+	trans.y = 36 * FX32_ONE;
+	numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, pPane, NULL, &trans, -1, FALSE);
+
+	MtxFx22 mtx = { FX32_ONE, 0, 0, FX32_ONE };
+	const u16 affineIdx = NNS_G2dEntryOamManagerAffine(&mSubObjOamManager, &mtx);
+
+	const NNSG2dCellData* pKnob = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 2);
+	trans.x = 46 * FX32_ONE;
+	trans.y = 91 * FX32_ONE;
+	numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, pKnob, &mtx, &trans, affineIdx, TRUE);
+	NNS_G2dEntryOamManagerOam(&mSubObjOamManager, &mTmpSubOamBuffer[0], numOamDrawn);
 }
 
 void Game::VBlank()
 {
 	//handle it as early as possible to prevent problems with the shared vram d
 	HandlePickingVBlank();
+	NNS_G2dApplyOamManagerToHW(&mSubObjOamManager);
+	NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
 	if (mPickingState == PICKING_STATE_RENDERING)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);

@@ -72,6 +72,12 @@ private:
 	UIManager* mUIManager;
 	TrackBuildUISlice* mTrackBuildUISlice;
 
+	NNSG2dOamManagerInstance mSubObjOamManager;
+	GXOamAttr mTmpSubOamBuffer[128];
+
+	NNSG2dCellDataBank* mCellDataSubBank;
+	void* mCellDataSub;
+
 	texture_t mShadowTex;
 
 	DragTool* mDragTool;

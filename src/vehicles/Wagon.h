@@ -21,6 +21,8 @@ private:
 		VecFx32 position;
 		NNSG3dUtilResName nodeName;//for rotation
 		PathWorker* pathWorker;
+		VecFx32 direction;
+		int jointId;
 	};
 
 	char mDirName[20];
@@ -36,12 +38,21 @@ private:
 	bool mOnTrack;
 
 	Sfx* mSfx;
+
+	fx16 mCurRot;
 public:
 	Wagon(GameController* gameController, char* name);
-	void PutOnTrack(TrackPieceEx* track);
+	void PutOnTrack(TrackPieceEx* track, fx32 offset = 0);
 	void Render();
 	void Update();
 	void GetPosition(VecFx32* dst);
+
+	static void StaticModifyBogeyRotation(NNSG3dRS* rs)
+	{
+		((Wagon*)rs->pRenderObj->ptrUser)->ModifyBogeyRotation(rs);
+	}
+
+	void ModifyBogeyRotation(NNSG3dRS* rs);
 };
 
 #endif
