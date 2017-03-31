@@ -96,6 +96,7 @@
     <ClCompile Include="src\videoplayer\Vx2Tables.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\core\os\VAlarm.h" />
     <ClInclude Include="src\engine\Camera.h" />
     <ClInclude Include="src\engine\FreeRoamCamera.h" />
     <ClInclude Include="src\engine\LookAtCamera.h" />

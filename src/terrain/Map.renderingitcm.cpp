@@ -637,6 +637,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int s
 			}
 		}
 	}
+	//TODO: move this elsewhere, since this doesn't update with sub 3d rendering
 	mTerrainManager->mTrackMarkerRotation += FX32_CONST(2);
 	if (mTerrainManager->mTrackMarkerRotation >= 360 * FX32_ONE)
 		mTerrainManager->mTrackMarkerRotation -= 360 * FX32_ONE;

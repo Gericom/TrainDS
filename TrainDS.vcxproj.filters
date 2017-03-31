@@ -252,5 +252,8 @@
     <ClInclude Include="src\terrain\GameController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\os\VAlarm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

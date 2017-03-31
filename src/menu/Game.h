@@ -1,6 +1,7 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 #include "SimpleMenu.h"
+#include "core/os/VAlarm.h"
 #include "terrain/TerrainManager.h"
 #include "terrain/GameController.h"
 
@@ -57,6 +58,13 @@ private:
 
 	bool mAntiAliasEnabled;
 
+	bool mSub3DInvalidated;
+
+	void InvalidateSub3D()
+	{
+		mSub3DInvalidated = true;
+	}
+
 	int mKeyTimer;
 
 	void* mTrackBuildCellData;
@@ -68,6 +76,16 @@ private:
 	void* mFontData;
 	NNSG2dCharCanvas mCanvas;
 	NNSG2dTextCanvas mTextCanvas;
+
+	NNSG2dFont mSubFont;
+	void* mSubFontData;
+	NNSG2dCharCanvas mSubCanvas;
+	NNSG2dTextCanvas mSubTextCanvas;
+
+	NNSG2dFont mSubFont2;
+	void* mSubFontData2;
+	NNSG2dCharCanvas mSubCanvas2;
+	NNSG2dTextCanvas mSubTextCanvas2;
 
 	UIManager* mUIManager;
 	TrackBuildUISlice* mTrackBuildUISlice;
@@ -82,9 +100,11 @@ private:
 
 	DragTool* mDragTool;
 
-	OSVAlarm mVRAMCopyVAlarm;
+	OS::VAlarm* mVRAMCopyVAlarm;
+	OS::VAlarm* mSub3DCopyVAlarm;
 
-	int mRenderState;
+	FrameType mCurFrameType;
+	FrameType mLastFrameType;
 
 	void OnPenDown(int x, int y);
 	void OnPenMove(int x, int y);
@@ -95,14 +115,18 @@ private:
 	void HandlePickingVBlank();
 	void HandlePickingEarly();
 	void HandlePickingLate();
+
+	int MakeTextCell(GXOamAttr* pOAM, int x, int y, int w, int h, int palette, u32 address);
 public:
 	GameController* mGameController;
 
 	void OnVRAMCopyVAlarm();
+	void OnSub3DCopyVAlarm();
 
 public:
-	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mAntiAliasEnabled(TRUE), mKeyTimer(0), 
-		mPickingState(PICKING_STATE_READY), mPickingRequested(false) 
+	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mAntiAliasEnabled(true), mKeyTimer(0),
+		mPickingState(PICKING_STATE_READY), mPickingRequested(false), mCurFrameType(FRAME_TYPE_MAIN_FAR), mLastFrameType(FRAME_TYPE_MAIN_FAR),
+		mSub3DCopyVAlarm(NULL), mSub3DInvalidated(false)
 	{ }
 
 	void Initialize(int arg);
@@ -110,6 +134,11 @@ public:
 	static void OnVRAMCopyVAlarm(void* arg)
 	{
 		((Game*)arg)->OnVRAMCopyVAlarm();
+	}
+
+	static void OnSub3DCopyVAlarm(void* arg)
+	{
+		((Game*)arg)->OnSub3DCopyVAlarm();
 	}
 
 	static void OnPenDown(Menu* context, int x, int y)

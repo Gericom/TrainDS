@@ -99,8 +99,8 @@ void Game::Initialize(int arg)
 
 	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_3, GX_BG0_AS_3D);
 	GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
-	GXS_SetGraphicsMode(GX_BGMODE_0);
-	GXS_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
+	GXS_SetGraphicsMode(GX_BGMODE_3);
+	GXS_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
 	G2_SetBG0Priority(3);
 	G2_SetBG3Priority(3);
 
@@ -184,6 +184,65 @@ void Game::Initialize(int arg)
 
 	reg_G2_BLDCNT = 0x2801;
 
+	mSubFontData = Util_LoadFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR", NULL, false);
+	MI_CpuClear8(&mSubFont, sizeof(mSubFont));
+	NNS_G2dFontInitAuto(&mSubFont, mSubFontData);
+
+	NNS_G2dCharCanvasInitForOBJ1D(&mSubCanvas, ((uint8_t*)G2S_GetOBJCharPtr()) + 8192, 12, 2, NNS_G2D_CHARA_COLORMODE_16);
+	NNS_G2dTextCanvasInit(&mSubTextCanvas, &mSubCanvas, &mSubFont, 0, 1);
+	NNS_G2dCharCanvasClear(&mSubCanvas, 0);
+	NNS_G2dTextCanvasDrawTextRect(
+		&mSubTextCanvas, 0, 0, 32, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Speed");
+
+	mSubCanvas.charBase = ((uint8_t*)G2S_GetOBJCharPtr()) + 8192 + 256;
+	NNS_G2dTextCanvasDrawTextRect(
+		&mSubTextCanvas, 0, 0, 32, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Stop");
+
+	mSubCanvas.charBase = ((uint8_t*)G2S_GetOBJCharPtr()) + 8192 + 2 * 256;
+	NNS_G2dTextCanvasDrawTextRect(
+		&mSubTextCanvas, 0, 0, 32, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Horn");
+
+	mSubCanvas.charBase = ((uint8_t*)G2S_GetOBJCharPtr()) + 8192 + 3 * 256;
+	NNS_G2dTextCanvasDrawTextRect(
+		&mSubTextCanvas, 0, 0, 64, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Headlight");
+
+	mSubFontData2 = Util_LoadFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_b_13pt.NFTR", NULL, false);
+	MI_CpuClear8(&mSubFont2, sizeof(mSubFont2));
+	NNS_G2dFontInitAuto(&mSubFont2, mSubFontData2);
+
+	NNS_G2dCharCanvasInitForOBJ1D(&mSubCanvas2, ((uint8_t*)G2S_GetOBJCharPtr()) + 8192 + 5 * 256, 16, 4, NNS_G2D_CHARA_COLORMODE_16);
+	NNS_G2dTextCanvasInit(&mSubTextCanvas2, &mSubCanvas2, &mSubFont2, 0, 1);
+	NNS_G2dCharCanvasClear(&mSubCanvas2, 0);
+	NNS_G2dTextCanvasDrawTextRect(
+		&mSubTextCanvas2, 0, 0, 128, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Train Control");
+
+	for (int i = 0; i < 16; i++)
+	{
+		int rnew = 4 + ((28 - 4) * i) / 15;
+		int gnew = 4 + ((28 - 4) * i) / 15;
+		int bnew = 4 + ((28 - 4) * i) / 15;
+		((uint16_t*)HW_DB_OBJ_PLTT)[i + 16] = GX_RGB(rnew, gnew, bnew);
+	}
+
+	for (int i = 0; i < 16; i++)
+	{
+		int rnew = 3 + ((28 - 3) * i) / 15;
+		int gnew = 3 + ((28 - 3) * i) / 15;
+		int bnew = 2 + ((28 - 2) * i) / 15;
+		((uint16_t*)HW_DB_OBJ_PLTT)[i + 32] = GX_RGB(rnew, gnew, bnew);
+	}
+
+	G2S_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_128x128, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+	MtxFx22 bg3mtx = { FX32_ONE, 0, 0, FX32_ONE };
+	G2S_SetBG3Affine(&bg3mtx, 64, 64, -(92 + 16), -(36 - 32));
+	G2S_SetWnd0Position(94, 38, 94 + 156, 38 + 92);
+	G2S_SetWnd0InsidePlane(GX_WND_PLANEMASK_BG3 | GX_WND_PLANEMASK_OBJ, false);
+	G2S_SetWndOutsidePlane(GX_WND_PLANEMASK_BG0 | GX_WND_PLANEMASK_OBJ, false);
+	GXS_SetVisibleWnd(GX_WNDMASK_W0);
+
+	G2S_SetBG0Priority(3);
+	G2S_SetBG3Priority(0);
+
 	mUIManager = new UIManager(this);
 	//mTrackBuildUISlice = new TrackBuildUISlice();
 	//mUIManager->AddSlice(mTrackBuildUISlice);
@@ -235,17 +294,19 @@ void Game::Initialize(int arg)
 
 	NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*//*31*/8 * 4096, 40960 * 4);
 
+	InvalidateSub3D();
+
 	mDragTool = new AddTrackTool(this);
 
-	OS_CreateVAlarm(&mVRAMCopyVAlarm);
-	OS_SetPeriodicVAlarm(&mVRAMCopyVAlarm, 192 - 48, 5, Game::OnVRAMCopyVAlarm, this);
+	mVRAMCopyVAlarm = new OS::VAlarm();
+	mVRAMCopyVAlarm->SetPeriodic(192 - 48, 5, Game::OnVRAMCopyVAlarm, this);
 }
 
 static int mVRAMReadyLine;
 
 void Game::OnVRAMCopyVAlarm()
 {
-	if(mRenderState == 1)
+	if(mCurFrameType == FRAME_TYPE_MAIN_NEAR)
 		mGameController->mMap->mTerrainTextureManager16->UpdateVramC();
 	else
 		mGameController->mMap->mTerrainTextureManager8->UpdateVramC();
@@ -282,7 +343,7 @@ void Game::HandlePickingEarly()
 
 void Game::HandlePickingLate()
 {
-	if (mPickingState == PICKING_STATE_READY && mRenderState == 0 && mPickingRequested)
+	if (mPickingState == PICKING_STATE_READY && mCurFrameType == FRAME_TYPE_MAIN_FAR && mLastFrameType == FRAME_TYPE_MAIN_NEAR && mPickingRequested)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT & ~REG_G3X_DISP3DCNT_TME_MASK;
 		G3X_SetClearColor(0, /*31*/0, 0x7fff, 0, false);
@@ -291,6 +352,7 @@ void Game::HandlePickingLate()
 		G3X_SetFog(false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0020, 0);
 		mPickingRequested = false;
 		mPickingState = PICKING_STATE_RENDERING;
+		mCurFrameType = FRAME_TYPE_MAIN_PICKING;
 	}
 }
 
@@ -463,8 +525,22 @@ static void CalculateVisibleGrid(VecFx32* bbmin, VecFx32* bbmax)
 	*bbmax = max;
 }
 
+int Game::MakeTextCell(GXOamAttr* pOAM, int x, int y, int w, int h, int palette, u32 address)
+{
+	int count = NNS_G2dArrangeOBJ1D(pOAM, w >> 3, h >> 3, x, y, GX_OAM_COLORMODE_16, address >> 5, NNS_G2D_OBJVRAMMODE_32K);
+	for (int i = 0; i < count; i++)
+		G2_SetOBJMode(&pOAM[i], GX_OAM_MODE_NORMAL, palette);
+	return count;
+}
+
 void Game::Render()
 {
+	if (mSub3DInvalidated && mLastFrameType == FRAME_TYPE_MAIN_NEAR)
+	{
+		mSub3DInvalidated = false;
+		mCurFrameType = FRAME_TYPE_SUB;
+	}
+
 	HandlePickingEarly();
 
 	mUIManager->ProcessInput();
@@ -480,6 +556,11 @@ void Game::Render()
 		mGameController->mWagon->mDriving = false;
 	if (!mKeyTimer)
 	{
+		if (keyData & PAD_BUTTON_L && keyData & PAD_BUTTON_R)
+		{
+			GX_SetDispSelect((GX_GetDispSelect() == GX_DISP_SELECT_MAIN_SUB ? GX_DISP_SELECT_SUB_MAIN : GX_DISP_SELECT_MAIN_SUB));
+			mKeyTimer = 20;
+		}
 		if (keyData & PAD_BUTTON_X)
 		{
 			mGameController->mMap->SetGridEnabled(!mGameController->mMap->GetGridEnabled());
@@ -514,9 +595,9 @@ void Game::Render()
 			camRot.y += FX32_ONE >> 2;
 		else if (keyData & PAD_KEY_DOWN)
 			camRot.y -= FX32_ONE >> 2;
-		if (keyData & PAD_BUTTON_L)
+		if (keyData & PAD_BUTTON_L && !(keyData & PAD_BUTTON_R))
 			mGameController->mCamera->MoveY(-FX32_ONE >> 5);
-		else if (keyData & PAD_BUTTON_R)
+		else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))
 			mGameController->mCamera->MoveY(FX32_ONE >> 5);
 	}
 	else
@@ -529,9 +610,9 @@ void Game::Render()
 			mGameController->mCamera->MoveZ(FX32_ONE / 50);// 24);
 		else if (keyData & PAD_KEY_DOWN)
 			mGameController->mCamera->MoveZ(-FX32_ONE / 50);// 24);
-		if (keyData & PAD_BUTTON_L)
+		if (keyData & PAD_BUTTON_L && !(keyData & PAD_BUTTON_R))
 			camRot.x -= FX32_ONE >> 1;
-		else if (keyData & PAD_BUTTON_R)
+		else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))
 			camRot.x += FX32_ONE >> 1;
 	}
 
@@ -540,17 +621,17 @@ void Game::Render()
 	if (keyData & PAD_BUTTON_START)
 		Game::GotoMenu();
 	G3X_Reset();
-	if (mPickingState != PICKING_STATE_RENDERING)
+	if (mCurFrameType != FRAME_TYPE_MAIN_PICKING && mCurFrameType != FRAME_TYPE_SUB)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
-		if(mRenderState == 0)
+		if(mCurFrameType == FRAME_TYPE_MAIN_FAR)
 			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31, 0x7fff, 0, true);
 		else
 			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), /*31*/0, 0x7fff, 0, false);
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(true);
 		G3X_AntiAlias(mAntiAliasEnabled);
-		if (mRenderState == 0)
+		if (mCurFrameType == FRAME_TYPE_MAIN_FAR)
 			G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0xC00);
 		else
 			G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0xC00);
@@ -568,129 +649,132 @@ void Game::Render()
 		G3X_SetToonTable(&sToonTable[0]);
 	}
 	mGameController->mWagon->Update();
-	//Train_UpdatePos(&mTrain);
+	if (mCurFrameType != FRAME_TYPE_SUB)
+	{
+		NNS_G3dGlbSetViewPort(0, 0, 255, 191);
+		//Train_UpdatePos(&mTrain);
 #ifdef FIRST_PERSON
-	mCamera->mPosition.x = tpos.x - 8 * FX32_ONE;// + 0.4 * dir.x;
-	mCamera->mPosition.y = tpos.y + FX32_HALF + (FX32_HALF >> 1);// + 0.4 * dir.y;
-	mCamera->mPosition.z = tpos.z - 8 * FX32_ONE;// + 0.4 * dir.z;
-	mCamera->mDestination.x = tpos.x - 8 * FX32_ONE + 4 * dir.x;
-	mCamera->mDestination.y = tpos.y + FX32_HALF + 4 * dir.y;// + 1 * FX32_ONE;
-	mCamera->mDestination.z = tpos.z - 8 * FX32_ONE + 4 * dir.z;
+		mCamera->mPosition.x = tpos.x - 8 * FX32_ONE;// + 0.4 * dir.x;
+		mCamera->mPosition.y = tpos.y + FX32_HALF + (FX32_HALF >> 1);// + 0.4 * dir.y;
+		mCamera->mPosition.z = tpos.z - 8 * FX32_ONE;// + 0.4 * dir.z;
+		mCamera->mDestination.x = tpos.x - 8 * FX32_ONE + 4 * dir.x;
+		mCamera->mDestination.y = tpos.y + FX32_HALF + 4 * dir.y;// + 1 * FX32_ONE;
+		mCamera->mDestination.z = tpos.z - 8 * FX32_ONE + 4 * dir.z;
 #endif
-	mGameController->mCamera->Apply();
+		mGameController->mCamera->Apply();
 
-	//Train_UpdateSound(&mTrain, mCamera);
+		//Train_UpdateSound(&mTrain, mCamera);
 
-	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-	/*VecFx32 vec = { FX32_CONST(0), FX32_CONST(-1), FX32_CONST(-1) };
-	VEC_Normalize(&vec, &vec);
-	if (vec.x > GX_FX32_FX10_MAX) vec.x = GX_FX32_FX10_MAX;
-	else if (vec.x < GX_FX32_FX10_MIN) vec.x = GX_FX32_FX10_MIN;
-	if (vec.y > GX_FX32_FX10_MAX) vec.y = GX_FX32_FX10_MAX;
-	else if (vec.y < GX_FX32_FX10_MIN) vec.y = GX_FX32_FX10_MIN;
-	if (vec.z > GX_FX32_FX10_MAX) vec.z = GX_FX32_FX10_MAX;
-	else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;*/
-	NNS_G3dGlbLightVector(GX_LIGHTID_0, /*vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
-	NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/GX_RGB(31, 31, 31));
-	if (mPickingState == PICKING_STATE_RENDERING)
-	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), false);
-		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), false);
-	}
-	else
-	{
-		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)*/GX_RGB(10, 10, 10), false);
-		NNS_G3dGlbMaterialColorSpecEmi(/*GX_RGB(3, 3, 3)*/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), false);
-	}
-
-	//lod0
-	/*NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, /*64//*18//*24//*31/10 * 4096, 40960 * 4);
-
-	VecFx32 bbmin, bbmax;
-	CalculateVisibleGrid(&bbmin, &bbmax);
-
-	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	xstart = MATH_CLAMP(xstart, 0, 128);
-	int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	zstart = MATH_CLAMP(zstart, 0, 128);
-
-	int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	xend = MATH_CLAMP(xend, 0, 128);
-	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	zend = MATH_CLAMP(zend, 0, 128);
-
-	NOCASH_Printf("lod0: (%d-%d, %d-%d)", xstart, xend, zstart, zend);
-
-	//what actually visible is
-	NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, /*64//*18//*24//*35/50 * 4096, 40960 * 4);
-
-	CalculateVisibleGrid(&bbmin, &bbmax);
-
-	int xstart2 = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	xstart2 = MATH_CLAMP(xstart2, 0, 128);
-	int zstart2 = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	zstart2 = MATH_CLAMP(zstart2, 0, 128);
-
-	int xend2 = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	xend2 = MATH_CLAMP(xend2, 0, 128);
-	int zend2 = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	zend2 = MATH_CLAMP(zend2, 0, 128);
-
-	NOCASH_Printf("lod1: (%d-%d, %d-%d)", xstart2, xend2, zstart2, zend2);*/
-
-	//test
-	if (mPickingState != PICKING_STATE_RENDERING)
-	{
-		if (mRenderState == 0)
+		NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+		/*VecFx32 vec = { FX32_CONST(0), FX32_CONST(-1), FX32_CONST(-1) };
+		VEC_Normalize(&vec, &vec);
+		if (vec.x > GX_FX32_FX10_MAX) vec.x = GX_FX32_FX10_MAX;
+		else if (vec.x < GX_FX32_FX10_MIN) vec.x = GX_FX32_FX10_MIN;
+		if (vec.y > GX_FX32_FX10_MAX) vec.y = GX_FX32_FX10_MAX;
+		else if (vec.y < GX_FX32_FX10_MIN) vec.y = GX_FX32_FX10_MIN;
+		if (vec.z > GX_FX32_FX10_MAX) vec.z = GX_FX32_FX10_MAX;
+		else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;*/
+		NNS_G3dGlbLightVector(GX_LIGHTID_0, /*vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
+		NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/GX_RGB(31, 31, 31));
+		if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)
 		{
-			NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 8 * 4096, /*35*/50 * 4096, 40960 * 4);
+			NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), false);
+			NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), false);
 		}
 		else
 		{
-			NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, 10 * 4096, 40960 * 4);
+			NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)*/GX_RGB(10, 10, 10), false);
+			NNS_G3dGlbMaterialColorSpecEmi(/*GX_RGB(3, 3, 3)*/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), false);
 		}
+
+		if (mCurFrameType != FRAME_TYPE_MAIN_PICKING)
+		{
+			if (mCurFrameType == FRAME_TYPE_MAIN_FAR)
+			{
+				NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 8 * 4096, /*35*/50 * 4096, 40960 * 4);
+			}
+			else
+			{
+				NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, 10 * 4096, 40960 * 4);
+			}
+		}
+		else
+			NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, 35 * 4096, 40960 * 4);
+
+		VecFx32 bbmin, bbmax;
+		CalculateVisibleGrid(&bbmin, &bbmax);
+
+		int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+		xstart = MATH_CLAMP(xstart, 0, 128);
+		int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+		zstart = MATH_CLAMP(zstart, 0, 128);
+
+		int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+		xend = MATH_CLAMP(xend, 0, 128);
+		int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+		zend = MATH_CLAMP(zend, 0, 128);
+
+		NNS_G3dGlbFlushP();
+		NNS_G3dGeFlushBuffer();
+
+		if (mPickingState == PICKING_STATE_RENDERING)
+		{
+			mPickingXStart = xstart;
+			mPickingXEnd = xend;
+			mPickingZStart = zstart;
+		}
+
+		G3_PushMtx();
+		{
+			VecFx32 camDir;
+			mGameController->mCamera->GetLookDirection(&camDir);
+			mGameController->mMap->Render(xstart, xend, zstart, zend, mCurFrameType == FRAME_TYPE_MAIN_PICKING, mSelectedMapX, mSelectedMapZ, &mGameController->mCamera->mPosition, &camDir, (mCurFrameType == FRAME_TYPE_MAIN_FAR ? 1 : 0));
+			mGameController->mWagon->Render();
+		}
+		G3_PopMtx(1);
+		mUIManager->Render();
 	}
 	else
-		NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (256 * 4096 / 192), 4096 >> 3, 35 * 4096, 40960 * 4);
-
-	VecFx32 bbmin, bbmax;
-	CalculateVisibleGrid(&bbmin, &bbmax);
-
-	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	xstart = MATH_CLAMP(xstart, 0, 128);
-	int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	zstart = MATH_CLAMP(zstart, 0, 128);
-
-	int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	xend = MATH_CLAMP(xend, 0, 128);
-	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	zend = MATH_CLAMP(zend, 0, 128);
-
-	NNS_G3dGlbFlushP();
-	NNS_G3dGeFlushBuffer();
-
-	//NOCASH_Printf("x: %d; %d", xstart, xend);
-	//NOCASH_Printf("z: %d; %d", zstart, zend);
-
-	if (mPickingState == PICKING_STATE_RENDERING)
 	{
-		mPickingXStart = xstart;
-		mPickingXEnd = xend;
-		mPickingZStart = zstart;
-	}
+		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
+		G3X_SetClearColor(GX_RGB(2, 2, 2), 31, 0x7fff, 0, false);
+		G3X_SetShading(GX_SHADING_HIGHLIGHT);
+		G3X_EdgeMarking(false);
+		G3X_AntiAlias(true);
+		G3X_SetFog(false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0020, 0);
+		//sub 3d is 128x96
+		NNS_G3dGlbSetViewPort(0, 96, 127, 191);
 
-	G3_PushMtx();
-	{
-		VecFx32 camDir;
-		mGameController->mCamera->GetLookDirection(&camDir);
-		mGameController->mMap->Render(xstart, xend, zstart, zend, mPickingState == PICKING_STATE_RENDERING, mSelectedMapX, mSelectedMapZ, &mGameController->mCamera->mPosition, &camDir, 1 - mRenderState);
-		mGameController->mWagon->Render();
+		FreeRoamCamera cam = FreeRoamCamera();
+		mGameController->mWagon->GetPosition(&cam.mDestination);
+		cam.mDestination.x -= 32 * FX32_ONE;
+		cam.mDestination.y += FX32_CONST(0.15f);
+		cam.mDestination.z -= 32 * FX32_ONE;
+		cam.mCamDistance = FX32_CONST(0.55f);
+		VecFx32 camRot = { 43 * FX32_ONE, 10 * FX32_ONE, 0 };
+		cam.SetRotation(&camRot);
+		cam.Apply();
+
+		NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+		NNS_G3dGlbLightVector(GX_LIGHTID_0, -2048, -2897, -2048);
+		NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31, 31, 31));
+		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(10, 10, 10), false);
+		NNS_G3dGlbMaterialColorSpecEmi(GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), false);
+		NNS_G3dGlbPerspectiveW(VIEW_ANGLE_SIN, VIEW_ANGLE_COS, (128 * 4096 / 96), 4096 >> 4, 10 * 4096, 40960 * 4);
+		NNS_G3dGlbFlushP();
+		NNS_G3dGeFlushBuffer();
+		G3_PushMtx();
+		{
+			G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+			G3_Translate(0, 0, FX32_CONST(-0.2f));
+			mGameController->mWagon->Render();
+		}
+		G3_PopMtx(1);
 	}
-	G3_PopMtx(1);
-	mUIManager->Render();
+	//InvalidateSub3D();
 	//char result[64];
 	//MI_CpuClear8(result, sizeof(result));
-	OS_Printf("%d: %d\n", mRenderState, G3X_GetPolygonListRamCount());
+	OS_Printf("%d: %d\n", mCurFrameType, G3X_GetPolygonListRamCount());
 	//OS_SPrintf(result, "%d;%d;%d", G3X_GetVtxListRamCount(), G3X_GetPolygonListRamCount(), mVRAMReadyLine);
 	//u16 result2[64];
 	//MI_CpuClear8(result2, sizeof(result2));
@@ -706,6 +790,11 @@ void Game::Render()
 	//sub screen oam
 	NNSG2dFVec2 trans;
 	u16 numOamDrawn = 0;
+	numOamDrawn += MakeTextCell((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 14 + 16, 59 - 16, 32, 16, 1, 8192);
+	numOamDrawn += MakeTextCell((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 14 + 16, 146, 32, 16, 2, 8192 + 256);
+	numOamDrawn += MakeTextCell((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 106 + 16, 146, 32, 16, 2, 8192 + 2 * 256);
+	numOamDrawn += MakeTextCell((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 174, 146, 64, 16, 2, 8192 + 3 * 256);
+	numOamDrawn += MakeTextCell((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 64, 0, 128, 32, 2, 8192 + 5 * 256);
 	const NNSG2dCellData* pButton = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 0);
 	trans.x = 14 * FX32_ONE;
 	trans.y = 144 * FX32_ONE;
@@ -731,46 +820,63 @@ void Game::Render()
 	NNS_G2dEntryOamManagerOam(&mSubObjOamManager, &mTmpSubOamBuffer[0], numOamDrawn);
 }
 
+void Game::OnSub3DCopyVAlarm()
+{
+	MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_B, (void*)(HW_DB_BG_VRAM + 0x2000), 128 * 96 * 2, NULL, NULL);
+}
+
 void Game::VBlank()
 {
 	//handle it as early as possible to prevent problems with the shared vram d
 	HandlePickingVBlank();
+	mLastFrameType = mCurFrameType;
 	NNS_G2dApplyOamManagerToHW(&mSubObjOamManager);
 	NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
-	if (mPickingState == PICKING_STATE_RENDERING)
+	if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)//mPickingState == PICKING_STATE_RENDERING)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
 		//Capture the picking data
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		mCurFrameType = FRAME_TYPE_MAIN_FAR;
 	}
-	else
+	else if (mCurFrameType == FRAME_TYPE_MAIN_FAR)//mRenderState == 0)
 	{
-		if (mRenderState == 0)
-		{
-			GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
-			GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
-			GX_SetVisiblePlane(GX_PLANEMASK_BG0);
-			GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
-		}
-		else
-		{
-			GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_D);
-			GX_SetBankForBG(GX_VRAM_BG_128_B);
-			GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
-			GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
-			G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
-			G2_SetBG3Priority(3);
-			G2_SetBG0Priority(0);
-			GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
-		}
-		mRenderState = !mRenderState;
+		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
+		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		mCurFrameType = FRAME_TYPE_MAIN_NEAR;
+	}
+	else if (mCurFrameType == FRAME_TYPE_MAIN_NEAR)
+	{
+		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_D);
+		GX_SetBankForBG(GX_VRAM_BG_128_B);
+		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
+		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+		G2_SetBG3Priority(3);
+		G2_SetBG0Priority(0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		mCurFrameType = FRAME_TYPE_MAIN_FAR;
+	}
+	else if (mCurFrameType == FRAME_TYPE_SUB)
+	{
+		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
+		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
+		//Capture the picking data
+		GX_SetCapture(GX_CAPTURE_SIZE_128x128, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		mCurFrameType = FRAME_TYPE_MAIN_FAR;
+		if (mSub3DCopyVAlarm != NULL)
+			delete mSub3DCopyVAlarm;
+		mSub3DCopyVAlarm = new OS::VAlarm();
+		mSub3DCopyVAlarm->Set(96, 5, Game::OnSub3DCopyVAlarm, this);
 	}
 }
 
 void Game::Finalize()
 {
 	//We don't have to free resources here, because that's done by using the group id
-	OS_CancelVAlarm(&mVRAMCopyVAlarm);
+	delete mVRAMCopyVAlarm;
 	delete mGameController;
 }

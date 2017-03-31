@@ -13,6 +13,12 @@ private:
 	fx32 mRotYSin;
 	fx32 mRotYCos;
 public:
+	fx32 mCamDistance;
+
+	FreeRoamCamera()
+		: mCamDistance(2 * FX32_ONE)
+	{}
+
 	void Apply();
 
 	void GetRotation(VecFx32* rot)
