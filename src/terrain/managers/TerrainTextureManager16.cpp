@@ -41,7 +41,14 @@ TerrainTextureManager16::TerrainTextureManager16()
 	{
 		for (int k = 0; k < 16 * 16; k++)
 		{
-			mTextureDatas[j][k] &= 0x7FFF;
+			int r = mTextureDatas[j][k] & 0x1F;
+			int g = (mTextureDatas[j][k] >> 5) & 0x1F;
+			int b = (mTextureDatas[j][k] >> 10) & 0x1F;
+			r = r * 31 / 25;
+			g = g * 31 / 25;
+			b = b * 31 / 25;
+			mTextureDatas[j][k] = GX_RGB(r, g, b);
+			//mTextureDatas[j][k] &= 0x7FFF;
 		}
 	}
 

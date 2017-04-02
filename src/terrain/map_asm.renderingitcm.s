@@ -58,7 +58,7 @@ render_tile:
 	mov r3, #0
 	ldmia r0, {r4, r5, r6, r7}
 	and r5, r5, #0xFF
-	orr r5, r10, r5, lsl #10
+	orr r5, r10, r5, lsl #11
 	ldr r8,= G3OP_TEXCOORD | (G3OP_NORMAL << 8) | (G3OP_VTX_10 << 16) | (G3OP_TEXCOORD << 24)
 	mov r9, #0x01000000
 
@@ -68,7 +68,7 @@ render_tile:
 	add r2, r0, #(128 * 8)
 	ldmia r2, {r2, r3, r9, r11}
 	and r3, r3, #0xFF
-	orr r3, r10, r3, lsl #10
+	orr r3, r10, r3, lsl #11
 	add r3, r3, #(1 << 20)
 
 	mov r4, #0x00000100
@@ -76,12 +76,12 @@ render_tile:
 	ldr r5,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_TEXCOORD << 16) | (G3OP_NORMAL << 24)
 	and r7, r7, #0xFF
 	add r10, r10, #1
-	orr r7, r10, r7, lsl #10
+	orr r7, r10, r7, lsl #11
 
 	orr r8, r4, #0x01000000		//=0x01000100
 
 	and r11, r11, #0xFF
-	orr r11, r10, r11, lsl #10
+	orr r11, r10, r11, lsl #11
 	add r11, r11, #(1 << 20)
 
 	ldr r10,= G3OP_VTX_10 | (G3OP_END << 8) | (G3OP_NOP << 16) | (G3OP_NOP << 24)
@@ -105,7 +105,7 @@ render_tile2x2:
 	ldmia r6, {r6, r7}
 
 	and r5, r5, #0xFF
-	orr r5, r10, r5, lsl #10
+	orr r5, r10, r5, lsl #11
 	ldr r8,= G3OP_TEXCOORD | (G3OP_NORMAL << 8) | (G3OP_VTX_10 << 16) | (G3OP_TEXCOORD << 24)
 	mov r9, #0x00800000
 
@@ -119,7 +119,7 @@ render_tile2x2:
 	ldmia r9, {r9, r11}
 
 	and r3, r3, #0xFF
-	orr r3, r10, r3, lsl #10
+	orr r3, r10, r3, lsl #11
 	add r3, r3, #(2 << 20)
 
 	mov r4, #0x00000100
@@ -127,12 +127,12 @@ render_tile2x2:
 	ldr r5,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_TEXCOORD << 16) | (G3OP_NORMAL << 24)
 	and r7, r7, #0xFF
 	add r10, r10, #2
-	orr r7, r10, r7, lsl #10
+	orr r7, r10, r7, lsl #11
 
 	orr r8, r4, #0x00800000		//=0x00800100
 
 	and r11, r11, #0xFF
-	orr r11, r10, r11, lsl #10
+	orr r11, r10, r11, lsl #11
 	add r11, r11, #(2 << 20)
 
 	ldr r10,= G3OP_VTX_10 | (G3OP_END << 8) | (G3OP_NOP << 16) | (G3OP_NOP << 24)

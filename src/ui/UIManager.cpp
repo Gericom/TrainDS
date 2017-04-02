@@ -24,7 +24,8 @@ void UIManager::AddSlice(UISlice* slice)
 
 void UIManager::ProcessInput()
 {
-	TPData raw_point = gTPData;
+	TPData raw_point;// = gTPData;
+	Core_GetTouchInput(&raw_point);
 	TPData disp_point;
 	//while (TP_RequestRawSampling(&raw_point) != 0);
 	TP_GetCalibratedPoint(&disp_point, &raw_point);

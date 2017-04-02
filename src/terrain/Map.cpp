@@ -50,8 +50,8 @@ Map::Map()
 	//mTexAddresses = new uint32_t[128 * 128];
 	//MI_CpuClearFast(mTexAddresses, 128 * 128 * 4);
 
-	//mLodLevels = new uint8_t[128 * 128];
-	//MI_CpuFillFast(mLodLevels, 0xFFFFFFFF, 128 * 128);
+	mLodLevels = new uint8_t[128 * 128];
+	MI_CpuFillFast(mLodLevels, 0, 128 * 128);
 
 	//mVtx = new uint8_t[128 * 128];
 	//MI_CpuFillFast(mVtx, 0x80808080, 128 * 128);
@@ -69,6 +69,7 @@ Map::~Map()
 	//delete mTexAddresses;
 	//delete mNormals;
 	delete mHMap;
+	delete mLodLevels;
 }
 
 
@@ -91,9 +92,16 @@ static bool PointInTriangle(VecFx32* pt, VecFx32* v1, VecFx32* v2, VecFx32* v3)
 
 bool Map::ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecFx32* result)
 {
+	//fix the camera matrix to get reliable results
+	MtxFx44 mtx = *NNS_G3dGlbGetProjectionMtx();
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 35 * 4096, 40960 * 4);
+
 	VecFx32 near;
 	VecFx32 far;
 	NNS_G3dScrPosToWorldLine(screenX, screenY, &near, &far);
+
+	//and restore the old one again
+	NNS_G3dGlbSetProjectionMtx(&mtx);
 
 	VecFx32 nf;
 	VEC_Subtract(&far, &near, &nf);

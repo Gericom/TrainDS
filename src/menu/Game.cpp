@@ -324,7 +324,7 @@ void Game::RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg)
 void Game::HandlePickingVBlank()
 {
 	if (mPickingState == PICKING_STATE_CAPTURING)
-		mPickingResult = ((picking_result_t*)HW_LCDC_VRAM_B)[mPickingPointX + mPickingPointY * 256]; ;// ((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256];
+		mPickingResult = ((picking_result_t*)HW_LCDC_VRAM_B)[mPickingPointX + mPickingPointY * 256];// ((picking_result_t*)HW_LCDC_VRAM_D)[mPickingPointX + mPickingPointY * 256];
 }
 
 void Game::HandlePickingEarly()
@@ -822,6 +822,7 @@ void Game::Render()
 
 void Game::OnSub3DCopyVAlarm()
 {
+	//this might cause glitches, because we update in the middle of a frame
 	MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_B, (void*)(HW_DB_BG_VRAM + 0x2000), 128 * 96 * 2, NULL, NULL);
 }
 
@@ -864,9 +865,9 @@ void Game::VBlank()
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
-		//Capture the picking data
 		GX_SetCapture(GX_CAPTURE_SIZE_128x128, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
 		mCurFrameType = FRAME_TYPE_MAIN_FAR;
+		//todo: remove the need for reallocation
 		if (mSub3DCopyVAlarm != NULL)
 			delete mSub3DCopyVAlarm;
 		mSub3DCopyVAlarm = new OS::VAlarm();

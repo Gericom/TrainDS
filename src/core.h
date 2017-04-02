@@ -57,9 +57,8 @@ extern NNSSndHeapHandle gSndHeapHandle;
 
 void Core_Init();
 
-extern volatile TPData gTPData;
-
 extern uint16_t gKeys;
 void Core_ReadInput();
+void Core_GetTouchInput(TPData* dst);
 
 #endif

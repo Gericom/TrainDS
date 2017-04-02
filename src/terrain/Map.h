@@ -45,7 +45,7 @@ public:
 	//uint8_t* mTextures;
 	//VecFx10* mNormals;
 	//uint32_t* mTexAddresses;
-	//uint8_t* mLodLevels;
+	uint8_t* mLodLevels;
 
 	TerrainTextureManager16* mTerrainTextureManager16;
 	TerrainTextureManager8* mTerrainTextureManager8;

@@ -63,7 +63,7 @@ NNSSndHeapHandle gSndHeapHandle;
 static uint32_t mSzWork;
 static void* mPMgrWork;
 
-volatile TPData gTPData;
+static TPData mTPData[4];
 
 void Core_Init()
 {
@@ -84,7 +84,7 @@ void Core_Init()
 	void* pMgrWork = NNS_FndAllocFromExpHeapEx(gHeapHandle, szWork, 16);
 	NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
 
-	TP_RequestAutoSamplingStart(192, 1, (TPData*)&gTPData, 1);
+	TP_RequestAutoSamplingStart(192, 2, &mTPData[0], 4);
 }
 
 uint16_t gKeys;
@@ -92,4 +92,9 @@ uint16_t gKeys;
 void Core_ReadInput()
 {
 	gKeys = PAD_Read();
+}
+
+void Core_GetTouchInput(TPData* dst)
+{
+	*dst = mTPData[TP_GetLatestIndexInAuto()];
 }

@@ -105,6 +105,9 @@ TerrainTextureManager8::TerrainTextureManager8()
 				b = (b + dither) >> 3;
 				if (b > 31)
 					b = 31;
+				r = r * 31 / 25;
+				g = g * 31 / 25;
+				b = b * 31 / 25;
 				int newcolor = GX_RGB(r, g, b);
 
 				newtex[y * 16 + x] = newcolor;
