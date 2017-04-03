@@ -11,7 +11,7 @@
 videoplayer_startup_params_t mVideoPlayerStartupParams;
 
 #include <nitro/dtcm_begin.h>
-bool videoPlayer_mWaveDataOffs_write = 0;
+int videoPlayer_mWaveDataOffs_write = 0;
 //FrameQueue implementation
 volatile int videoPlayer_curBlock = -1;
 volatile int videoPlayer_nrFramesInQueue = 0;
@@ -38,16 +38,6 @@ void VideoPlayer::Run(int arg)
 	videoPlayer_mShouldCopyFrame = 0;
 	//load vx2_decoder overlay
 	LOAD_OVERLAY_ITCM(videoplayer_itcm);
-
-	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
-	MI_CpuClearFast((void*)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
-	GX_DisableBankForLCDC();
-
-	MI_CpuFillFast((void*)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
-	MI_CpuClearFast((void*)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
-
-	MI_CpuFillFast((void*)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
-	MI_CpuClearFast((void*)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
 
 	OS_SetIrqFunction(OS_IE_V_BLANK, VideoPlayer_VBlankIntr);
 	//allocate wave buffers

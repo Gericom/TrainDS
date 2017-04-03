@@ -4,7 +4,7 @@
 #include "core.h"
 #include "util.h"
 #include "terrain/TerrainManager.h"
-#include "menu/TitleMenu.h"
+#include "menu/TitleMenu2.h"
 #include "menu/Depot.h"
 #include "menu/Game.h"
 #include "menu/VideoPlayer.h"
@@ -232,8 +232,8 @@ static void Init()
 
 void OnIntroVideoFinish()
 {
-	//TitleMenu::GotoMenu();
-	Game::GotoMenu();
+	TitleMenu2::GotoMenu();
+	//Game::GotoMenu();
 }
 
 void NitroMain ()

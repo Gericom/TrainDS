@@ -69,6 +69,7 @@
     <ClCompile Include="src\inih\ini.c" />
     <ClCompile Include="src\inih\INIReader.cpp" />
     <ClCompile Include="src\menu\Depot.cpp" />
+    <ClCompile Include="src\menu\TitleMenu2.cpp" />
     <ClCompile Include="src\menu\VideoPlayer.cpp" />
     <ClCompile Include="src\menu\VideoPlayer.videoplayeritcm.cpp" />
     <ClCompile Include="src\print.cpp" />
@@ -109,6 +110,7 @@
     <ClInclude Include="src\inih\INIReader.h" />
     <ClInclude Include="src\menu\Depot.h" />
     <ClInclude Include="src\menu\SimpleMenu.h" />
+    <ClInclude Include="src\menu\TitleMenu2.h" />
     <ClInclude Include="src\menu\VideoPlayer.h" />
     <ClInclude Include="src\print.h" />
     <ClInclude Include="src\terrain\GameController.h" />

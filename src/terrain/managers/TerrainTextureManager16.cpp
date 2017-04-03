@@ -5,6 +5,7 @@
 #include "TerrainTextureManager16.h"
 
 TerrainTextureManager16::TerrainTextureManager16()
+	: TerrainTextureManager()
 {
 	mTexArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.carc", NULL, FALSE);
 	NNS_FndMountArchive(&mTexArc, "mtx", mTexArcData);

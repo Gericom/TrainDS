@@ -13,6 +13,7 @@ static int ditherTable[] =
 };
 
 TerrainTextureManager8::TerrainTextureManager8()
+	: TerrainTextureManager()
 {
 	mTexArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.carc", NULL, FALSE);
 	NNS_FndMountArchive(&mTexArc, "mt2", mTexArcData);

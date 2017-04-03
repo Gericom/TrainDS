@@ -18,16 +18,6 @@ void TitleMenu::Initialize(int arg)
 	}
 	else mState = TITLEMENU_STATE_INTRO;
 
-	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
-	MI_CpuClearFast((void*)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
-	GX_DisableBankForLCDC();
-
-	MI_CpuFillFast((void*)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
-	MI_CpuClearFast((void*)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
-
-	MI_CpuFillFast((void*)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
-	MI_CpuClearFast((void*)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
-
 	OS_SetIrqFunction(OS_IE_V_BLANK, TitleMenu::VBlankIntr);
 
 	OS_CreateThread(&mDouble3DThread, Double3DThread, this, mDouble3DThreadStack + DOUBLE_3D_THREAD_STACK_SIZE / sizeof(u32), DOUBLE_3D_THREAD_STACK_SIZE, DOUBLE_3D_THREAD_PRIO);

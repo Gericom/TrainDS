@@ -245,8 +245,6 @@ void Game::Initialize(int arg)
 	mVRAMCopyVAlarm->SetPeriodic(192 - 48, 5, Game::OnVRAMCopyVAlarm, this);
 }
 
-static int mVRAMReadyLine;
-
 void Game::OnVRAMCopyVAlarm()
 {
 	if(mCurFrameType == FRAME_TYPE_MAIN_NEAR)

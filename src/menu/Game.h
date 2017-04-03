@@ -112,11 +112,11 @@ private:
 	void HandlePickingLate();
 
 	int MakeTextCell(GXOamAttr* pOAM, int x, int y, int w, int h, int palette, u32 address);
-public:
-	GameController* mGameController;
 
 	void OnVRAMCopyVAlarm();
 	void OnSub3DCopyVAlarm();
+public:
+	GameController* mGameController;
 
 public:
 	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mKeyTimer(0),
