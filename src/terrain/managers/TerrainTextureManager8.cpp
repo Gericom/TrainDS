@@ -57,33 +57,6 @@ TerrainTextureManager8::TerrainTextureManager8()
 			for (int x = 0; x < 8; x++)
 			{
 				//create new color
-				/*int r = 0, g = 0, b = 0;
-				for (int y2 = 0; y2 < 4; y2++)
-				{
-					for (int x2 = 0; x2 < 4; x2++)
-					{
-						int color = mTextureDatas[j][(y * 4 + y2) * 16 + x * 4 + x2];
-						r += color & 0x1F;
-						g += (color >> 5) & 0x1F;
-						b += (color >> 10) & 0x1F;
-					}
-				}
-				int dither = 8;//ditherTable[y * 4 + x];
-				r = (r + dither) >> 4;
-				if (r > 31)
-					r = 31;
-				g = (g + dither) >> 4;
-				if (g > 31)
-					g = 31;
-				b = (b + dither) >> 4;
-				if (b > 31)
-					b = 31;
-				int newcolor = GX_RGB(r, g, b);
-
-				newtex[y * 8 + x] = newcolor;// mTextureDatas[j][y * 4 * 16 + x * 4];
-				newtex[y * 8 + x + 4] = newcolor;// mTextureDatas[j][y * 4 * 16 + x * 4];
-				newtex[(y + 4) * 8 + x] = newcolor;// mTextureDatas[j][y * 4 * 16 + x * 4];
-				newtex[(y + 4) * 8 + x + 4] = newcolor;// mTextureDatas[j][y * 4 * 16 + x * 4];*/
 				int r = 0, g = 0, b = 0;
 				for (int y2 = 0; y2 < 4; y2++)
 				{

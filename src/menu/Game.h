@@ -39,9 +39,6 @@ private:
 
 	int mPickingPointX;
 	int mPickingPointY;
-	int mPickingXStart;
-	int mPickingXEnd;
-	int mPickingZStart;
 	int mSelectedTrain;
 	int mSelectedMapX;
 	int mSelectedMapZ;
@@ -55,8 +52,6 @@ private:
 
 	PickingState mPickingState;
 	bool mPickingRequested;
-
-	bool mAntiAliasEnabled;
 
 	bool mSub3DInvalidated;
 
@@ -124,7 +119,7 @@ public:
 	void OnSub3DCopyVAlarm();
 
 public:
-	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mAntiAliasEnabled(true), mKeyTimer(0),
+	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mKeyTimer(0),
 		mPickingState(PICKING_STATE_READY), mPickingRequested(false), mCurFrameType(FRAME_TYPE_MAIN_FAR), mLastFrameType(FRAME_TYPE_MAIN_FAR),
 		mSub3DCopyVAlarm(NULL), mSub3DInvalidated(false)
 	{ }
@@ -156,20 +151,6 @@ public:
 		((Game*)context)->OnPenUp(x, y);
 	}
 
-	static void OnPenDownPickingCallback(void* arg, picking_result_t result)
-	{
-		((Game*)arg)->OnPenDownPickingCallback(result);
-	}
-
-	void OnPenDownPickingCallback(picking_result_t result);
-
-	static void OnPenUpPickingCallback(void* arg, picking_result_t result)
-	{
-		((Game*)arg)->OnPenUpPickingCallback(result);
-	}
-
-	void OnPenUpPickingCallback(picking_result_t result);
-
 	void RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg);
 
 	void Render();
@@ -180,19 +161,6 @@ public:
 	{
 		gNextMenuArg = 0;
 		gNextMenuCreateFunc = CreateMenu;
-	}
-
-	void GetMapPosFromPickingResult(picking_result_t result, int &mapX, int &mapY)
-	{
-		if (PICKING_IDX(result) <= 0 || PICKING_TYPE(result) != PICKING_TYPE_MAP)
-		{
-			mapX = -1;
-			mapY = -1;
-			return;
-		}
-		int idx = PICKING_IDX(result) - 1;
-		mapX = mPickingXStart + idx % (mPickingXEnd - mPickingXStart);
-		mapY = mPickingZStart + idx / (mPickingXEnd - mPickingXStart);
 	}
 
 private:

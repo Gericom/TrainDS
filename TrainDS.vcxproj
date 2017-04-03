@@ -72,6 +72,7 @@
     <ClCompile Include="src\menu\VideoPlayer.cpp" />
     <ClCompile Include="src\menu\VideoPlayer.videoplayeritcm.cpp" />
     <ClCompile Include="src\print.cpp" />
+    <ClCompile Include="src\terrain\GameController.cpp" />
     <ClCompile Include="src\terrain\managers\SfxManager.cpp" />
     <ClCompile Include="src\terrain\managers\TerrainTextureManager16.cpp" />
     <ClCompile Include="src\terrain\managers\TerrainTextureManager16.renderingitcm.cpp" />

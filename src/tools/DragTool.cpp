@@ -13,7 +13,7 @@ void DragTool::OnPenDown(int x, int y)
 void DragTool::OnPenDownPickingCallback(picking_result_t result)
 {
 	int x, y;
-	mContext->GetMapPosFromPickingResult(result, x, y);
+	mContext->mGameController->GetMapPosFromPickingResult(result, x, y);
 	if (x < 0 || y < 0)
 		return;
 	VecFx32 worldPos;
@@ -35,7 +35,7 @@ void DragTool::OnPenMove(int x, int y)
 void DragTool::OnPenMovePickingCallback(picking_result_t result)
 {
 	int x, y;
-	mContext->GetMapPosFromPickingResult(result, x, y);
+	mContext->mGameController->GetMapPosFromPickingResult(result, x, y);
 	if (x < 0 || y < 0)
 		return;
 	VecFx32 worldPos;
@@ -56,7 +56,7 @@ void DragTool::OnPenUp(int x, int y)
 void DragTool::OnPenUpPickingCallback(picking_result_t result)
 {
 	int x, y;
-	mContext->GetMapPosFromPickingResult(result, x, y);
+	mContext->mGameController->GetMapPosFromPickingResult(result, x, y);
 	if (x < 0 || y < 0)
 		return;
 	VecFx32 worldPos;

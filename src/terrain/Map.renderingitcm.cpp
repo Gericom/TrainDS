@@ -42,7 +42,7 @@ void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
 extern "C" void render_tile(Map::hvtx_t* vtx, int x, int y);
 extern "C" void render_tile2x2(Map::hvtx_t* vtx, int x, int y);
 
-void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos, VecFx32* camDir, int lodLevel)
+void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel)
 {
 	//fx32 d = -(FX_Mul(camDir->x, camPos->x) + FX_Mul(camDir->y, camPos->y) + FX_Mul(camDir->z, camPos->z));
 	int count = 0;
