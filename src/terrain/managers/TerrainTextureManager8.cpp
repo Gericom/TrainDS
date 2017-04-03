@@ -91,11 +91,19 @@ TerrainTextureManager8::TerrainTextureManager8()
 		}
 		MI_CpuCopyFast(newtex, mTextureDatas[j], sizeof(newtex));
 	}
-
+	mReplaceListHead = 0;
+	mReplaceListTail = 511;
 	for (int j = 0; j < 512; j++)
 	{
 		mCacheBlocks[j].tag = TEXTURE_CACHE_BLOCK_TAG_EMPTY;
-		mCacheBlocks[j].last_accessed = 0;
+		if (j != 0)
+			mCacheBlocks[j].prev = j - 1;
+		else
+			mCacheBlocks[j].prev = 0xFFFF;
+		if (j != 511)
+			mCacheBlocks[j].next = j + 1;
+		else
+			mCacheBlocks[j].next = 0xFFFF;
 	}
 }
 
@@ -109,4 +117,22 @@ void TerrainTextureManager8::UpdateVramC()
 	//maybe we should flush the cache here?!
 	GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_C);
 	MI_DmaCopy32Async(0, &mVramCTexData, (void*)HW_LCDC_VRAM_C, 128 * 1024, OnVRAMCopyComplete, NULL);
+}
+
+void TerrainTextureManager8::MoveToTail(uint16_t block)
+{
+	if (block == 0xFFFF || mReplaceListTail == block)
+		return;
+	if (mCacheBlocks[block].prev != 0xFFFF)
+		mCacheBlocks[mCacheBlocks[block].prev].next = mCacheBlocks[block].next;
+	if (mCacheBlocks[block].next != 0xFFFF)
+	{
+		mCacheBlocks[mCacheBlocks[block].next].prev = mCacheBlocks[block].prev;
+		if(mCacheBlocks[block].prev == 0xFFFF)//head
+			mReplaceListHead = mCacheBlocks[block].next;
+	}
+	mCacheBlocks[mReplaceListTail].next = block;
+	mCacheBlocks[block].prev = mReplaceListTail;
+	mCacheBlocks[block].next = 0xFFFF;
+	mReplaceListTail = block;
 }

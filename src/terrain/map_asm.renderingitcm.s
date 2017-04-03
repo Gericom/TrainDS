@@ -246,7 +246,7 @@ arg_dst	= 4 * 9
 gen_terrain_texture_8:
 arg_dst	= 4 * 9
 	stmfd sp!, {r4-r11,lr}
-	//ldr r4, [sp, #arg_dst]	//dst
+	ldr r4, [sp, #arg_dst]	//dst
 	ldr r5,= gen_terrain_texture_8_coeftable
 	mov r6, #128
 	gen_terrain_texture_8_yloop:

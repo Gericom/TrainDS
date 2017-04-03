@@ -6,6 +6,15 @@
 class TerrainTextureManager
 {
 protected:
+	struct texture_cache_block2_t
+	{
+		uint32_t tag;
+		uint16_t prev;
+		uint16_t next;
+	};
+	uint16_t mReplaceListHead;//next block that will be replaced
+	uint16_t mReplaceListTail;//blocks that have just been accesses will be moved to the tail of the list
+	//tempoarly
 	struct texture_cache_block_t
 	{
 		uint32_t tag;
