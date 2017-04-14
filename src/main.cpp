@@ -208,7 +208,7 @@ static void Init()
 
 	FS_Init(DEFAULT_DMA_NUMBER);
 
-	GX_VBlankIntr(TRUE);         // to generate V-Blank interrupt request
+	GX_VBlankIntr(true);         // to generate V-Blank interrupt request
 
 	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
 	MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
@@ -250,8 +250,8 @@ void NitroMain ()
 	NNS_FndSetGroupIDForExpHeap(gHeapHandle, MENU_PRIVATE_HEAP_GROUP_ID);//This is to be able to simply free all resources used by the menu after it is closed
 	//Game loop
 	//Should handle switching menu's and deallocating the shit they didn't (and don't have to) clean up
-	Game::GotoMenu();
-	//VideoPlayer::GotoMenu("/data/intro.vx2", true, OnIntroVideoFinish);
+	//Game::GotoMenu();
+	VideoPlayer::GotoMenu("/data/intro.vx2", true, OnIntroVideoFinish);
 	while (gNextMenuCreateFunc)
 	{
 		NNS_FndSetGroupIDForExpHeap(gHeapHandle, 0);
@@ -262,7 +262,7 @@ void NitroMain ()
 		gRunningMenu->Run(gNextMenuArg);
 		//restore vblank function (to fix it if it was changed by the menu)
 		OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIntr);
-		GX_VBlankIntr(TRUE);
+		GX_VBlankIntr(true);
 		Util_FreeAllToExpHeapByGroupId(gHeapHandle, MENU_PRIVATE_HEAP_GROUP_ID);//Release everything allocated by the menu
 		delete gRunningMenu;
 		gRunningMenu = NULL;
@@ -293,6 +293,16 @@ void NitroMain ()
 		G2_SetBG3Affine(&mtx, 0, 0, 0, 0);
 		G2S_SetBG2Affine(&mtx, 0, 0, 0, 0);
 		G2S_SetBG3Affine(&mtx, 0, 0, 0, 0);
+
+		GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
+		MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
+		(void)GX_DisableBankForLCDC();
+
+		MI_CpuFillFast((void *)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
+		MI_CpuClearFast((void *)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
+
+		MI_CpuFillFast((void *)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
+		MI_CpuClearFast((void *)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
 	}
 	while (1)
 	{

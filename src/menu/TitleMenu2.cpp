@@ -8,6 +8,7 @@
 #include "terrain/managers/TerrainTextureManager8.h"
 #include "terrain/managers/TerrainTextureManager16.h"
 #include "terrain/track/FlexTrack.h"
+#include "Game.h"
 #include "TitleMenu2.h"
 
 #define SWAP_BUFFERS_SORTMODE	GX_SORTMODE_MANUAL //AUTO
@@ -52,13 +53,14 @@ void TitleMenu2::Initialize(int arg)
 
 	GX_SetDispSelect(GX_DISP_SELECT_MAIN_SUB);
 
-	G2_SetWnd0InsidePlane(GX_WND_PLANEMASK_BG0 | GX_WND_PLANEMASK_BG1 | GX_WND_PLANEMASK_BG2 | GX_WND_PLANEMASK_BG3 | GX_WND_PLANEMASK_OBJ, TRUE);
+	/*G2_SetWnd0InsidePlane(GX_WND_PLANEMASK_BG0 | GX_WND_PLANEMASK_BG1 | GX_WND_PLANEMASK_BG2 | GX_WND_PLANEMASK_BG3 | GX_WND_PLANEMASK_OBJ, TRUE);
 	G2_SetWnd1InsidePlane(GX_WND_PLANEMASK_BG0 | GX_WND_PLANEMASK_BG1 | GX_WND_PLANEMASK_BG2 | GX_WND_PLANEMASK_BG3 | GX_WND_PLANEMASK_OBJ, TRUE);
 	G2_SetWndOutsidePlane(GX_WND_PLANEMASK_BG0 | GX_WND_PLANEMASK_BG1 | GX_WND_PLANEMASK_BG2 | GX_WND_PLANEMASK_BG3 | GX_WND_PLANEMASK_OBJ, FALSE);
 	G2_SetWnd0Position(0, 191 - 20, 255, 192);
 	G2_SetWnd1Position(1, 191 - 20, 0, 192);
-	G2_SetBlendBrightness(GX_BLEND_PLANEMASK_BG0 | GX_BLEND_PLANEMASK_BG1 | GX_BLEND_PLANEMASK_BG2 | GX_BLEND_PLANEMASK_BG3 | GX_BLEND_PLANEMASK_BD, -6);
-	GX_SetVisibleWnd(GX_WNDMASK_W0 | GX_WNDMASK_W1);
+	G2_SetBlendBrightnessExt(GX_BLEND_PLANEMASK_BG0 | GX_BLEND_PLANEMASK_BG1 | GX_BLEND_PLANEMASK_BG2 | GX_BLEND_PLANEMASK_BG3 | GX_BLEND_PLANEMASK_BD, GX_BLEND_PLANEMASK_BG3 | GX_BLEND_PLANEMASK_BD, 0, 0, -6);
+	GX_SetVisibleWnd(GX_WNDMASK_W0 | GX_WNDMASK_W1);*/
+	G2_SetBlendAlpha(GX_BLEND_PLANEMASK_BG0, GX_BLEND_PLANEMASK_BG3 | GX_BLEND_PLANEMASK_BD, 16, 0);
 
 
 	NNS_GfdResetLnkTexVramState();
@@ -89,11 +91,13 @@ void TitleMenu2::Initialize(int arg)
 
 	NNS_G2dArrangeOBJ1D((GXOamAttr*)HW_OAM, 32, 2, 0, 168 + 6, GX_OAM_COLORMODE_16, 0, NNS_G2D_OBJVRAMMODE_32K);
 
+	Util_LoadTextureFromCard("/data/menu/title/titlelogolarge.ntft", "/data/menu/title/titlelogolarge.ntfp", mLogoLargeTexture.texKey, mLogoLargeTexture.plttKey);
+
 	mGameController = new GameController();
 
 	VecFx32 a = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 24) * FX32_ONE - 32 * FX32_ONE };
 	VecFx32 b = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 20 + 24) * FX32_ONE - 32 * FX32_ONE };
-	FlexTrack* tmp = new FlexTrack(&a, &b);
+	FlexTrack* tmp = new FlexTrack(mGameController->mMap, &a, &b);
 
 	mGameController->mWagon->PutOnTrack(tmp, 10 * FX32_ONE);
 
@@ -120,10 +124,78 @@ void TitleMenu2::OnVRAMCopyVAlarm()
 
 void TitleMenu2::Render()
 {
+	Core_ReadInput();
+	if (gKeys & PAD_BUTTON_START)
+		Game::GotoMenu();
 	G3X_Reset();
 	mGameController->Update();
 	NNS_G3dGlbSetViewPort(0, 0, 255, 191);
 	mGameController->Render(mRenderMode);
+	if (mRenderMode == GameController::RENDER_MODE_NEAR)
+	{
+		//Do some 2d with the 3d engine when needed (AKA, fucking up matrices)
+		G3_MtxMode(GX_MTXMODE_PROJECTION);
+		{
+			G3_Identity();
+			G3_OrthoW(FX32_ONE * 0, FX32_ONE * 192, FX32_ONE * 0, FX32_ONE * 256, FX32_ONE * -1024, FX32_ONE * 1024, FX32_ONE * 1024, NULL);
+		}
+		G3_MtxMode(GX_MTXMODE_TEXTURE);
+		{
+			G3_Identity();
+		}
+		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+		G3_Identity();
+		G3_Color(GX_RGB(31, 31, 31));
+
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0x30, 31, 0);
+		G3_TexImageParam(GX_TEXFMT_A3I5, GX_TEXGEN_TEXCOORD, GX_TEXSIZE_S256, GX_TEXSIZE_T64, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, NNS_GfdGetTexKeyAddr(mLogoLargeTexture.texKey));
+		G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(mLogoLargeTexture.plttKey), GX_TEXFMT_A3I5);
+
+		switch (mState)
+		{
+		case TITLE_MENU_STATE_LOGO_IN:
+			Util_DrawSprite(27 * FX32_ONE, -64 * FX32_ONE + (8 * FX32_ONE - -64 * FX32_ONE) * mStateCounter / 29, 1024 * FX32_ONE, 202 * FX32_ONE, 64 * FX32_ONE);
+			if (mStateCounter == 29)
+			{
+				mStateCounter = 0;
+				mState = TITLE_MENU_STATE_LOGO_WAIT;
+			}
+			else
+				mStateCounter++;
+			break;
+		case TITLE_MENU_STATE_LOGO_WAIT:
+			Util_DrawSprite(27 * FX32_ONE, 8 * FX32_ONE, 1024 * FX32_ONE, 202 * FX32_ONE, 64 * FX32_ONE);
+			if (mStateCounter == 79)
+			{
+				mStateCounter = 0;
+				mState = TITLE_MENU_STATE_LOGO_SCALE;
+			}
+			else
+				mStateCounter++;
+			break;
+		case TITLE_MENU_STATE_LOGO_SCALE:
+			fx32 newX = 27 * FX32_ONE + (86 * FX32_ONE - 27 * FX32_ONE) * mStateCounter / 19;
+			fx32 newY = 8 * FX32_ONE + (-10 * FX32_ONE - 8 * FX32_ONE) * mStateCounter / 19;
+			fx32 newScale = (202 * FX32_ONE + (138 * FX32_ONE - 202 * FX32_ONE) * mStateCounter / 19) / 202;
+			Util_DrawSpriteScaled(newX, newY, 1024 * FX32_ONE, 202 * FX32_ONE, 64 * FX32_ONE, newScale);
+			if (mStateCounter == 19)
+			{
+				mStateCounter = 0;
+				mState = TITLE_MENU_STATE_LOOP;
+			}
+			else
+				mStateCounter++;
+			break;
+		case TITLE_MENU_STATE_LOOP:
+			Util_DrawSpriteScaled(86 * FX32_ONE, -10 * FX32_ONE, 1024 * FX32_ONE, 202 * FX32_ONE, 64 * FX32_ONE, 138 * FX32_ONE / 202);
+			break;
+		}
+
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0x30, 12, 0);
+		G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S256, GX_TEXSIZE_T64, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
+		G3_Color(GX_RGB(0, 0, 0));
+		Util_DrawSprite(0, (192 - 21) * FX32_ONE, 1024 * FX32_ONE, 256 * FX32_ONE, 21 * FX32_ONE);
+	}
 	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
 }
 
@@ -141,6 +213,7 @@ void TitleMenu2::VBlank()
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_D);
 		GX_SetBankForBG(GX_VRAM_BG_128_B);
+		//set this to GX_DISPMODE_VRAM_D to prevent flickering, but it will introduce one frame of lag (don't know if that really matters though)
 		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
 		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
@@ -153,6 +226,7 @@ void TitleMenu2::VBlank()
 
 void TitleMenu2::Finalize()
 {
+	NNS_SndArcStrmStop(&mMusicHandle, 0);
 	delete mVRAMCopyVAlarm;
 	delete mGameController;
 }

@@ -57,6 +57,21 @@ Map::Map()
 	//MI_CpuFillFast(mVtx, 0x80808080, 128 * 128);
 	//mNormals = new VecFx10[128 * 128];
 	RecalculateNormals(0, 127, 0, 127);
+
+	//load tracks
+	u32 len;
+	fx32* trackdata = (fx32*)Util_LoadFileToBuffer("/data/map/trackdata.bin", &len, true);
+	fx32* curPtr = trackdata;
+	for (int i = 0; i < len / 16; i++)
+	{
+		VecFx32 a = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
+		VecFx32 b = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
+		FlexTrack* track = new FlexTrack(this, &a, &b);
+		AddTrackPiece(track);
+		TrySnapTrack(track, 0);
+		TrySnapTrack(track, 1);
+	}
+	NNS_FndFreeToExpHeap(gHeapHandle, trackdata);
 }
 
 Map::~Map()
@@ -254,14 +269,19 @@ fx32 Map::GetYOnMap(fx32 x, fx32 z)
 //We should get rid of the flextrack in this method
 void Map::TrySnapGhostTrack(int inPoint, TrackPieceEx* ignore)
 {
-	if (mGhostPiece == NULL)
+	TrySnapTrack(mGhostPiece, inPoint, ignore);
+}
+
+void Map::TrySnapTrack(TrackPieceEx* track, int inPoint, TrackPieceEx* ignore)
+{
+	if (track == NULL)
 		return;
-	VecFx32 ghostEnd;// = ((FlexTrack*)mGhostPiece)->mPoints[1];
-	mGhostPiece->GetConnectionPoint(inPoint, &ghostEnd);
+	VecFx32 ghostEnd;
+	track->GetConnectionPoint(inPoint, &ghostEnd);
 	TrackPieceEx* trackPiece = NULL;
 	while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 	{
-		if (trackPiece == ignore)
+		if (trackPiece == ignore || trackPiece == track)
 			continue;
 		int nrConnectors = trackPiece->GetNrConnectionPoints();
 		for (int i = 0; i < nrConnectors; i++)
@@ -274,10 +294,10 @@ void Map::TrySnapGhostTrack(int inPoint, TrackPieceEx* ignore)
 				FX_Mul(pos.z - ghostEnd.z, pos.z - ghostEnd.z);
 			if (sedist <= FX32_ONE / 16)//>> 2)
 			{
-				mGhostPiece->Connect(inPoint, trackPiece, i, true);
+				track->Connect(inPoint, trackPiece, i, true);
 				return;
 			}
 		}
 	}
-	mGhostPiece->Disconnect(inPoint);
+	track->Disconnect(inPoint);
 }

@@ -80,7 +80,7 @@ void Wagon::PutOnTrack(TrackPieceEx* track, fx32 offset)
 		fx32 dist = VEC_Distance(&mBack, &mBogeys[i].position) / 13;
 		if (mBogeys[i].pathWorker)
 			delete mBogeys[i].pathWorker;
-		mBogeys[i].pathWorker = new PathWorker(track, 0, offset + dist, mGameController->mMap);
+		mBogeys[i].pathWorker = new PathWorker(track, 0, offset + dist);
 	}
 	mOnTrack = true;
 }
@@ -243,7 +243,7 @@ void Wagon::Update()
 		}
 		for (int i = 0; i < mNrBogeys; i++)
 		{
-			mBogeys[i].pathWorker->Proceed(FX32_ONE / 60, NULL, NULL);
+			mBogeys[i].pathWorker->Proceed(FX32_ONE / 40, NULL, NULL);
 		}
 	}
 	else

@@ -28,7 +28,7 @@
 
 //static tile_t sDummyMap[64][64];
 //static trackpiece_t sDummyPieces[8];
-static TrackPieceEx* sDummyPieces[120];//10];
+//static TrackPieceEx* sDummyPieces[120];//10];
 
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
@@ -137,9 +137,9 @@ void Game::Initialize(int arg)
 
 	VecFx32 a = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 24) * FX32_ONE - 32 * FX32_ONE };
 	VecFx32 b = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 20 + 24) * FX32_ONE - 32 * FX32_ONE };
-	sDummyPieces[0] = new FlexTrack(&a, &b);
+	FlexTrack* tmp = new FlexTrack(mGameController->mMap, &a, &b);
 
-	mGameController->mWagon->PutOnTrack(sDummyPieces[0], 10 * FX32_ONE);
+	mGameController->mWagon->PutOnTrack(tmp, 10 * FX32_ONE);
 
 	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
@@ -150,8 +150,8 @@ void Game::Initialize(int arg)
 	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, (uint8_t*)G2_GetOBJCharPtr(), 8, 4, NNS_G2D_CHARA_COLORMODE_16);
 	NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
 	NNS_G2dCharCanvasClear(&mCanvas, 0);
-	NNS_G2dTextCanvasDrawTextRect(
-		&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Tri's Test");
+	//NNS_G2dTextCanvasDrawTextRect(
+	//	&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Tri's Test");
 
 	for(int i = 0; i < 16; i++)
 		((uint16_t*)HW_OBJ_PLTT)[i] = 0x7FFF;
@@ -357,7 +357,8 @@ void Game::Render()
 		{
 			if (mGameController->mMap->GetFirstTrackPiece() != NULL)
 			{
-				mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece());
+				mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 60 * FX32_ONE);
+				mTrainMode = true;
 			}
 			mKeyTimer = 10;
 		}
@@ -367,7 +368,28 @@ void Game::Render()
 
 	VecFx32 camRot;
 	mGameController->mCamera->GetRotation(&camRot);
-	if (keyData & PAD_BUTTON_A)
+	if (mTrainMode)
+	{
+		mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
+		mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
+		mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
+		mGameController->mCamera->mCamDistance = FX32_CONST(1.25f);
+		mGameController->mCamera->mDestination.y += FX32_CONST(0.2f);
+	}
+
+
+	if (!mDebugKeyTimer)
+	{
+		if (keyData & PAD_BUTTON_DEBUG)
+		{
+			OS_Printf("Camdata: dst(%d, %d, %d), rot(%d, %d, %d)\n", mGameController->mCamera->mDestination.x, mGameController->mCamera->mDestination.y, mGameController->mCamera->mDestination.z, camRot.x, camRot.y, camRot.z);
+			mDebugKeyTimer = 60;
+		}
+	}
+	else
+		mDebugKeyTimer--;
+
+	if ((keyData & PAD_BUTTON_A) || mTrainMode)
 	{
 		if (keyData & PAD_KEY_LEFT)
 			camRot.x += FX32_ONE >> 1;
@@ -397,7 +419,6 @@ void Game::Render()
 		else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))
 			camRot.x += FX32_ONE >> 1;
 	}
-
 	mGameController->mCamera->SetRotation(&camRot);
 
 	if (keyData & PAD_BUTTON_START)
@@ -453,7 +474,7 @@ void Game::Render()
 	//InvalidateSub3D();
 	//char result[64];
 	//MI_CpuClear8(result, sizeof(result));
-	OS_Printf("%d: %d\n", mCurFrameType, G3X_GetPolygonListRamCount());
+	//OS_Printf("%d: %d\n", mCurFrameType, G3X_GetPolygonListRamCount());
 	//OS_SPrintf(result, "%d;%d;%d", G3X_GetVtxListRamCount(), G3X_GetPolygonListRamCount(), mVRAMReadyLine);
 	//u16 result2[64];
 	//MI_CpuClear8(result2, sizeof(result2));

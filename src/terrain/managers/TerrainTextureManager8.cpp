@@ -70,18 +70,18 @@ TerrainTextureManager8::TerrainTextureManager8()
 					}
 				}
 				int dither = 4;//ditherTable[y * 4 + x];
-				r = (r + dither) >> 3;
+				r = (r + dither) >> 3;				
+				g = (g + dither) >> 3;			
+				b = (b + dither) >> 3;
+				r = r * 31 / 20;//25;
+				g = g * 31 / 20;//25;
+				b = b * 31 / 20;//25;
 				if (r > 31)
 					r = 31;
-				g = (g + dither) >> 3;
 				if (g > 31)
 					g = 31;
-				b = (b + dither) >> 3;
 				if (b > 31)
 					b = 31;
-				r = r * 31 / 25;
-				g = g * 31 / 25;
-				b = b * 31 / 25;
 				int newcolor = GX_RGB(r, g, b);
 
 				newtex[y * 16 + x] = newcolor;

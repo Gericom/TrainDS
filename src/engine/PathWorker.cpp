@@ -12,7 +12,7 @@ static void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
 
 void PathWorker::CalculatePoint()
 {
-	mCurPiece->CalculatePoint(mCurInPoint, FX_Div(mCurDistance, mNextDistance), &mCurPoint, &mCurDirection, mMap);
+	mCurPiece->CalculatePoint(mCurInPoint, FX_Div(mCurDistance, mNextDistance), &mCurPoint, &mCurDirection);
 	//mCurPoint.x = mCurPoint.y = mCurPoint.z = 0;
 	//if (mNextDistance < 0) return;
 	//mCurPiece->CalculatePoint(&mCurPiecePoint, &mNextPiecePoint, &mNextDirection, FX_Div(mCurDistance, mNextDistance), &mCurPoint, &mCurDirection);
@@ -20,7 +20,7 @@ void PathWorker::CalculatePoint()
 
 void PathWorker::SetupPoint()
 {
-	mNextDistance = mCurPiece->GetTrackLength(mMap, mCurInPoint);
+	mNextDistance = mCurPiece->GetTrackLength(mCurInPoint);
 	/*fx32 xa = 0, za = 0;
 	TrackPiece* a = mCurPiece;
 	if(a->mRot == TRACKPIECE_ROT_0) za = FX32_HALF;
@@ -52,12 +52,9 @@ void PathWorker::SetupPoint()
 	else mNextDistance = -FX32_ONE;*/
 }
 
-PathWorker::PathWorker(TrackPieceEx* curPiece, int curInPoint, fx32 curDistance, Map* map)
+PathWorker::PathWorker(TrackPieceEx* curPiece, int curInPoint, fx32 curDistance)
+	: mCurPiece(curPiece), mCurInPoint(curInPoint), mCurDistance(curDistance)
 {
-	mCurPiece = curPiece;
-	mCurInPoint = curInPoint;
-	mCurDistance = curDistance;
-	mMap = map;
 	SetupPoint();
 	//CalculatePoint();
 	Proceed(0, NULL, NULL);

@@ -4,10 +4,19 @@
 #include "SimpleMenu.h"
 #include "core/os/VAlarm.h"
 #include "terrain/GameController.h"
+#include "terrain/TerrainManager.h"
 
 class TitleMenu2 : public SimpleMenu
 {
 private:
+	enum TitleMenuState
+	{
+		TITLE_MENU_STATE_LOGO_IN,
+		TITLE_MENU_STATE_LOGO_WAIT,
+		TITLE_MENU_STATE_LOGO_SCALE,
+		TITLE_MENU_STATE_LOOP
+	};
+
 	GameController* mGameController;
 	GameController::RenderMode mRenderMode;
 
@@ -18,10 +27,15 @@ private:
 	NNSG2dCharCanvas mCanvas;
 	NNSG2dTextCanvas mTextCanvas;
 
+	texture_t mLogoLargeTexture;
+
+	TitleMenuState mState;
+	int mStateCounter;
+
 	OS::VAlarm* mVRAMCopyVAlarm;
 	void OnVRAMCopyVAlarm();
 public:
-	TitleMenu2() : SimpleMenu(17, 17), mRenderMode(GameController::RENDER_MODE_FAR)
+	TitleMenu2() : SimpleMenu(17, 17), mRenderMode(GameController::RENDER_MODE_FAR), mState(TITLE_MENU_STATE_LOGO_IN), mStateCounter(0)
 	{ }
 
 	void Initialize(int arg);

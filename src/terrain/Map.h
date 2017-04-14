@@ -101,6 +101,7 @@ public:
 	fx32 GetYOnMap(fx32 x, fx32 z);
 
 	void TrySnapGhostTrack(int inPoint, TrackPieceEx* ignore = NULL);
+	void TrySnapTrack(TrackPieceEx* track, int inPoint, TrackPieceEx* ignore = NULL);
 
 	//tempoarly
 	TrackPieceEx* GetFirstTrackPiece()

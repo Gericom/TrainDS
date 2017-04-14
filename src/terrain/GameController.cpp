@@ -1,6 +1,8 @@
 #include <nitro.h>
 #include <nnsys/fnd.h>
 #include <nnsys/g3d.h>
+#include <math.h>
+#include <cmath>
 #include "core.h"
 #include "util.h"
 #include "GameController.h"
@@ -32,7 +34,7 @@ static void VEC_MinMax(VecFx32* a, VecFx32* min, VecFx32* max)
 		max->z = a->z;
 }
 
-static void CalculateVisibleGrid(VecFx32* bbmin, VecFx32* bbmax)
+static void calculateVisibleGrid(VecFx32* bbmin, VecFx32* bbmax)
 {
 	int y = 0;
 
@@ -145,7 +147,7 @@ void GameController::Render(RenderMode mode)
 		NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 35 * 4096, 40960 * 4);
 
 	VecFx32 bbmin, bbmax;
-	CalculateVisibleGrid(&bbmin, &bbmax);
+	calculateVisibleGrid(&bbmin, &bbmax);
 
 	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
 	xstart = MATH_CLAMP(xstart, 0, 128);
@@ -173,6 +175,24 @@ void GameController::Render(RenderMode mode)
 		mCamera->GetLookDirection(&camDir);
 		mMap->Render(xstart, xend, zstart, zend, mode == RENDER_MODE_PICKING, &mCamera->mPosition, &camDir, (mode == RENDER_MODE_FAR ? 1 : 0));
 		mWagon->Render();
+		//skybox
+		if (mode == RENDER_MODE_FAR)
+		{
+			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, 64 * FX32_ONE, 40960 * 4);
+			NNS_G3dGlbFlushP();
+			NNS_G3dGeFlushBuffer();
+			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, 0);
+			G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S8, GX_TEXSIZE_T8, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
+			G3_PushMtx();
+			//G3_Identity();
+			//VecFx32 dst;
+			//mWagon->GetPosition(&dst);
+			//G3_Translate(dst.x, dst.y, dst.z);
+			G3_Translate(mCamera->mDestination.x, 0, mCamera->mDestination.z);
+			G3_Scale(50 * FX32_ONE, 50 * FX32_ONE, 50 * FX32_ONE);
+			mHemisphere->Render();
+			G3_PopMtx(1);
+		}
 	}
 	G3_PopMtx(1);
 }

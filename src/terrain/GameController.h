@@ -5,6 +5,7 @@
 #include "engine/FreeRoamCamera.h"
 #include "managers/SfxManager.h"
 #include "vehicles/Wagon.h"
+#include "engine/Hemisphere.h"
 class LookAtCamera;
 
 class GameController
@@ -23,6 +24,7 @@ public:
 		mSfxManager = new SfxManager();
 		mCamera = new FreeRoamCamera();
 		mWagon = new Wagon(this, "a3");
+		mHemisphere = new Hemisphere();
 	}
 
 	~GameController()
@@ -37,6 +39,7 @@ public:
 	Wagon* mWagon;
 	SfxManager* mSfxManager;
 	FreeRoamCamera* mCamera;
+	Hemisphere* mHemisphere;
 
 	int mPickingXStart;
 	int mPickingXEnd;

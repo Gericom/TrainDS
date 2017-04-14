@@ -3,14 +3,24 @@
 
 #include "TrackPieceEx.h"
 
+#define FLEXTRACK_NR_POINTS	6
+
+#define FLEXTRACK_TRACK_WIDTH					FX32_CONST(0.4)
+#define FLEXTRACK_INV_TRACK_WIDTH	FX32_CONST(1.0 / 0.4)
+
 class FlexTrack : public TrackPieceEx
 {
-public:
+private:
 	VecFx32 mPoints[2];
+	VecFx32 mCurvePoints[FLEXTRACK_NR_POINTS];
+	VecFx32 mCurveNormals[FLEXTRACK_NR_POINTS];
+	fx32 mCurveLength;
+public:
 	TrackPieceEx* mConnections[2];
 	int mConnectionInPoints[2];
 public:
-	FlexTrack(VecFx32* a, VecFx32* b)
+	FlexTrack(Map* map, VecFx32* a, VecFx32* b)
+		: TrackPieceEx(map)
 	{ 
 		mPoints[0] = *a;
 		mPoints[1] = *b;
@@ -18,6 +28,7 @@ public:
 		mConnections[1] = NULL;
 		mConnectionInPoints[0] = -1;
 		mConnectionInPoints[1] = -1;
+		Invalidate();
 	}
 
 	int GetNrConnectionPoints()
@@ -47,7 +58,11 @@ public:
 	void Connect(int id, TrackPieceEx* track, int inPoint, bool updatePos)
 	{
 		if (updatePos)
-			track->GetConnectionPoint(inPoint, &mPoints[id]);
+		{
+			VecFx32 tmp;
+			track->GetConnectionPoint(inPoint, &tmp);
+			SetPoint(id, &tmp);
+		}
 		//this is to prevent an endless loop
 		if (mConnections[id] == track && mConnectionInPoints[id] == inPoint)
 			return;
@@ -55,6 +70,7 @@ public:
 		mConnections[id] = track;
 		mConnectionInPoints[id] = inPoint;
 		mConnections[id]->Connect(inPoint, this, id, false);
+		Invalidate();
 	}
 
 	void Disconnect(int id)
@@ -67,12 +83,22 @@ public:
 		mConnections[id] = NULL;
 		mConnectionInPoints[id] = -1;
 		old->Disconnect(old2);
+		Invalidate();
 	}
 
-	void Render(Map* map, TerrainManager* terrainManager);
-	void RenderMarkers(Map* map, TerrainManager* terrainManager);
-	fx32 GetTrackLength(Map* map, int inPoint);
-	void CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir, Map* map);
+	void Render(TerrainManager* terrainManager);
+	void RenderMarkers(TerrainManager* terrainManager);
+	fx32 GetTrackLength(int inPoint);
+	void CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir);
+	void Invalidate();
+
+	void SetPoint(int id, VecFx32* pos)
+	{
+		mPoints[id] = *pos;
+		Invalidate();
+		if (mConnections[id])
+			mConnections[id]->Invalidate();
+	}
 };
 
 #endif

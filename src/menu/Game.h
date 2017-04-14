@@ -61,6 +61,7 @@ private:
 	}
 
 	int mKeyTimer;
+	int mDebugKeyTimer;
 
 	void* mTrackBuildCellData;
 	NNSG2dCellDataBank* mTrackBuildCellDataBank;
@@ -91,6 +92,8 @@ private:
 	NNSG2dCellDataBank* mCellDataSubBank;
 	void* mCellDataSub;
 
+	bool mTrainMode;
+
 	texture_t mShadowTex;
 
 	DragTool* mDragTool;
@@ -119,7 +122,7 @@ public:
 	GameController* mGameController;
 
 public:
-	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mKeyTimer(0),
+	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mKeyTimer(0), mDebugKeyTimer(0), mTrainMode(false), 
 		mPickingState(PICKING_STATE_READY), mPickingRequested(false), mCurFrameType(FRAME_TYPE_MAIN_FAR), mLastFrameType(FRAME_TYPE_MAIN_FAR),
 		mSub3DCopyVAlarm(NULL), mSub3DInvalidated(false)
 	{ }

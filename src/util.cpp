@@ -14,6 +14,7 @@ void* Util_LoadFileToBuffer(char* path, uint32_t* size, bool tempoarly)
 	if (buffer != NULL)
 		FS_ReadFile(&file, buffer, (int)mSize);
 	FS_CloseFile(&file);
+	DC_FlushRange(buffer, mSize);
 	if (size != NULL) *size = mSize;
 	return buffer;
 }
@@ -123,6 +124,53 @@ static void Util_FreeAllToExpHeapByGroupIdForMBlock(void* memBlock, NNSFndHeapHa
 void Util_FreeAllToExpHeapByGroupId(NNSFndHeapHandle heap, int groupId)
 {
 	NNS_FndVisitAllocatedForExpHeap(heap, Util_FreeAllToExpHeapByGroupIdForMBlock, groupId);
+}
+
+void Util_DrawSprite(fx32 x, fx32 y, fx32 z, fx32 width, fx32 height)
+{
+	G3_PushMtx();
+	{
+		G3_Translate(x + (width >> 1), y + (height >> 1), z);
+		G3_Scale(width, height, FX32_ONE);
+
+		G3_Begin(GX_BEGIN_QUADS);
+		{
+			G3_TexCoord(0, 0);
+			G3_Vtx(-FX32_HALF, -FX32_HALF, 0);
+			G3_TexCoord(0, height);
+			G3_Vtx(-FX32_HALF, FX32_HALF, 0);
+			G3_TexCoord(width, height);
+			G3_Vtx(FX32_HALF, FX32_HALF, 0);
+			G3_TexCoord(width, 0);
+			G3_Vtx(FX32_HALF, -FX32_HALF, 0);
+		}
+		G3_End();
+	}
+	G3_PopMtx(1);
+}
+
+void Util_DrawSpriteScaled(fx32 x, fx32 y, fx32 z, fx32 width, fx32 height, fx32 scale)
+{
+	G3_PushMtx();
+	{
+		G3_Translate(x + (width >> 1), y + (height >> 1), z);
+		G3_Scale(width, height, FX32_ONE);
+		G3_Scale(scale, scale, FX32_ONE);
+
+		G3_Begin(GX_BEGIN_QUADS);
+		{
+			G3_TexCoord(0, 0);
+			G3_Vtx(-FX32_HALF, -FX32_HALF, 0);
+			G3_TexCoord(0, height);
+			G3_Vtx(-FX32_HALF, FX32_HALF, 0);
+			G3_TexCoord(width, height);
+			G3_Vtx(FX32_HALF, FX32_HALF, 0);
+			G3_TexCoord(width, 0);
+			G3_Vtx(FX32_HALF, -FX32_HALF, 0);
+		}
+		G3_End();
+	}
+	G3_PopMtx(1);
 }
 
 void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)

@@ -63,9 +63,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\engine\FreeRoamCamera.cpp" />
+    <ClCompile Include="src\engine\Hemisphere.cpp" />
     <ClCompile Include="src\engine\LookAtCamera.cpp" />
     <ClCompile Include="src\engine\PathWorker.cpp" />
     <ClCompile Include="src\engine\ThirdPersonCamera.cpp" />
+    <ClCompile Include="src\engine\TitleSequence.cpp" />
+    <ClCompile Include="src\engine\TitleSequencePlayer.cpp" />
     <ClCompile Include="src\inih\ini.c" />
     <ClCompile Include="src\inih\INIReader.cpp" />
     <ClCompile Include="src\menu\Depot.cpp" />
@@ -89,6 +92,7 @@
     <ClCompile Include="src\terrain\scenery\RCT2Tree1.cpp" />
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
     <ClCompile Include="src\terrain\track\FlexTrack.cpp" />
+    <ClCompile Include="src\terrain\track\FlexTrack.renderingitcm.cpp" />
     <ClCompile Include="src\tools\AddTrackTool.cpp" />
     <ClCompile Include="src\tools\DragTool.cpp" />
     <ClCompile Include="src\ui\UIManager.cpp" />
@@ -101,10 +105,13 @@
     <ClInclude Include="src\core\os\VAlarm.h" />
     <ClInclude Include="src\engine\Camera.h" />
     <ClInclude Include="src\engine\FreeRoamCamera.h" />
+    <ClInclude Include="src\engine\Hemisphere.h" />
     <ClInclude Include="src\engine\LookAtCamera.h" />
     <ClInclude Include="src\engine\PathWorker.h" />
     <ClInclude Include="src\engine\Quaternion.h" />
     <ClInclude Include="src\engine\ThirdPersonCamera.h" />
+    <ClInclude Include="src\engine\TitleSequence.h" />
+    <ClInclude Include="src\engine\TitleSequencePlayer.h" />
     <ClInclude Include="src\engine\WorldObject.h" />
     <ClInclude Include="src\inih\ini.h" />
     <ClInclude Include="src\inih\INIReader.h" />

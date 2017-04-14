@@ -20,21 +20,22 @@ asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, i
 	stmfd sp!, { r4 - r11,lr }
 	ldr r4, [sp, #arg_br]
 	ldr r7, [r0, #offsetof_mResourceCounter]
-	add r7, r7, #1
-	str r7, [r0, #offsetof_mResourceCounter]
 	//create tag
 	orr r6, r1, r2, lsl #8
 	orr r6, r6, r3, lsl #16
 	orr r6, r6, r4, lsl #24
 
 	ldr r11, [sp, #arg_oldTexKey]
-	cmp r11, #0
-	beq notexkey
-	sub r9, r11, #(128 * 1024)
+	subs r9, r11, #(128 * 1024)
+		bmi notexkey
 	add r9, r0, r9, lsr #5 //#4
 	ldr r8, [r9, #offsetof_mCacheBlocks]!
 	cmp r8, r6
-	beq tag_found_old
+		bne notexkey
+
+	str r7, [r9, #4]
+	mov r0, r11
+	ldmfd sp!, { r4 - r11,pc }
 
 notexkey:
 	add r9, r0, #offsetof_mCacheBlocks
@@ -86,10 +87,5 @@ tag_found:
 	str r7, [r9, #-4]
 	mov r12, r12, lsl #5 //#4
 	add r0, r12, #(128 * 1024)
-	ldmfd sp!, { r4 - r11,pc }
-
-tag_found_old:
-	str r7, [r9, #4]
-	mov r0, r11
 	ldmfd sp!, { r4 - r11,pc }
 }
