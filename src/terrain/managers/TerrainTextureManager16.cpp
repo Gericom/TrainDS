@@ -64,6 +64,10 @@ TerrainTextureManager16::TerrainTextureManager16()
 		mCacheBlocks[j].tag = TEXTURE_CACHE_BLOCK_TAG_EMPTY;
 		mCacheBlocks[j].last_accessed = 0;
 	}
+	MI_CpuFillFast(&mVramCTexData[0], 0xFFFFFFFF, sizeof(mVramCTexData));
+	OS_InitMessageQueue(&mMessageQueue, &mMessageQueueData[0], TEXTURE16_QUEUE_LENGTH);
+	OS_CreateThread(&mWorkerThread, WorkerThreadMain, this, mWorkerThreadStack + TEXTURE16_WORKER_THREAD_STACK_SIZE / sizeof(u32), TEXTURE16_WORKER_THREAD_STACK_SIZE, TEXTURE16_WORKER_THREAD_PRIORITY);
+	OS_WakeupThreadDirect(&mWorkerThread);
 }
 
 static void OnVRAMCopyComplete(void* arg)

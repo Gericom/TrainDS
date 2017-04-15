@@ -108,15 +108,19 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 				//fx32 ything = camDir->y * ((mHMap[((zstart + zend) / 2) * 128 + ((xstart + xend) / 2)].y - Y_OFFSET) * Y_SCALE - camPos->y);
 				//fx32 dist = camDir->x * (xstart * FX32_ONE + xadd) + camDir->z * (zstart * FX32_ONE + zadd);
 				//fx32 distbase = camDir->x * (xstart * FX32_ONE + xadd) + camDir->z * (zstart * FX32_ONE + zadd) - camDir->y * camPos->y - camDir->y * Y_OFFSET * Y_SCALE;
-				for (int y = zstart; y < zend && y + 1 <= 127; y++)
+				if (zend > 126)
+					zend = 126;
+				if (xend > 126)
+					xend = 126;
+				for (int y = zstart; y < zend; y++)
 				{
 					//fx32 dist = distbase;
-					for (int x = xstart; x < xend && x + 1 <= 127; x++)
+					for (int x = xstart; x < xend; x++)
 					{
 						fx32 top = 
 							camDir->x * (x * FX32_ONE + xadd) + 
 							camDir->y * ((mHMap[y * 128 + x].y - Y_OFFSET) * Y_SCALE - camPos->y) + 
-							camDir->z * (y * FX32_ONE + zadd); //VEC_DotProduct(camDir, &diff);*/
+							camDir->z * (y * FX32_ONE + zadd); //VEC_DotProduct(camDir, &diff);
 						//fx32 top = dist + camDir->y * mHMap[y * 128 + x].y * Y_SCALE;
 						if (top <= (10 * FX32_ONE * FX32_ONE))
 						{
@@ -133,7 +137,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 							//reg_G3_TEXIMAGE_PARAM = 0x1C900000 | (texOffset >> 3);
 							reg_G3_TEXIMAGE_PARAM = 0xDC900000 | (texOffset >> 3);
 
-							if (mLodLevels[y * 128 + x] == 1 || mLodLevels[y * 128 + (x + 1)] == 1 || mLodLevels[(y + 1) * 128 + x] == 1 || mLodLevels[(y + 1) * 128 + (x + 1)] == 1)
+							if (mLodLevels[y * 128 + x] || mLodLevels[y * 128 + (x + 1)] || mLodLevels[(y + 1) * 128 + x] || mLodLevels[(y + 1) * 128 + (x + 1)])
 							{
 								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
 								{
@@ -249,12 +253,21 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 				MI_CpuClearFast(mLodLevels, 128 * 128);
 				//int count = 0;
 				G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+
 				fx32 xadd = FX32_ONE - camPos->x - 32 * FX32_ONE;
 				fx32 zadd = FX32_ONE - camPos->z - 32 * FX32_ONE;
 				//fx32 ything = camDir->y * ((mHMap[((zstart + zend) / 2) * 128 + ((xstart + xend) / 2)].y - Y_OFFSET) * Y_SCALE - camPos->y);
-				for (int y = zstart & ~1; y < (zend | 1) && y + 2 <= 127; y += 2)
+				zstart &= ~1;
+				xstart &= ~1;
+				zend |= 1;
+				xend |= 1;
+				if (zend > 125)
+					zend = 125;
+				if (xend > 125)
+					xend = 125;
+				for (int y = zstart; y < zend; y += 2)
 				{
-					for (int x = xstart & ~1; x < (xend | 1) && x + 2 <= 127; x += 2)
+					for (int x = xstart; x < xend; x += 2)
 					{
 						fx32 top = 
 							camDir->x * (x * FX32_ONE + xadd) + 

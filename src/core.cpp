@@ -58,7 +58,7 @@ NNSSndArc gSndArc;
 static u8 mSndHeap[SOUND_HEAP_SIZE];
 NNSSndHeapHandle gSndHeapHandle;
 
-#define STREAM_THREAD_PRIO 10
+#define STREAM_THREAD_PRIO (OS_THREAD_LAUNCHER_PRIORITY + 4) //10
 
 static uint32_t mSzWork;
 static void* mPMgrWork;

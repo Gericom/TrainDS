@@ -15,7 +15,8 @@ asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, i
 		offsetof_mResourceCounter = offsetof(TerrainTextureManager8, mResourceCounter),
 		offsetof_mCacheBlocks = offsetof(TerrainTextureManager8, mCacheBlocks),
 		offsetof_mTextureDatas = offsetof(TerrainTextureManager8, mTextureDatas),
-		offsetof_mVramCTexData = offsetof(TerrainTextureManager8, mVramCTexData)
+		offsetof_mVramCTexData = offsetof(TerrainTextureManager8, mVramCTexData),
+		offsetof_mMessageQueue = offsetof(TerrainTextureManager8, mMessageQueue)
 	};
 	stmfd sp!, { r4 - r11,lr }
 	ldr r4, [sp, #arg_br]
@@ -65,7 +66,17 @@ loop2:
 	add r12, r12, r5, lsl #3
 	strd r6, [r12]
 
-	add r12, r0, r5, lsl #8 //#7
+	ldr r1,= offsetof_mMessageQueue
+	add r0, r0, r1
+	mov r1, r5
+	mov r2, #OS_MESSAGE_NOBLOCK
+	bl OS_JamMessage
+	mov r0, r5, lsl #8 //#7
+	add r0, r0, #(128 * 1024)
+	ldmfd sp!, { r4 - r11,pc }
+
+
+	/*add r12, r0, r5, lsl #8 //#7
 
 	ldr r11,= offsetof_mTextureDatas
 	add lr, r0, r11
@@ -80,7 +91,7 @@ loop2:
 	bl gen_terrain_texture_8
 	mov r0, r5, lsl #8 //#7
 	add r0, r0, #(128 * 1024)
-	ldmfd sp!, { r4 - r11,pc }
+	ldmfd sp!, { r4 - r11,pc }*/
 tag_found:
 	sub r12, r8, r9
 	rsb r12, r12, #(512 * 8) //#(1024 * 8)
@@ -88,4 +99,21 @@ tag_found:
 	mov r12, r12, lsl #5 //#4
 	add r0, r12, #(128 * 1024)
 	ldmfd sp!, { r4 - r11,pc }
+}
+
+void TerrainTextureManager8::WorkerThreadMain()
+{
+	OSMessage msg;
+	while (1)
+	{
+		OS_ReceiveMessage(&mMessageQueue, &msg, OS_MESSAGE_BLOCK);
+		int cacheBlock = (int)msg;
+		texture_cache_block_t* block = &mCacheBlocks[cacheBlock];
+		gen_terrain_texture_8(
+			mTextureDatas[block->tag & 0xFF], 
+			mTextureDatas[(block->tag >> 8) & 0xFF], 
+			mTextureDatas[(block->tag >> 16) & 0xFF], 
+			mTextureDatas[(block->tag >> 24) & 0xFF], 
+			(u16*)&mVramCTexData[cacheBlock << 8]);
+	}
 }

@@ -144,6 +144,14 @@ render_tile2x2:
 	ldmfd sp!, {r4-r11}
 	bx lr
 
+.global render_lod0
+render_lod0:
+	stmfd sp!, {r4-r11,lr}
+
+
+
+	ldmfd sp!, {r4-r11,pc}
+
 
 //((15 - x)*(15 - y))*tl + (x*(15 - y))*tr + (y*(15 - x))*bl + (x*y)*br
 
@@ -152,7 +160,7 @@ render_tile2x2:
 gen_terrain_texture:
 arg_dst	= 4 * 9
 	stmfd sp!, {r4-r11,lr}
-	//ldr r4, [sp, #arg_dst]	//dst
+	ldr r4, [sp, #arg_dst]	//dst
 	ldr r5,= gen_terrain_texture_coeftable
 	mov r6, #256
 	gen_terrain_texture_yloop:
@@ -248,7 +256,7 @@ arg_dst	= 4 * 9
 gen_terrain_texture_8:
 arg_dst	= 4 * 9
 	stmfd sp!, {r4-r11,lr}
-	//ldr r4, [sp, #arg_dst]	//dst
+	ldr r4, [sp, #arg_dst]	//dst
 	ldr r5,= gen_terrain_texture_8_coeftable
 	mov r6, #128
 	gen_terrain_texture_8_yloop:

@@ -77,13 +77,21 @@ void Hemisphere::Render()
 		for (int s = 0; s < HEMISPHERE_NR_SECTORS; s++)
 		{
 			G3_Color(mColors[r * HEMISPHERE_NR_SECTORS + s]);
-			G3_Vtx(mVtx[r * HEMISPHERE_NR_SECTORS + s].x, mVtx[r * HEMISPHERE_NR_SECTORS + s].y, mVtx[r * HEMISPHERE_NR_SECTORS + s].z);
+			reg_G3_VTX_16 = GX_FX16PAIR(mVtx[r * HEMISPHERE_NR_SECTORS + s].x, mVtx[r * HEMISPHERE_NR_SECTORS + s].y);
+			reg_G3_VTX_16 = mVtx[r * HEMISPHERE_NR_SECTORS + s].z;
+			//G3_Vtx(mVtx[r * HEMISPHERE_NR_SECTORS + s].x, mVtx[r * HEMISPHERE_NR_SECTORS + s].y, mVtx[r * HEMISPHERE_NR_SECTORS + s].z);
 			G3_Color(mColors[r * HEMISPHERE_NR_SECTORS + (s + 1)]);
-			G3_Vtx(mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].y, mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].z);
+			reg_G3_VTX_16 = GX_FX16PAIR(mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].y);
+			reg_G3_VTX_16 = mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].z;
+			//G3_Vtx(mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].y, mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].z);
 			G3_Color(mColors[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)]);
-			G3_Vtx(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].y, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].z);
+			reg_G3_VTX_16 = GX_FX16PAIR(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].y);
+			reg_G3_VTX_16 = mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].z;
+			//G3_Vtx(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].y, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].z);
 			G3_Color(mColors[(r + 1) * HEMISPHERE_NR_SECTORS + s]);
-			G3_Vtx(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].y, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].z);
+			reg_G3_VTX_16 = GX_FX16PAIR(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].y);
+			reg_G3_VTX_16 = mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].z;
+			//G3_Vtx(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].y, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].z);
 		}
 	}
 	G3_End();
