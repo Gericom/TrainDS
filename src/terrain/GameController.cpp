@@ -92,12 +92,12 @@ void GameController::Render(RenderMode mode)
 		G3X_EdgeMarking(true);
 		G3X_AntiAlias(true);
 		if (mode == RENDER_MODE_FAR)
-			G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0xC00);
+			G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x2000, 0x8000 - 0x2000);
 		else
 			G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0xC00);
 		//G3X_SetFog(/*true*/false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
 		//G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
-		G3X_SetFogColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31);
+		G3X_SetFogColor(GX_RGB(148 >> 3, 181 >> 3, 206 >> 3), 31);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
 		{
