@@ -91,8 +91,21 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 		{
 			if (lodLevel == 0)
 			{
+				//setup texture matrix for vertex transform mode
+				MtxFx44 texMtx =
+				{
+					FX32_ONE * FX32_ONE / 64 * 16 * 16, 0, 0, 0,
+					0, 0, 0, 0,
+					0, FX32_ONE * FX32_ONE / 64 * 16 * 16, 0, 0,
+					0, 0, 0, 0
+				};
+				G3_MtxMode(GX_MTXMODE_TEXTURE);
+				G3_LoadMtx44(&texMtx);
+				G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+
 				fx32 xadd = FX32_HALF - camPos->x - 32 * FX32_ONE;
 				fx32 zadd = FX32_HALF - camPos->z - 32 * FX32_ONE;
+				//fx32 ything = camDir->y * ((mHMap[((zstart + zend) / 2) * 128 + ((xstart + xend) / 2)].y - Y_OFFSET) * Y_SCALE - camPos->y);
 				//fx32 dist = camDir->x * (xstart * FX32_ONE + xadd) + camDir->z * (zstart * FX32_ONE + zadd);
 				//fx32 distbase = camDir->x * (xstart * FX32_ONE + xadd) + camDir->z * (zstart * FX32_ONE + zadd) - camDir->y * camPos->y - camDir->y * Y_OFFSET * Y_SCALE;
 				for (int y = zstart; y < zend && y + 1 <= 127; y++)
@@ -100,7 +113,10 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 					//fx32 dist = distbase;
 					for (int x = xstart; x < xend && x + 1 <= 127; x++)
 					{
-						fx32 top = camDir->x * (x * FX32_ONE + xadd) + camDir->y * ((mHMap[y * 128 + x].y - Y_OFFSET) * Y_SCALE - camPos->y) + camDir->z * (y * FX32_ONE + zadd); //VEC_DotProduct(camDir, &diff);*/
+						fx32 top = 
+							camDir->x * (x * FX32_ONE + xadd) + 
+							camDir->y * ((mHMap[y * 128 + x].y - Y_OFFSET) * Y_SCALE - camPos->y) + 
+							camDir->z * (y * FX32_ONE + zadd); //VEC_DotProduct(camDir, &diff);*/
 						//fx32 top = dist + camDir->y * mHMap[y * 128 + x].y * Y_SCALE;
 						if (top <= (10 * FX32_ONE * FX32_ONE))
 						{
@@ -114,14 +130,15 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 								mHMap[(y + 1) * 128 + x + 1].tex,
 								mHMap[y * 128 + x].texAddress << 3);
 							mHMap[y * 128 + x].texAddress = texOffset >> 3;
-							reg_G3_TEXIMAGE_PARAM = 0x1C900000 | (texOffset >> 3);
+							//reg_G3_TEXIMAGE_PARAM = 0x1C900000 | (texOffset >> 3);
+							reg_G3_TEXIMAGE_PARAM = 0xDC900000 | (texOffset >> 3);
 
 							if (mLodLevels[y * 128 + x] == 1 || mLodLevels[y * 128 + (x + 1)] == 1 || mLodLevels[(y + 1) * 128 + x] == 1 || mLodLevels[(y + 1) * 128 + (x + 1)] == 1)
 							{
 								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
 								{
 									reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
-									reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 0);
+									reg_G3X_GXFIFO = ~(x << 8) ^ (y << 24);
 									reg_G3X_GXFIFO = mHMap[y * 128 + x].normal;
 
 									if (mLodLevels[y * 128 + x])
@@ -142,9 +159,8 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 									else
 										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (mHMap[y * 128 + x].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
 								}
-								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD);
+								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_NORMAL, G3OP_VTX_10);
 								{
-									reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 16 * FX32_ONE);
 									reg_G3X_GXFIFO = mHMap[(y + 1) * 128 + x].normal;
 									if (mLodLevels[(y + 1) * 128 + x])
 									{
@@ -163,10 +179,6 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 									}
 									else
 										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (mHMap[(y + 1) * 128 + x].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
-									reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 0);
-								}
-								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL);
-								{						
 									reg_G3X_GXFIFO = mHMap[y * 128 + (x + 1)].normal;
 									if (mLodLevels[y * 128 + (x + 1)])
 									{
@@ -185,11 +197,10 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 									}
 									else
 										reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (mHMap[y * 128 + (x + 1)].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
-									reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 16 * FX32_ONE);
-									reg_G3X_GXFIFO = mHMap[(y + 1) * 128 + (x + 1)].normal;
 								}
-								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP);
-								{
+								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_END, G3OP_NOP);
+								{	
+									reg_G3X_GXFIFO = mHMap[(y + 1) * 128 + (x + 1)].normal;
 									if (mLodLevels[(y + 1) * 128 + (x + 1)])
 									{
 										uint8_t tl = mHMap[(y & ~1) * 128 + (x & ~1)].y;
@@ -225,16 +236,30 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 			}
 			else if (lodLevel == 1)
 			{
+				MtxFx44 texMtx =
+				{
+					FX32_ONE * FX32_ONE / 64 * 8 * 16, 0, 0, 0,
+					0, 0, 0, 0,
+					0, FX32_ONE * FX32_ONE / 64 * 4 * 16, 0, 0,
+					0, 0, 0, 0
+				};
+				G3_MtxMode(GX_MTXMODE_TEXTURE);
+				G3_LoadMtx44(&texMtx);
+				G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
 				MI_CpuClearFast(mLodLevels, 128 * 128);
 				//int count = 0;
 				G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 				fx32 xadd = FX32_ONE - camPos->x - 32 * FX32_ONE;
 				fx32 zadd = FX32_ONE - camPos->z - 32 * FX32_ONE;
+				//fx32 ything = camDir->y * ((mHMap[((zstart + zend) / 2) * 128 + ((xstart + xend) / 2)].y - Y_OFFSET) * Y_SCALE - camPos->y);
 				for (int y = zstart & ~1; y < (zend | 1) && y + 2 <= 127; y += 2)
 				{
 					for (int x = xstart & ~1; x < (xend | 1) && x + 2 <= 127; x += 2)
 					{
-						fx32 top = camDir->x * (x * FX32_ONE + xadd) + camDir->y * ((mHMap[y * 128 + x].y - Y_OFFSET) * Y_SCALE - camPos->y) + camDir->z * (y * FX32_ONE + zadd);//FX_Mul(camDir->x, diff.x) + FX_Mul(camDir->y, diff.y) + FX_Mul(camDir->z, diff.z);////VEC_DotProduct(camDir, &diff);
+						fx32 top = 
+							camDir->x * (x * FX32_ONE + xadd) + 
+							camDir->y * ((mHMap[y * 128 + x].y - Y_OFFSET) * Y_SCALE - camPos->y) + 
+							camDir->z * (y * FX32_ONE + zadd);//FX_Mul(camDir->x, diff.x) + FX_Mul(camDir->y, diff.y) + FX_Mul(camDir->z, diff.z);////VEC_DotProduct(camDir, &diff);
 
 						if (top >= (8 * FX32_ONE * FX32_ONE) && top <= (/*35*/25 * FX32_ONE * FX32_ONE))
 						{
@@ -252,7 +277,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 								mHMap[y * 128 + x].texAddress << 3);
 							mHMap[y * 128 + x].texAddress = texOffset >> 3;
 
-							reg_G3_TEXIMAGE_PARAM = 0x1C100000 | (texOffset >> 3);
+							reg_G3_TEXIMAGE_PARAM = 0xDC100000 | (texOffset >> 3);
 							render_tile2x2(&mHMap[y * 128 + x], x, y);
 #ifdef DEBUG_TILE_COUNT
 							count++;
@@ -299,6 +324,9 @@ void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx
 					}
 				}
 			}
+			G3_MtxMode(GX_MTXMODE_TEXTURE);
+			G3_Identity();
+			G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
 		}
 	}
 	G3_PopMtx(1);
