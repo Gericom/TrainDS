@@ -8,8 +8,10 @@ extern "C" void gen_terrain_texture_8(u16* tl, u16* tr, u16* bl, u16* br, u16* d
 
 asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, int br, uint32_t oldTexKey)
 {
-#define arg_br (4 * 9)
-#define arg_oldTexKey (4 * 10)
+//#define arg_br (4 * 9)
+//#define arg_oldTexKey (4 * 10)
+#define arg_br (4 * 0)
+#define arg_oldTexKey (4 * 1)
 	enum
 	{
 		offsetof_mResourceCounter = offsetof(TerrainTextureManager8, mResourceCounter),
@@ -18,87 +20,72 @@ asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, i
 		offsetof_mVramCTexData = offsetof(TerrainTextureManager8, mVramCTexData),
 		offsetof_mMessageQueue = offsetof(TerrainTextureManager8, mMessageQueue)
 	};
-	stmfd sp!, { r4 - r11,lr }
-	ldr r4, [sp, #arg_br]
-	ldr r7, [r0, #offsetof_mResourceCounter]
-	//create tag
-	orr r6, r1, r2, lsl #8
-	orr r6, r6, r3, lsl #16
-	orr r6, r6, r4, lsl #24
+	orr r2, r1, r2, lsl #8
+	ldr r1, [sp, #arg_br]
+	orr r2, r2, r3, lsl #16
+	orr r2, r2, r1, lsl #24
+	ldr r1, [sp, #arg_oldTexKey]
 
-	ldr r11, [sp, #arg_oldTexKey]
-	subs r9, r11, #(128 * 1024)
+	subs r12, r1, #(128 * 1024)
 		bmi notexkey
-	add r9, r0, r9, lsr #5 //#4
-	ldr r8, [r9, #offsetof_mCacheBlocks]!
-	cmp r8, r6
+	add r12, r0, r12, lsr #5
+	ldr r3, [r12, #offsetof_mCacheBlocks]!
+	cmp r3, r2
 		bne notexkey
 
-	str r7, [r9, #4]
-	mov r0, r11
-	ldmfd sp!, { r4 - r11,pc }
+	ldr r3, [r0, #offsetof_mResourceCounter]
+	str r3, [r12, #4]
+	mov r0, r1
+	bx lr
 
 notexkey:
-	add r9, r0, #offsetof_mCacheBlocks
-	add r8, r9, #(512 * 8) //#(1024 * 8)
-	str r6, [r8], #8
-loop:	
-	ldr r10, [r9], #8
-	teq r10, r6
-	bne loop
+	add r12, r0, #offsetof_mCacheBlocks
+	add r1, r12, #(512 * 8)
+	str r2, [r1], #8
+loop:
+	ldr r3, [r12], #8
+	teq r3, r2
+		bne loop
 
-	cmp r9, r8
-	bne tag_found
+	cmp r12, r1
+		beq no_tag_found
 
-	mvn r5, #1
-	mvn r8, #0x80000000
-	add r9, r0, #(offsetof_mCacheBlocks + 4)
-	mov r12, #512 //#1024
+	ldr r3, [r0, #offsetof_mResourceCounter]
+	sub r1, r1, r12
+	rsb r1, r1, #(512 * 8)
+	str r3, [r12, #-4]
+	mov r1, r1, lsl #5
+	add r0, r1, #(128 * 1024)
+	bx lr
+
+no_tag_found:
+	stmfd sp!, { r4, r5, lr }
+	mvn r1, #1
+	mvn r4, #0x80000000
+	add r12, r0, #(offsetof_mCacheBlocks + 4)
+	mov r5, #512
 loop2:
-	ldr r10, [r9], #8
-	cmp r10, r8
-		movlt r8, r10
-		movlt r5, r12
-	subs r12, r12, #1
-	bgt loop2
-	rsb r5, r5, #512 //#1024
+	ldr r3, [r12], #8
+	cmp r3, r4
+		movlt r4, r3
+		movlt r1, r5
+	subs r5, r5, #1
+		bgt loop2
+
+	ldr r3, [r0, #offsetof_mResourceCounter]
+	rsb r5, r1, #512
 	add r12, r0, #offsetof_mCacheBlocks
 	add r12, r12, r5, lsl #3
-	strd r6, [r12]
+	strd r2, [r12]
 
 	ldr r1,= offsetof_mMessageQueue
 	add r0, r0, r1
 	mov r1, r5
 	mov r2, #OS_MESSAGE_NOBLOCK
 	bl OS_JamMessage
-	mov r0, r5, lsl #8 //#7
+	mov r0, r5, lsl #8
 	add r0, r0, #(128 * 1024)
-	ldmfd sp!, { r4 - r11,pc }
-
-
-	/*add r12, r0, r5, lsl #8 //#7
-
-	ldr r11,= offsetof_mTextureDatas
-	add lr, r0, r11
-	ldr r0, [lr, r1, lsl #2]
-	ldr r1, [lr, r2, lsl #2]
-	ldr r2, [lr, r3, lsl #2]
-	ldr r3, [lr, r4, lsl #2]
-
-	ldr r11, = offsetof_mVramCTexData
-	add r4, r12, r11//#offsetof_mVramCTexData
-
-	bl gen_terrain_texture_8
-	mov r0, r5, lsl #8 //#7
-	add r0, r0, #(128 * 1024)
-	ldmfd sp!, { r4 - r11,pc }*/
-tag_found:
-	sub r12, r8, r9
-	rsb r12, r12, #(512 * 8) //#(1024 * 8)
-	str r7, [r9, #-4]
-	mov r12, r12, lsl #5 //#4
-	add r0, r12, #(128 * 1024)
-	ldmfd sp!, { r4 - r11,pc }
+	ldmfd sp!, { r4, r5, pc }
 }
 
 void TerrainTextureManager8::WorkerThreadMain()

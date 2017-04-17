@@ -19,7 +19,7 @@
 # STRM:
 # label                     number fileID vol pri ply                          size name
   STRM_INTRO                     0      3 127  64   0                        696412 strm/STRM_INTRO.adpcm.strm
-  STRM_TITLE                     1      4 127  64   0                       2542904 strm/STRM_TITLE.adpcm.strm
+  STRM_TITLE                     1      4 127  64   0                      10091824 strm/STRM_TITLE.pcm16.strm
   STRM_CREDITS                   2      5 127  64   0                       4199296 strm/STRM_CREDITS.adpcm.strm
 
 # FAT:
@@ -28,6 +28,6 @@
        1 0x000002e0         76 bnk/train.sbnk
        2 0x00000340      94332 swar/train.swar
        3 0x000173c0     696412 strm/STRM_INTRO.adpcm.strm
-       4 0x000c1420    2542904 strm/STRM_TITLE.adpcm.strm
-       5 0x0032e160    4199296 strm/STRM_CREDITS.adpcm.strm
+       4 0x000c1420   10091824 strm/STRM_TITLE.pcm16.strm
+       5 0x00a61160    4199296 strm/STRM_CREDITS.adpcm.strm
 

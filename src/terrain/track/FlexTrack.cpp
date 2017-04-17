@@ -164,13 +164,13 @@ void FlexTrack::RenderMarkers(TerrainManager* terrainManager)
 					//G3_Vtx(-normal.x >> 1, 0, -normal.z >> 1);
 					//G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * dist);
 					//G3_Vtx(normal.x >> 1, 0, normal.z >> 1);
-					G3_TexCoord(0, 0);
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, 0);
 					G3_Vtx(-FLEXTRACK_TRACK_WIDTH >> 1, 0, -FLEXTRACK_TRACK_WIDTH >> 1);
-					G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, (8 << tex->nitroHeight) * FX32_ONE);
 					G3_Vtx(-FLEXTRACK_TRACK_WIDTH >> 1, 0, FLEXTRACK_TRACK_WIDTH >> 1);
-					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
 					G3_Vtx(FLEXTRACK_TRACK_WIDTH >> 1, 0, FLEXTRACK_TRACK_WIDTH >> 1);
-					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE, 0);
 					G3_Vtx(FLEXTRACK_TRACK_WIDTH >> 1, 0, -FLEXTRACK_TRACK_WIDTH >> 1);
 				}
 				G3_PopMtx(1);
@@ -277,5 +277,21 @@ void FlexTrack::Invalidate()
 		if (i != 0)
 			len += VEC_Distance(&mCurvePoints[i], &mCurvePoints[i - 1]);
 	}
+	//redo length calculation with estimated length
+	/*int nrparts = (len + FX32_HALF) >> FX32_SHIFT;
+	if (nrparts > FLEXTRACK_NR_POINTS)
+	{
+		VecFx32 prev;
+		len = 0;
+		for (int i = 0; i < nrparts; i++)
+		{
+			VecFx32 point;
+			cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (nrparts - 1), &point);
+			point.y = mMap->GetYOnMap(point.x, point.z);
+			if (i != 0)
+				len += VEC_Distance(&point, &prev);
+			prev = point;
+		}
+	}*/
 	mCurveLength = len;
 }

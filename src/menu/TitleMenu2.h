@@ -5,6 +5,7 @@
 #include "core/os/VAlarm.h"
 #include "terrain/GameController.h"
 #include "terrain/TerrainManager.h"
+class TitleSequencePlayer;
 
 class TitleMenu2 : public SimpleMenu
 {
@@ -31,6 +32,8 @@ private:
 
 	TitleMenuState mState;
 	int mStateCounter;
+
+	TitleSequencePlayer* mTSPlayer;
 
 	OS::VAlarm* mVRAMCopyVAlarm;
 	void OnVRAMCopyVAlarm();

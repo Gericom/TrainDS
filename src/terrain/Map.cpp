@@ -68,8 +68,12 @@ Map::Map()
 		VecFx32 b = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
 		FlexTrack* track = new FlexTrack(this, &a, &b);
 		AddTrackPiece(track);
-		TrySnapTrack(track, 0);
-		TrySnapTrack(track, 1);
+	}
+	TrackPieceEx* trackPiece = NULL;
+	while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
+	{
+		TrySnapTrack(trackPiece, 0);
+		TrySnapTrack(trackPiece, 1);
 	}
 	NNS_FndFreeToExpHeap(gHeapHandle, trackdata);
 }
@@ -88,8 +92,7 @@ Map::~Map()
 }
 
 
-
-static fx32 sign(VecFx32* p1, VecFx32* p2, VecFx32* p3)
+static inline fx32 sign(VecFx32* p1, VecFx32* p2, VecFx32* p3)
 {
 	return FX_Mul(p1->x - p3->x, p2->z - p3->z) - FX_Mul(p2->x - p3->x, p1->z - p3->z);
 }

@@ -78,6 +78,8 @@ void PathWorker::Proceed(fx32 distance, VecFx32* point, VecFx32* direction)
 				mCurInPoint = newInPoint;
 				SetupPoint();
 			}
+			else
+				mCurDistance = mCurDistance + mNextDistance - distance;
 		}
 		/*while(mCurDistance < 0 && mCurPiece->mPrev[0] != NULL)
 		{

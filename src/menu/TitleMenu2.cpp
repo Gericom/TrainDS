@@ -8,6 +8,8 @@
 #include "terrain/managers/TerrainTextureManager8.h"
 #include "terrain/managers/TerrainTextureManager16.h"
 #include "terrain/track/FlexTrack.h"
+#include "engine/TitleSequence.h"
+#include "engine/TitleSequencePlayer.h"
 #include "Game.h"
 #include "TitleMenu2.h"
 
@@ -95,17 +97,10 @@ void TitleMenu2::Initialize(int arg)
 
 	mGameController = new GameController();
 
-	VecFx32 a = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 24) * FX32_ONE - 32 * FX32_ONE };
-	VecFx32 b = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 20 + 24) * FX32_ONE - 32 * FX32_ONE };
-	FlexTrack* tmp = new FlexTrack(mGameController->mMap, &a, &b);
+	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 138 * FX32_ONE/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
+	mGameController->mWagon->mDriving = true;
 
-	mGameController->mWagon->PutOnTrack(tmp, 10 * FX32_ONE);
-
-	mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
-	mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
-	mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
-	VecFx32 camRot = { 0, 22 * FX32_ONE, 0 };
-	mGameController->mCamera->SetRotation(&camRot);
+	mTSPlayer = new TitleSequencePlayer(mGameController, gTitleSequence);
 
 	mVRAMCopyVAlarm = new OS::VAlarm();
 	mVRAMCopyVAlarm->SetPeriodic(192 - 48, 5, TitleMenu2::OnVRAMCopyVAlarm, this);
@@ -128,6 +123,7 @@ void TitleMenu2::Render()
 	if (gKeys & PAD_BUTTON_START)
 		Game::GotoMenu();
 	G3X_Reset();
+	mTSPlayer->Update();
 	mGameController->Update();
 	NNS_G3dGlbSetViewPort(0, 0, 255, 191);
 	mGameController->Render(mRenderMode);
