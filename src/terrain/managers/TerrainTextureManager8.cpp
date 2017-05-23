@@ -15,44 +15,41 @@ static int ditherTable[] =
 TerrainTextureManager8::TerrainTextureManager8()
 	: TerrainTextureManager()
 {
-	mTexArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.carc", NULL, FALSE);
-	NNS_FndMountArchive(&mTexArc, "mt2", mTexArcData);
-
 	int i = 0;
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/grass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/grass_b.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/grass_stripes.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/dry_grass_tufts.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/dry_longgrass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/dry_longgrass_b.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/dry_longgrass_tufts.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/gravel_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/gravel_b.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/concrete_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/concrete_overgrown.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/mud_overgrown.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/grass_a1.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/gravel_grass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/dry_goldgrass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/dry_longgrass_stripes.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/dry_greygrass_a.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/grass_wlonggrass.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/gravel_c.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/mud_darkovergrown.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/grass_a3.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/graystone_crack.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/graystone.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/grass_lavender.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/grass_a2.ntft");
-	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mt2:/grass_a_b.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_a.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_b.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_stripes.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/dry_grass_tufts.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/dry_longgrass_a.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/dry_longgrass_b.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/dry_longgrass_tufts.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/gravel_a.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/gravel_b.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/concrete_a.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/concrete_overgrown.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/mud_overgrown.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_a1.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/gravel_grass_a.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/dry_goldgrass_a.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/dry_longgrass_stripes.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/dry_greygrass_a.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_wlonggrass.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/gravel_c.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/mud_darkovergrown.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_a3.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/graystone_crack.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/graystone.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_lavender.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_a2.ntft");
+	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_a_b.ntft");
 
 	for (int j = 0; j < i; j++)
 	{
-		for (int k = 0; k < 16 * 16; k++)
+		for (int k = 0; k < 16 * 8; k++)
 		{
 			mTextureDatas[j][k] &= 0x7FFF;
 		}
-		uint16_t newtex[128];//64];
+		/*uint16_t newtex[128];//64];
 		for (int y = 0; y < 4; y++)
 		{
 			for (int x = 0; x < 8; x++)
@@ -90,7 +87,7 @@ TerrainTextureManager8::TerrainTextureManager8()
 				newtex[(y + 4) * 16 + x + 8] = newcolor;
 			}
 		}
-		MI_CpuCopyFast(newtex, mTextureDatas[j], sizeof(newtex));
+		MI_CpuCopyFast(newtex, mTextureDatas[j], sizeof(newtex));*/
 	}
 
 	for (int j = 0; j < 512; j++)

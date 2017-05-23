@@ -16,9 +16,6 @@ public:
 	uint16_t* mTextureDatas[26] ATTRIBUTE_ALIGN(32);
 
 private:
-	void* mTexArcData;
-	NNSFndArchive mTexArc;
-
 	uint8_t mVramCTexData[128 * 1024] ATTRIBUTE_ALIGN(32);
 
 	void WorkerThreadMain();
@@ -33,8 +30,6 @@ public:
 	~TerrainTextureManager16()
 	{
 		OS_DestroyThread(&mWorkerThread);
-		NNS_FndUnmountArchive(&mTexArc);
-		NNS_FndFreeToExpHeap(gHeapHandle, mTexArcData);
 	}
 	uint32_t GetTextureAddress(int tl, int tr, int bl, int br, uint32_t oldTexKey);
 	void UpdateVramC();

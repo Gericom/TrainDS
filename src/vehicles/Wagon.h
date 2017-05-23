@@ -42,7 +42,7 @@ private:
 	fx16 mCurRot;
 public:
 	Wagon(GameController* gameController, char* name);
-	void PutOnTrack(TrackPieceEx* track, fx32 offset = 0);
+	void PutOnTrack(TrackPieceEx* track, int inPoint, fx32 offset = 0);
 	void Render();
 	void Update();
 	void GetPosition(VecFx32* dst);

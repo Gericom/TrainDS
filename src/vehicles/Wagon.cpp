@@ -72,7 +72,7 @@ Wagon::Wagon(GameController* gameController, char* name)
 	}
 }
 
-void Wagon::PutOnTrack(TrackPieceEx* track, fx32 offset)
+void Wagon::PutOnTrack(TrackPieceEx* track, int inPoint, fx32 offset)
 {
 	for (int i = 0; i < mNrBogeys; i++)
 	{
@@ -80,7 +80,7 @@ void Wagon::PutOnTrack(TrackPieceEx* track, fx32 offset)
 		fx32 dist = VEC_Distance(&mBack, &mBogeys[i].position) / 13;
 		if (mBogeys[i].pathWorker)
 			delete mBogeys[i].pathWorker;
-		mBogeys[i].pathWorker = new PathWorker(track, 0, offset + dist);
+		mBogeys[i].pathWorker = new PathWorker(track, inPoint, offset + dist);
 	}
 	mOnTrack = true;
 }

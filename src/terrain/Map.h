@@ -56,6 +56,9 @@ private:
 	NNSFndList mSceneryList;
 	bool mGridEnabled;
 
+	void* mTexArcData;
+	NNSFndArchive mTexArc;
+
 	void RecalculateNormals(int xstart, int xend, int zstart, int zend);
 public:
 	Map();

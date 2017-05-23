@@ -42,6 +42,10 @@ Map::Map()
 	}
 	NNS_FndFreeToExpHeap(gHeapHandle, tex);
 
+	//mount the tex data archive
+	mTexArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.carc", NULL, FALSE);
+	NNS_FndMountArchive(&mTexArc, "mtx", mTexArcData);
+
 	//mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);
 	//mTextures = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.tmap", NULL, false);
 
@@ -80,6 +84,9 @@ Map::Map()
 
 Map::~Map()
 {
+	NNS_FndUnmountArchive(&mTexArc);
+	NNS_FndFreeToExpHeap(gHeapHandle, mTexArcData);
+
 	delete mTerrainManager;
 	//NNS_FndFreeToExpHeap(gHeapHandle, mVtx);
 	//NNS_FndFreeToExpHeap(gHeapHandle, mTextures);
@@ -207,6 +214,9 @@ fx32 Map::GetYOnMap(fx32 x, fx32 z)
 
 	int mapX = (x + 32 * FX32_ONE) >> FX32_SHIFT;
 	int mapY = (z + 32 * FX32_ONE) >> FX32_SHIFT;
+
+	//if (mapX < 0 || mapY < 0 || mapX >= 126 || mapY >= 126)
+	//	return 0;
 
 	//get the plane of the map square
 	VecFx32 a =

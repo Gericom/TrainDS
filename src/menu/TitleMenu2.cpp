@@ -97,7 +97,7 @@ void TitleMenu2::Initialize(int arg)
 
 	mGameController = new GameController();
 
-	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 138 * FX32_ONE/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
+	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, /*138*/133 * FX32_ONE + (FX32_HALF >> 1) + (FX32_HALF >> 2)/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
 	mGameController->mWagon->mDriving = true;
 
 	mTSPlayer = new TitleSequencePlayer(mGameController, gTitleSequence);

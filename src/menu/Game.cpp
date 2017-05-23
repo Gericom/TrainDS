@@ -139,7 +139,7 @@ void Game::Initialize(int arg)
 	VecFx32 b = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 20 + 24) * FX32_ONE - 32 * FX32_ONE };
 	FlexTrack* tmp = new FlexTrack(mGameController->mMap, &a, &b);
 
-	mGameController->mWagon->PutOnTrack(tmp, 10 * FX32_ONE);
+	mGameController->mWagon->PutOnTrack(tmp, 0, 10 * FX32_ONE);
 
 	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
@@ -357,7 +357,7 @@ void Game::Render()
 		{
 			if (mGameController->mMap->GetFirstTrackPiece() != NULL)
 			{
-				mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 60 * FX32_ONE);
+				mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, 60 * FX32_ONE);
 				mTrainMode = true;
 			}
 			mKeyTimer = 10;
