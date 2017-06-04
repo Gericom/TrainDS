@@ -19,6 +19,8 @@ void FlexTrack::Render(TerrainManager* terrainManager)
 		GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
 		NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
 	);
+	fx32 texWidth = (8 << tex->nitroWidth) * FX32_ONE;
+	fx32 texHeight = (8 << tex->nitroHeight) * FLEXTRACK_INV_TRACK_WIDTH;
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 	G3_PushMtx();
 	{
@@ -33,18 +35,16 @@ void FlexTrack::Render(TerrainManager* terrainManager)
 				G3_PushMtx();
 				{
 					G3_Translate(mCurvePoints[i].x, mCurvePoints[i].y + (FX32_ONE / 32), mCurvePoints[i].z);
-					//G3_TexCoord(0, FX_Mul((8 << tex->nitroHeight) * dist, FLEXTRACK_INV_TRACK_WIDTH));
-					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, FX_Mul((8 << tex->nitroHeight) * dist, FLEXTRACK_INV_TRACK_WIDTH));
+
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, FX_Mul(texHeight, dist) - 2048 * 4096);
 
 					reg_G3_VTX_16 = (-FX_Mul(normal.x, FLEXTRACK_TRACK_WIDTH) >> 1) & 0xFFFF;
 					reg_G3_VTX_16 = (-FX_Mul(normal.z, FLEXTRACK_TRACK_WIDTH) >> 1) & 0xFFFF;
-					//G3_Vtx(-FX_Mul(normal.x, FLEXTRACK_TRACK_WIDTH) >> 1, 0, -FX_Mul(normal.z, FLEXTRACK_TRACK_WIDTH) >> 1);
-					//G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, FX_Mul((8 << tex->nitroHeight) * dist, FLEXTRACK_INV_TRACK_WIDTH));
-					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE, FX_Mul((8 << tex->nitroHeight) * dist, FLEXTRACK_INV_TRACK_WIDTH));
+
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(texWidth, FX_Mul(texHeight, dist) - 2048 * 4096);
 
 					reg_G3_VTX_16 = (FX_Mul(normal.x, FLEXTRACK_TRACK_WIDTH) >> 1) & 0xFFFF;
 					reg_G3_VTX_16 = (FX_Mul(normal.z, FLEXTRACK_TRACK_WIDTH) >> 1) & 0xFFFF;
-					//G3_Vtx(FX_Mul(normal.x, FLEXTRACK_TRACK_WIDTH) >> 1, 0, FX_Mul(normal.z, FLEXTRACK_TRACK_WIDTH) >> 1);
 				}
 				G3_PopMtx(1);
 				if (i != (FLEXTRACK_NR_POINTS - 1))

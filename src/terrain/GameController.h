@@ -33,6 +33,7 @@ public:
 		delete mSfxManager;
 		delete mCamera;
 		delete mWagon;
+		delete mHemisphere;
 	}
 
 	Map* mMap;

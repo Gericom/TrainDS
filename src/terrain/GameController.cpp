@@ -9,12 +9,28 @@
 
 static const GXRgb sToonTable[32] =
 {
+	//GX_RGB(0, 0, 0), GX_RGB(1, 1, 1), GX_RGB(2, 2, 2), GX_RGB(3, 3, 3),
+	//GX_RGB(4, 4, 4), GX_RGB(5, 5, 5), GX_RGB(6, 6, 6), GX_RGB(7, 7, 7),
+	//GX_RGB(8, 8, 8), GX_RGB(9, 9, 9), GX_RGB(10, 10, 10), GX_RGB(11, 11, 11),
+	//GX_RGB(12, 12, 12), GX_RGB(13, 13, 13), GX_RGB(14, 14, 14), GX_RGB(15, 15, 15),
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0,
-	GX_RGB(31,31,31),
-	GX_RGB(4, 4, 4)
+	GX_RGB(0, 0, 0), GX_RGB(1, 1, 1), GX_RGB(2, 2, 2), GX_RGB(3, 3, 3),
+	GX_RGB(4, 4, 4), GX_RGB(5, 5, 5), GX_RGB(6, 6, 6), GX_RGB(7, 7, 7),
+	//GX_RGB(8, 8, 8), GX_RGB(9, 9, 9), GX_RGB(10, 10, 10), GX_RGB(11, 11, 11),
+	//GX_RGB(12, 12, 12), GX_RGB(13, 13, 13), GX_RGB(14, 14, 14), GX_RGB(15, 15, 15)
+	//GX_RGB(12, 12, 12), GX_RGB(13, 13, 13), GX_RGB(14, 14, 14), GX_RGB(15, 15, 15),
+	//GX_RGB(16, 16, 16), GX_RGB(17, 17, 17), GX_RGB(18, 18, 18), GX_RGB(19, 19, 19),
+	//GX_RGB(20, 20, 20), GX_RGB(21, 21, 21), GX_RGB(22, 22, 22), GX_RGB(23, 23, 23),
+	//GX_RGB(24, 24, 24), GX_RGB(25, 25, 25), GX_RGB(26, 26, 26), GX_RGB(27, 27, 27),
+	//GX_RGB(28, 28, 28), GX_RGB(29, 29, 29), GX_RGB(30, 30, 30), GX_RGB(31, 31, 31)
+	//0, 0, 0, 0, 0, 0, 0, 0,
+	//0, 0, 0, 0, 0, 0, 0, 0,
+	//0, 0, 0, 0, 0, 0, 0, 0,
+	//0, 0, 0, 0, 0, 0,
+	//GX_RGB(31,31,31),
+	//GX_RGB(4, 4, 4)
 };
 
 static void VEC_MinMax(VecFx32* a, VecFx32* min, VecFx32* max)
@@ -184,10 +200,6 @@ void GameController::Render(RenderMode mode)
 			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, 0);
 			G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S8, GX_TEXSIZE_T8, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
 			G3_PushMtx();
-			//G3_Identity();
-			//VecFx32 dst;
-			//mWagon->GetPosition(&dst);
-			//G3_Translate(dst.x, dst.y, dst.z);
 			G3_Translate(mCamera->mDestination.x, 0, mCamera->mDestination.z);
 			G3_Scale(50 * FX32_ONE, 50 * FX32_ONE, 50 * FX32_ONE);
 			mHemisphere->Render();

@@ -173,7 +173,7 @@ void Util_DrawSpriteScaled(fx32 x, fx32 y, fx32 z, fx32 width, fx32 height, fx32
 	G3_PopMtx(1);
 }
 
-void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
+void VEC_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
 {
 	result->x = a->x + FX_Mul(b->x - a->x, t);
 	result->y = a->y + FX_Mul(b->y - a->y, t);

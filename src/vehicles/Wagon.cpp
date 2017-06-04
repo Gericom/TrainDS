@@ -34,6 +34,11 @@ Wagon::Wagon(GameController* gameController, char* name)
 	mBack.y = FX_F32_TO_FX32(iniReader.GetReal("back", "y", 0));
 	mBack.z = FX_F32_TO_FX32(iniReader.GetReal("back", "z", 0));
 
+	mAcceleration = FX64C_ONE / 2400;
+	mDeceleration = -8192 * 32;
+	mSpeed = 0;
+	mMaxSpeed = FX64C_ONE / 30;
+
 	//load model
 	GEN_FILE_PATH(name, "low.nsbmd", path);
 	mModelData = (NNSG3dResFileHeader*)Util_LoadFileToBuffer(path, NULL, false);
@@ -43,10 +48,11 @@ Wagon::Wagon(GameController* gameController, char* name)
 	NNS_G3dResDefaultSetup(mTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mModelData), 0);
 	NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);
-	NNS_G3dMdlSetMdlDiffAll(model, GX_RGB(21, 21, 21));
+	NNS_G3dMdlSetMdlDiffAll(model, GX_RGB(8, 8, 8));
 	NNS_G3dMdlSetMdlAmbAll(model, GX_RGB(15, 15, 15));
-	NNS_G3dMdlSetMdlSpecAll(model, GX_RGB(0, 0, 0));
+	NNS_G3dMdlSetMdlSpecAll(model, GX_RGB(10, 10, 10));
 	NNS_G3dMdlSetMdlEmiAll(model, GX_RGB(0, 0, 0));
+	NNS_G3dMdlSetMdlPolygonModeAll(model, GX_POLYGONMODE_TOON);
 	NNS_G3dMdlSetMdlFogEnableFlagAll(model, true);
 	NNSG3dResTex* tex = NNS_G3dGetTex(mTextures);
 	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mModelData), tex);
@@ -218,10 +224,10 @@ void Wagon::Render()
 			if (mSelectedTrain == 0) NNS_G3dMdlSetMdlPolygonIDAll(mTrain.firstPart->renderObj.resMdl, 8);
 			else NNS_G3dMdlSetMdlPolygonIDAll(mTrain.firstPart->renderObj.resMdl, 0);
 		}*/
-		NNS_G3dMdlSetMdlDiffAll(mRenderObj.resMdl, GX_RGB(21, 21, 21));
-		NNS_G3dMdlSetMdlAmbAll(mRenderObj.resMdl, GX_RGB(15, 15, 15));
-		NNS_G3dMdlSetMdlSpecAll(mRenderObj.resMdl, GX_RGB(0, 0, 0));
-		NNS_G3dMdlSetMdlEmiAll(mRenderObj.resMdl, GX_RGB(0, 0, 0));
+		//NNS_G3dMdlSetMdlDiffAll(mRenderObj.resMdl, GX_RGB(21, 21, 21));
+		//NNS_G3dMdlSetMdlAmbAll(mRenderObj.resMdl, GX_RGB(15, 15, 15));
+		//NNS_G3dMdlSetMdlSpecAll(mRenderObj.resMdl, GX_RGB(0, 0, 0));
+		//NNS_G3dMdlSetMdlEmiAll(mRenderObj.resMdl, GX_RGB(0, 0, 0));
 		NNS_G3dMdlSetMdlPolygonIDAll(mRenderObj.resMdl, 0);
 		NNS_G3dDraw(&mRenderObj);
 	}
@@ -234,6 +240,14 @@ void Wagon::Update()
 	if (!mOnTrack)
 		return;
 	if (mDriving)
+		mSpeed += mAcceleration;
+	else
+		mSpeed += mDeceleration;
+	if (mSpeed > mMaxSpeed)
+		mSpeed = mMaxSpeed;
+	if (mSpeed < 0)
+		mSpeed = 0;
+	if (mSpeed > 0)
 	{
 		if (!mSfx)
 		{
@@ -243,7 +257,7 @@ void Wagon::Update()
 		}
 		for (int i = 0; i < mNrBogeys; i++)
 		{
-			mBogeys[i].pathWorker->Proceed(FX32_ONE / 40, NULL, NULL);
+			mBogeys[i].pathWorker->Proceed(mSpeed >> 20, NULL, NULL);
 		}
 	}
 	else

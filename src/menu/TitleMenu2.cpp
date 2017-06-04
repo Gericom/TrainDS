@@ -93,11 +93,25 @@ void TitleMenu2::Initialize(int arg)
 
 	NNS_G2dArrangeOBJ1D((GXOamAttr*)HW_OAM, 32, 2, 0, 168 + 6, GX_OAM_COLORMODE_16, 0, NNS_G2D_OBJVRAMMODE_32K);
 
+	NNSG2dScreenData* mScreenDataSubUnpacked;
+	void* mScreenDataSub = Util_LoadFileToBuffer("/data/game/BG.NSCR", NULL, TRUE);
+	NNS_G2dGetUnpackedScreenData(mScreenDataSub, &mScreenDataSubUnpacked);
+	void* mCharDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCGR", NULL, TRUE);
+	NNSG2dCharacterData* mCharDataSubUnpacked;
+	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
+	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCLR", NULL, TRUE);
+	NNSG2dPaletteData* mPalDataSubUnpacked;
+	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
+	NNS_G2dBGSetup(NNS_G2D_BGSELECT_SUB0, mScreenDataSubUnpacked, mCharDataSubUnpacked, mPalDataSubUnpacked, GX_BG_SCRBASE_0x0800, GX_BG_CHARBASE_0x00000);
+	NNS_FndFreeToExpHeap(gHeapHandle, mScreenDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
+
 	Util_LoadTextureFromCard("/data/menu/title/titlelogolarge.ntft", "/data/menu/title/titlelogolarge.ntfp", mLogoLargeTexture.texKey, mLogoLargeTexture.plttKey);
 
 	mGameController = new GameController();
 
-	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, /*138*/133 * FX32_ONE + (FX32_HALF >> 1) + (FX32_HALF >> 2)/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
+	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, 134 * FX32_ONE/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
 	mGameController->mWagon->mDriving = true;
 
 	mTSPlayer = new TitleSequencePlayer(mGameController, gTitleSequence);

@@ -15,9 +15,8 @@ void Util_FreeAllToExpHeapByGroupId(NNSFndHeapHandle heap, int groupId);
 void Util_DrawSprite(fx32 x, fx32 y, fx32 z, fx32 width, fx32 height);
 void Util_DrawSpriteScaled(fx32 x, fx32 y, fx32 z, fx32 width, fx32 height, fx32 scale);
 
-void FX_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result);
+void VEC_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result);
 
-void Util_OBJ1DToTex(uint8_t* pOBJData, int objWidth, int objHeight, uint8_t* pTexData, int texWidth, int texHeight);
 void Util_SetupSubOAMForDouble3D();
 void Util_SetupBillboardYMatrix();
 

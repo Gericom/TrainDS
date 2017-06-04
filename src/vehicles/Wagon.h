@@ -40,6 +40,11 @@ private:
 	Sfx* mSfx;
 
 	fx16 mCurRot;
+
+	fx64c mAcceleration;
+	fx64c mDeceleration;
+	fx64c mSpeed;
+	fx64c mMaxSpeed;
 public:
 	Wagon(GameController* gameController, char* name);
 	void PutOnTrack(TrackPieceEx* track, int inPoint, fx32 offset = 0);
