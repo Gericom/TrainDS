@@ -13,6 +13,7 @@
 #include "terrain/managers/TerrainTextureManager8.h"
 #include "engine/PathWorker.h"
 #include "ui/UIManager.h"
+#include "ui/components/Button.h"
 #include "engine/Camera.h"
 #include "engine/LookAtCamera.h"
 #include "engine/ThirdPersonCamera.h"
@@ -102,31 +103,47 @@ void Game::Initialize(int arg)
 	NNS_G2dInitOamManagerModule();
 	NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_SUB);
 
+	mCellDataMain = Util_LoadFileToBuffer("/data/game/BottomButtonsOAM.NCER", NULL, FALSE);
+	NNS_G2dGetUnpackedCellBank(mCellDataMain, &mCellDataMainBank);
+
 	mCellDataSub = Util_LoadFileToBuffer("/data/game/OBJ.NCER", NULL, FALSE);
 	NNS_G2dGetUnpackedCellBank(mCellDataSub, &mCellDataSubBank);
 
-	NNSG2dCharacterData* mCharDataSubUnpacked;
-	void* mCharDataSub = Util_LoadFileToBuffer("/data/game/IngameOBJ.NCGR", NULL, TRUE);
-	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
-	NNS_G2dInitImageProxy(&mImageProxy);
-	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImageProxy);
+	NNSG2dCharacterData* charDataUnpacked;
+	NNSG2dPaletteData* palDataUnpacked;
+	NNSG2dScreenData* screenDataUnpacked;
+
+	void* mCharDataSub = Util_LoadFileToBuffer("/data/game/OAM.NCGR", NULL, TRUE);
+	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &charDataUnpacked);
+	NNS_G2dInitImageProxy(&mImageProxyMain);
+	NNS_G2dLoadImage1DMapping(charDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImageProxyMain);
 	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
 
-	NNSG2dPaletteData* mPalDataSubUnpacked;
-	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameOBJ.NCLR", NULL, TRUE);
-	NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
-	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
-	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImagePaletteProxy);
+	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/OAM.NCLR", NULL, TRUE);
+	NNS_G2dInitImagePaletteProxy(&mImagePaletteProxyMain);
+	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &palDataUnpacked);
+	NNS_G2dLoadPalette(palDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxyMain);
 	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
 
-	NNSG2dScreenData* mScreenDataSubUnpacked;
+	mCharDataSub = Util_LoadLZ77FileToBuffer("/data/game/IngameOBJ.NCGR.lz", NULL, TRUE);
+	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &charDataUnpacked);
+	NNS_G2dInitImageProxy(&mImageProxy);
+	NNS_G2dLoadImage2DMapping(charDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImageProxy);
+	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
+	
+	mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameOBJ.NCLR", NULL, TRUE);
+	NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
+	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &palDataUnpacked);
+	NNS_G2dLoadPalette(palDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImagePaletteProxy);
+	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
+	
 	void* mScreenDataSub = Util_LoadFileToBuffer("/data/game/BG.NSCR", NULL, TRUE);
-	NNS_G2dGetUnpackedScreenData(mScreenDataSub, &mScreenDataSubUnpacked);
-	mCharDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCGR", NULL, TRUE);
-	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
+	NNS_G2dGetUnpackedScreenData(mScreenDataSub, &screenDataUnpacked);
+	mCharDataSub = Util_LoadLZ77FileToBuffer("/data/game/IngameBG.NCGR.lz", NULL, TRUE);
+	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &charDataUnpacked);
 	mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCLR", NULL, TRUE);
-	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
-	NNS_G2dBGSetup(NNS_G2D_BGSELECT_SUB0, mScreenDataSubUnpacked, mCharDataSubUnpacked, mPalDataSubUnpacked, GX_BG_SCRBASE_0x0800, GX_BG_CHARBASE_0x00000);
+	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &palDataUnpacked);
+	NNS_G2dBGSetup(NNS_G2D_BGSELECT_SUB0, screenDataUnpacked, charDataUnpacked, palDataUnpacked, GX_BG_SCRBASE_0x0800, GX_BG_CHARBASE_0x00000);
 	NNS_FndFreeToExpHeap(gHeapHandle, mScreenDataSub);
 	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
 	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
@@ -141,27 +158,27 @@ void Game::Initialize(int arg)
 
 	mGameController->mWagon->PutOnTrack(tmp, 0, 10 * FX32_ONE);
 
-	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
+	//GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
-	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL, false);
+	mFontData = Util_LoadLZ77FileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR.lz", NULL, false);
 	MI_CpuClear8(&mFont, sizeof(mFont));
 	NNS_G2dFontInitAuto(&mFont, mFontData);
 
-	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, (uint8_t*)G2_GetOBJCharPtr(), 8, 4, NNS_G2D_CHARA_COLORMODE_16);
-	NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
-	NNS_G2dCharCanvasClear(&mCanvas, 0);
+	//NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, (uint8_t*)G2_GetOBJCharPtr(), 8, 4, NNS_G2D_CHARA_COLORMODE_16);
+	//NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
+	//NNS_G2dCharCanvasClear(&mCanvas, 0);
 	//NNS_G2dTextCanvasDrawTextRect(
 	//	&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Tri's Test");
 
-	for(int i = 0; i < 16; i++)
-		((uint16_t*)HW_OBJ_PLTT)[i] = 0x7FFF;
-	((uint16_t*)HW_OBJ_PLTT)[0] = 0;
+	//for(int i = 0; i < 16; i++)
+	//	((uint16_t*)HW_OBJ_PLTT)[i] = 0x7FFF;
+	//((uint16_t*)HW_OBJ_PLTT)[0] = 0;
 
-	G2_SetOBJAttr(&GXOamAttrArray[0], 0, 0, 0, GX_OAM_MODE_NORMAL, FALSE, GX_OAM_EFFECT_NONE, GX_OAM_SHAPE_64x32, GX_OAM_COLORMODE_16, 0, 0, 0);
+	//G2_SetOBJAttr(&GXOamAttrArray[0], 0, 0, 0, GX_OAM_MODE_NORMAL, FALSE, GX_OAM_EFFECT_NONE, GX_OAM_SHAPE_64x32, GX_OAM_COLORMODE_16, 0, 0, 0);
 
 	reg_G2_BLDCNT = 0x2801;
 
-	mSubFontData = Util_LoadFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR", NULL, false);
+	mSubFontData = Util_LoadLZ77FileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR.lz", NULL, false);
 	MI_CpuClear8(&mSubFont, sizeof(mSubFont));
 	NNS_G2dFontInitAuto(&mSubFont, mSubFontData);
 
@@ -183,7 +200,7 @@ void Game::Initialize(int arg)
 	NNS_G2dTextCanvasDrawTextRect(
 		&mSubTextCanvas, 0, 0, 64, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Headlight");
 
-	mSubFontData2 = Util_LoadFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_b_13pt.NFTR", NULL, false);
+	mSubFontData2 = Util_LoadLZ77FileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_b_13pt.NFTR.lz", NULL, false);
 	MI_CpuClear8(&mSubFont2, sizeof(mSubFont2));
 	NNS_G2dFontInitAuto(&mSubFont2, mSubFontData2);
 
@@ -220,9 +237,11 @@ void Game::Initialize(int arg)
 	G2S_SetBG0Priority(3);
 	G2S_SetBG3Priority(0);
 
-	mUIManager = new UIManager(this);
-
-	mUIManager->RegisterPenCallbacks(Game::OnPenDown, Game::OnPenMove, Game::OnPenUp);
+	mUIManager = new UIManager(UIManager::UI_MANAGER_SCREEN_MAIN);
+	mUIManager->AddUIComponent(new Button(0, 0, 20, 20, NNS_G2dGetCellDataByIdx(mCellDataMainBank, 0), NNS_G2dGetCellDataByIdx(mCellDataMainBank, 1)));
+	mUIManager->AddUIComponent(new Button(0, 20, 20, 20, NNS_G2dGetCellDataByIdx(mCellDataMainBank, 2), NNS_G2dGetCellDataByIdx(mCellDataMainBank, 3)));
+	mUIManager->AddUIComponent(new Button(0, 40, 20, 20, NNS_G2dGetCellDataByIdx(mCellDataMainBank, 4), NNS_G2dGetCellDataByIdx(mCellDataMainBank, 5)));
+	mUIManager->RegisterPenCallbacks(OnPenDown, OnPenMove, OnPenUp, this);
 
 	NNS_SndArcLoadSeqArc(SEQ_TRAIN, gSndHeapHandle);
 	NNS_SndArcLoadBank(BANK_TRAIN, gSndHeapHandle);
@@ -488,7 +507,7 @@ void Game::Render()
 	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
 	//sub screen oam
 	NNSG2dFVec2 trans;
-	u16 numOamDrawn = 0;
+	int numOamDrawn = 0;
 	numOamDrawn += MakeTextCell((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 14 + 16, 59 - 16, 32, 16, 1, 8192);
 	numOamDrawn += MakeTextCell((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 14 + 16, 146, 32, 16, 2, 8192 + 256);
 	numOamDrawn += MakeTextCell((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 106 + 16, 146, 32, 16, 2, 8192 + 2 * 256);
@@ -516,6 +535,7 @@ void Game::Render()
 	trans.x = 46 * FX32_ONE;
 	trans.y = 91 * FX32_ONE;
 	numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, pKnob, &mtx, &trans, affineIdx, TRUE);
+
 	NNS_G2dEntryOamManagerOam(&mSubObjOamManager, &mTmpSubOamBuffer[0], numOamDrawn);
 }
 
@@ -530,6 +550,7 @@ void Game::VBlank()
 	//handle it as early as possible to prevent problems with the shared vram d
 	HandlePickingVBlank();
 	mLastFrameType = mCurFrameType;
+	mUIManager->ProcessVBlank();
 	NNS_G2dApplyOamManagerToHW(&mSubObjOamManager);
 	NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
 	if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)//mPickingState == PICKING_STATE_RENDERING)

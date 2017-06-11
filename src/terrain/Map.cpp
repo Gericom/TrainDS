@@ -21,7 +21,7 @@ Map::Map()
 
 	mHMap = new hvtx_t[128 * 128];
 
-	uint8_t* vtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, true);
+	uint8_t* vtx = (uint8_t*)Util_LoadLZ77FileToBuffer("/data/map/terrain.hmap.lz", NULL, true);
 	for (int y = 0; y < 128; y++)
 	{
 		for (int x = 0; x < 128; x++)
@@ -31,7 +31,7 @@ Map::Map()
 	}
 	NNS_FndFreeToExpHeap(gHeapHandle, vtx);
 
-	uint8_t* tex = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.tmap", NULL, true);
+	uint8_t* tex = (uint8_t*)Util_LoadLZ77FileToBuffer("/data/map/terrain.tmap.lz", NULL, true);
 	for (int y = 0; y < 128; y++)
 	{
 		for (int x = 0; x < 128; x++)

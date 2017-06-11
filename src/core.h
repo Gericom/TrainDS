@@ -6,6 +6,13 @@
 #include "../resources/sound/sdat/sound_data.sadl"
 #include "print.h"
 
+#define WFS_HEAP_GROUP_ID	0x5B
+
+#define SDK_MAKEGGID_SYSTEM(num)    (0x003FFF00 | (num))
+#define WH_GGID		SDK_MAKEGGID_SYSTEM(0x42)
+
+#define PORT_WFS                  4
+
 #define LOAD_OVERLAY_ITCM(name)	\
 	do {	\
 		int default_dma = FS_GetDefaultDMA();	\
@@ -51,6 +58,15 @@ void operator delete[](void *block) throw();
 
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+	void* mb_alloc(int size);
+
+#ifdef __cplusplus
+}
+#endif
 
 extern NNSSndArc gSndArc;
 extern NNSSndHeapHandle gSndHeapHandle;

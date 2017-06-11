@@ -71,8 +71,12 @@
     <ClCompile Include="src\engine\TitleSequencePlayer.cpp" />
     <ClCompile Include="src\inih\ini.c" />
     <ClCompile Include="src\inih\INIReader.cpp" />
+    <ClCompile Include="src\mb\mbp.c" />
+    <ClCompile Include="src\mb\wfs_common.c" />
+    <ClCompile Include="src\mb\wh.c" />
     <ClCompile Include="src\menu\Depot.cpp" />
-    <ClCompile Include="src\menu\TitleMenu2.cpp" />
+    <ClCompile Include="src\menu\MultibootMenu.cpp" />
+    <ClCompile Include="src\menu\TitleMenu.cpp" />
     <ClCompile Include="src\menu\VideoPlayer.cpp" />
     <ClCompile Include="src\menu\VideoPlayer.videoplayeritcm.cpp" />
     <ClCompile Include="src\print.cpp" />
@@ -87,7 +91,6 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\menu\Game.cpp" />
     <ClCompile Include="src\menu\Menu.cpp" />
-    <ClCompile Include="src\menu\TitleMenu.cpp" />
     <ClCompile Include="src\terrain\Map.renderingitcm.cpp" />
     <ClCompile Include="src\terrain\scenery\RCT2Tree1.cpp" />
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
@@ -95,6 +98,7 @@
     <ClCompile Include="src\terrain\track\FlexTrack.renderingitcm.cpp" />
     <ClCompile Include="src\tools\AddTrackTool.cpp" />
     <ClCompile Include="src\tools\DragTool.cpp" />
+    <ClCompile Include="src\tools\PointerTool.cpp" />
     <ClCompile Include="src\ui\UIManager.cpp" />
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\vehicles\Wagon.cpp" />
@@ -115,9 +119,14 @@
     <ClInclude Include="src\engine\WorldObject.h" />
     <ClInclude Include="src\inih\ini.h" />
     <ClInclude Include="src\inih\INIReader.h" />
+    <ClInclude Include="src\mb\mbp.h" />
+    <ClInclude Include="src\mb\wfs.h" />
+    <ClInclude Include="src\mb\wh.h" />
+    <ClInclude Include="src\mb\wh_config.h" />
     <ClInclude Include="src\menu\Depot.h" />
+    <ClInclude Include="src\menu\MultibootMenu.h" />
     <ClInclude Include="src\menu\SimpleMenu.h" />
-    <ClInclude Include="src\menu\TitleMenu2.h" />
+    <ClInclude Include="src\menu\TitleMenu.h" />
     <ClInclude Include="src\menu\VideoPlayer.h" />
     <ClInclude Include="src\print.h" />
     <ClInclude Include="src\terrain\GameController.h" />
@@ -133,7 +142,6 @@
     <ClInclude Include="src\core.h" />
     <ClInclude Include="src\menu\Game.h" />
     <ClInclude Include="src\menu\Menu.h" />
-    <ClInclude Include="src\menu\TitleMenu.h" />
     <ClInclude Include="src\terrain\scenery\BillboardSceneryObject.h" />
     <ClInclude Include="src\terrain\scenery\RCT2Tree1.h" />
     <ClInclude Include="src\terrain\scenery\SceneryObject.h" />
@@ -142,7 +150,10 @@
     <ClInclude Include="src\terrain\track\TrackPieceEx.h" />
     <ClInclude Include="src\tools\AddTrackTool.h" />
     <ClInclude Include="src\tools\DragTool.h" />
+    <ClInclude Include="src\tools\PointerTool.h" />
     <ClInclude Include="src\tools\Tool.h" />
+    <ClInclude Include="src\ui\components\Button.h" />
+    <ClInclude Include="src\ui\components\UIComponent.h" />
     <ClInclude Include="src\ui\UIManager.h" />
     <ClInclude Include="src\ui\UISlice.h" />
     <ClInclude Include="src\util.h" />

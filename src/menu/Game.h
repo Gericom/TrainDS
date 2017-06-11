@@ -13,6 +13,7 @@ class ThirdPersonCamera;
 class FreeRoamCamera;
 class DragTool;
 class Wagon;
+class Button;
 
 class Game : public SimpleMenu
 {
@@ -68,6 +69,9 @@ private:
 	NNSG2dImageProxy mImageProxy;
 	NNSG2dImagePaletteProxy mImagePaletteProxy;
 
+	NNSG2dImageProxy mImageProxyMain;
+	NNSG2dImagePaletteProxy mImagePaletteProxyMain;
+
 	NNSG2dFont mFont;
 	void* mFontData;
 	NNSG2dCharCanvas mCanvas;
@@ -86,11 +90,16 @@ private:
 	UIManager* mUIManager;
 	TrackBuildUISlice* mTrackBuildUISlice;
 
+	NNSG2dCellDataBank* mCellDataMainBank;
+	void* mCellDataMain;
+
 	NNSG2dOamManagerInstance mSubObjOamManager;
 	GXOamAttr mTmpSubOamBuffer[128];
 
 	NNSG2dCellDataBank* mCellDataSubBank;
 	void* mCellDataSub;
+
+	Button* mPointerButton;
 
 	bool mTrainMode;
 
@@ -139,19 +148,19 @@ public:
 		((Game*)arg)->OnSub3DCopyVAlarm();
 	}
 
-	static void OnPenDown(Menu* context, int x, int y)
+	static void OnPenDown(void* arg, int x, int y)
 	{
-		((Game*)context)->OnPenDown(x, y);
+		((Game*)arg)->OnPenDown(x, y);
 	}
 
-	static void OnPenMove(Menu* context, int x, int y)
+	static void OnPenMove(void* arg, int x, int y)
 	{
-		((Game*)context)->OnPenMove(x, y);
+		((Game*)arg)->OnPenMove(x, y);
 	}
 
-	static void OnPenUp(Menu* context, int x, int y)
+	static void OnPenUp(void* arg, int x, int y)
 	{
-		((Game*)context)->OnPenUp(x, y);
+		((Game*)arg)->OnPenUp(x, y);
 	}
 
 	void RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg);

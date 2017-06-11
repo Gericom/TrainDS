@@ -51,6 +51,22 @@ void operator delete[](void* block) throw()
     NNS_FndFreeToExpHeap(gHeapHandle, block);
 }
 
+extern "C" void* mb_alloc(int size)
+{
+	void* result;
+	OSIntrMode cur = OS_DisableInterrupts();
+	{
+		int curHeapGroup = NNS_FndGetGroupIDForExpHeap(gHeapHandle);
+		NNS_FndSetGroupIDForExpHeap(gHeapHandle, WFS_HEAP_GROUP_ID);
+		{			
+			result = NNS_FndAllocFromExpHeapEx(gHeapHandle, size, 16);
+		}
+		NNS_FndSetGroupIDForExpHeap(gHeapHandle, curHeapGroup);
+	}
+	OS_RestoreInterrupts(cur);
+	return result;
+}
+
 #define SOUND_HEAP_SIZE 0x80000
 
 NNSSndArc gSndArc;

@@ -2,9 +2,15 @@
 #include <nnsys/g3d.h>
 #include <nnsys/gfd.h>
 #include "core.h"
+extern "C" 
+{
+	#include "mb/wh.h"
+	#include "mb/mbp.h"
+	#include "mb/wfs.h"
+}
 #include "util.h"
 #include "terrain/TerrainManager.h"
-#include "menu/TitleMenu2.h"
+#include "menu/TitleMenu.h"
 #include "menu/Depot.h"
 #include "menu/Game.h"
 #include "menu/VideoPlayer.h"
@@ -182,6 +188,31 @@ static void VBlankIntr()
 	OS_SetIrqCheckFlag(OS_IE_V_BLANK); // checking V-Blank interrupt
 }
 
+static void WaitWHState(int state)
+{
+	while (WH_GetSystemState() != state)
+		OS_WaitVBlankIntr();
+}
+
+static void* AllocatorForWFS(void *arg, u32 size, void *ptr)
+{
+	if (!ptr)
+	{
+		OSIntrMode cur = OS_DisableInterrupts();
+		int curHeapGroup = NNS_FndGetGroupIDForExpHeap(gHeapHandle);
+		NNS_FndSetGroupIDForExpHeap(gHeapHandle, WFS_HEAP_GROUP_ID);
+		void* result = NNS_FndAllocFromExpHeapEx(gHeapHandle, size, 16);
+		NNS_FndSetGroupIDForExpHeap(gHeapHandle, curHeapGroup);
+		OS_RestoreInterrupts(cur);
+		return result;
+	}
+	else
+	{
+		NNS_FndFreeToExpHeap(gHeapHandle, ptr);
+		return NULL;
+	}
+}
+
 #include <nitro/code16.h>
 static void Init()
 {
@@ -199,7 +230,13 @@ static void Init()
 	GX_Init();
 	GX_SetDefaultDMA(2);
 
-	GX_DispOff();
+	//GX_DispOff();
+	GX_SetMasterBrightness(0);
+	GX_DispOn();
+	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_1, GX_BG0_AS_2D);
+	GX_SetVisiblePlane(0);
+	((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(31, 0, 0);
+
 	GXS_DispOff();
 
 	OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIntr);
@@ -224,15 +261,85 @@ static void Init()
 	//card_lock_id = (u16)OS_GetLockID();
 
 	SND_Init();
+
+	if (MB_IsMultiBootChild())
+	{
+		//GX_SetMasterBrightness(0);
+		//GX_DispOn();
+		//GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_1, GX_BG0_AS_2D);
+		//GX_SetVisiblePlane(0);
+		//((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(31, 0, 0);
+
+		WH_Initialize();
+		WaitWHState(WH_SYSSTATE_IDLE);
+		((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 0, 31);
+		for (;;)
+		{
+			/* begins WFS initialization, parent search and connection processes */
+			WaitWHState(WH_SYSSTATE_IDLE);
+			WFS_InitChild(PORT_WFS, NULL, AllocatorForWFS, NULL);
+			WH_SetGgid(WH_GGID);
+			WH_ChildConnectAuto(WH_CONNECTMODE_DS_CHILD, (const u8 *)MB_GetMultiBootParentBssDesc()->bssid, 0);
+			((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(31, 31, 0);
+			while ((WH_GetSystemState() == WH_SYSSTATE_BUSY) || (WH_GetSystemState() == WH_SYSSTATE_SCANNING))
+				OS_WaitVBlankIntr();
+			/* retries when connection fails */
+			if (WH_GetSystemState() == WH_SYSSTATE_CONNECT_FAIL)
+			{
+				((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 0, 0);
+				WH_Reset();
+				WaitWHState(WH_SYSSTATE_IDLE);
+			}
+			/* end here for unexpected errors */
+			else if (WH_GetSystemState() == WH_SYSSTATE_ERROR)
+			{
+				((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 31, 31);
+				for (;;)
+				{
+					static int over_max_entry_count = 0;
+
+					OS_WaitVBlankIntr();
+
+					if (WH_GetLastError() == WM_ERRCODE_OVER_MAX_ENTRY)
+					{
+						// Retries the connection, considering situations in which a connection is made to a new download child during the timing for a reconnection to the parent child.
+						// The real OVER_MAX_ENTRY if it seems the retry will fail.
+						if (over_max_entry_count < 10)
+						{
+							WH_Reset();
+
+							over_max_entry_count++;
+
+							break;
+						}
+						else
+						{
+							//PrintString(5, 13, 0xf, "OVER_MAX_ENTRY");
+						}
+					}
+					//PrintString(5, 10, 0x1, "======= ERROR! =======");
+				}
+			}
+			break;
+		}
+		((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 8, 0);
+		WaitWHState(WH_SYSSTATE_DATASHARING);
+		WFS_Start();
+		while (WFS_GetStatus() != WFS_STATE_READY)
+			OS_WaitVBlankIntr();
+		((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 31, 0);
+	}
+
 	Core_Init();
 	NNS_G3dInit();
 	//MIC_Init();
+	((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(31, 31, 31);
 }
 #include <nitro/codereset.h>
 
 void OnIntroVideoFinish()
 {
-	TitleMenu2::GotoMenu();
+	TitleMenu::GotoMenu();
 	//Game::GotoMenu();
 }
 
@@ -251,7 +358,10 @@ void NitroMain ()
 	//Game loop
 	//Should handle switching menu's and deallocating the shit they didn't (and don't have to) clean up
 	//Game::GotoMenu();
-	VideoPlayer::GotoMenu("/data/intro.vx2", true, OnIntroVideoFinish);
+	if (!MB_IsMultiBootChild())
+		VideoPlayer::GotoMenu("/data/intro.vx2", true, OnIntroVideoFinish);
+	else
+		TitleMenu::GotoMenu();
 	while (gNextMenuCreateFunc)
 	{
 		NNS_FndSetGroupIDForExpHeap(gHeapHandle, 0);
