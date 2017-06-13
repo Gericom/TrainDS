@@ -21,7 +21,10 @@ public:
 	virtual void UpdateVramC() = 0;
 	void UpdateResourceCounter()
 	{
-		mResourceCounter++;
+		if (mResourceCounter == 0x7FFFFFFF)
+			mResourceCounter = 0;
+		else
+			mResourceCounter++;
 	}
 };
 

@@ -2,6 +2,8 @@
 #include <nnsys/gfd.h>
 #include <nnsys/g2d.h>
 #include "core.h"
+#include "lh.h"
+//#include "lrc.h"
 #include "util.h"
 
 void* Util_LoadFileToBuffer(char* path, uint32_t* size, bool tempoarly)
@@ -48,6 +50,72 @@ void* Util_LoadLZ77FileToBuffer(char* path, uint32_t* size, bool tempoarly)
 	return buffer;
 }
 
+void* Util_LoadLHFileToBuffer(char* path, uint32_t* size, bool tempoarly)
+{
+	FSFile file;
+	FS_InitFile(&file);
+	FS_OpenFile(&file, path);
+
+	CXCompressionHeader header;
+	FS_ReadFile(&file, &header, sizeof(CXCompressionHeader));
+	uint32_t mSize = CXGetUncompressedSize(&header);
+	FS_SeekFile(&file, 0, FS_SEEK_SET);
+	void* buffer = NNS_FndAllocFromExpHeapEx(gHeapHandle, mSize, (tempoarly ? -32 : 32));
+	if (buffer != NULL)
+	{
+		CXUncompContextLH* context = (CXUncompContextLH*)NNS_FndAllocFromExpHeapEx(gHeapHandle, sizeof(CXUncompContextLH), -32);
+		void* tmpBuffer = NNS_FndAllocFromExpHeapEx(gHeapHandle, 512, -32);
+		CXInitUncompContextLH(context, (uint8_t*)buffer);
+		int read_len;
+		while (1)
+		{
+			read_len = FS_ReadFile(&file, tmpBuffer, 512);
+			if (CXReadUncompLH(context, (uint8_t*)tmpBuffer, (u32)read_len) == 0)
+				break;
+		}
+		NNS_FndFreeToExpHeap(gHeapHandle, tmpBuffer);
+		NNS_FndFreeToExpHeap(gHeapHandle, context);
+	}
+	FS_CloseFile(&file);
+	DC_FlushRange(buffer, mSize);
+	if (size != NULL)
+		*size = mSize;
+	return buffer;
+}
+
+/*void* Util_LoadLRCFileToBuffer(char* path, uint32_t* size, bool tempoarly)
+{
+	FSFile file;
+	FS_InitFile(&file);
+	FS_OpenFile(&file, path);
+
+	CXCompressionHeader header;
+	FS_ReadFile(&file, &header, sizeof(CXCompressionHeader));
+	uint32_t mSize = CXGetUncompressedSize(&header);
+	FS_SeekFile(&file, 0, FS_SEEK_SET);
+	void* buffer = NNS_FndAllocFromExpHeapEx(gHeapHandle, mSize, (tempoarly ? -32 : 32));
+	if (buffer != NULL)
+	{
+		CXUncompContextLRC* context = (CXUncompContextLRC*)NNS_FndAllocFromExpHeapEx(gHeapHandle, sizeof(CXUncompContextLRC), -32);
+		void* tmpBuffer = NNS_FndAllocFromExpHeapEx(gHeapHandle, 2048, -32);
+		CXInitUncompContextLRC(context, (uint8_t*)buffer);
+		int read_len;
+		while (1)
+		{
+			read_len = FS_ReadFile(&file, tmpBuffer, 2048);
+			if (CXReadUncompLRC(context, (uint8_t*)tmpBuffer, (u32)read_len) == 0)
+				break;
+		}
+		NNS_FndFreeToExpHeap(gHeapHandle, tmpBuffer);
+		NNS_FndFreeToExpHeap(gHeapHandle, context);
+	}
+	FS_CloseFile(&file);
+	DC_FlushRange(buffer, mSize);
+	if (size != NULL)
+		*size = mSize;
+	return buffer;
+}*/
+
 void Util_LoadTextureWithKey(NNSGfdTexKey key, void* data)
 {
 	GX_BeginLoadTex();
@@ -85,12 +153,90 @@ void Util_LoadTextureFromCard(char* texPath, char* plttPath, NNSGfdTexKey &texKe
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 }
 
+void Util_LoadLZ77TextureFromCard(char* texPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+{
+	uint32_t size;
+	void* buffer = Util_LoadLZ77FileToBuffer(texPath, &size, TRUE);
+	DC_FlushRange(buffer, size);
+
+	texKey = NNS_GfdAllocTexVram(size, FALSE, 0);
+	Util_LoadTextureWithKey(texKey, buffer);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+
+	buffer = Util_LoadLZ77FileToBuffer(plttPath, &size, TRUE);
+	DC_FlushRange(buffer, size);
+
+	plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
+	Util_LoadPaletteWithKey(plttKey, buffer);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+}
+
+void Util_LoadLHTextureFromCard(char* texPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+{
+	uint32_t size;
+	void* buffer = Util_LoadLHFileToBuffer(texPath, &size, TRUE);
+	DC_FlushRange(buffer, size);
+
+	texKey = NNS_GfdAllocTexVram(size, FALSE, 0);
+	Util_LoadTextureWithKey(texKey, buffer);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+
+	buffer = Util_LoadFileToBuffer(plttPath, &size, TRUE);
+	DC_FlushRange(buffer, size);
+
+	plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
+	Util_LoadPaletteWithKey(plttKey, buffer);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+}
+
 void Util_LoadTexture4x4FromCard(char* texPath, char* texIndexPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
 {
 	uint32_t size;
 	void* buffer = Util_LoadFileToBuffer(texPath, &size, TRUE);
 	DC_FlushRange(buffer, size);
 	void* buffer2 = Util_LoadFileToBuffer(texIndexPath, NULL, TRUE);
+	DC_FlushRange(buffer2, size >> 1);
+
+	texKey = NNS_GfdAllocTexVram(size, TRUE, 0);
+	Util_LoadTexture4x4WithKey(texKey, buffer, buffer2);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer2);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+
+	buffer = Util_LoadFileToBuffer(plttPath, &size, TRUE);
+	DC_FlushRange(buffer, size);
+
+	plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
+	Util_LoadPaletteWithKey(plttKey, buffer);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+}
+
+void Util_LoadLZ77Texture4x4FromCard(char* texPath, char* texIndexPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+{
+	uint32_t size;
+	void* buffer = Util_LoadLZ77FileToBuffer(texPath, &size, TRUE);
+	DC_FlushRange(buffer, size);
+	void* buffer2 = Util_LoadLZ77FileToBuffer(texIndexPath, NULL, TRUE);
+	DC_FlushRange(buffer2, size >> 1);
+
+	texKey = NNS_GfdAllocTexVram(size, TRUE, 0);
+	Util_LoadTexture4x4WithKey(texKey, buffer, buffer2);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer2);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+
+	buffer = Util_LoadLZ77FileToBuffer(plttPath, &size, TRUE);
+	DC_FlushRange(buffer, size);
+
+	plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
+	Util_LoadPaletteWithKey(plttKey, buffer);
+	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+}
+
+void Util_LoadLHTexture4x4FromCard(char* texPath, char* texIndexPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+{
+	uint32_t size;
+	void* buffer = Util_LoadLHFileToBuffer(texPath, &size, TRUE);
+	DC_FlushRange(buffer, size);
+	void* buffer2 = Util_LoadLHFileToBuffer(texIndexPath, NULL, TRUE);
 	DC_FlushRange(buffer2, size >> 1);
 
 	texKey = NNS_GfdAllocTexVram(size, TRUE, 0);

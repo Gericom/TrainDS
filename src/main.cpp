@@ -230,13 +230,7 @@ static void Init()
 	GX_Init();
 	GX_SetDefaultDMA(2);
 
-	//GX_DispOff();
-	GX_SetMasterBrightness(0);
-	GX_DispOn();
-	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_1, GX_BG0_AS_2D);
-	GX_SetVisiblePlane(0);
-	((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(31, 0, 0);
-
+	GX_DispOff();
 	GXS_DispOff();
 
 	OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIntr);
@@ -264,15 +258,8 @@ static void Init()
 
 	if (MB_IsMultiBootChild())
 	{
-		//GX_SetMasterBrightness(0);
-		//GX_DispOn();
-		//GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_1, GX_BG0_AS_2D);
-		//GX_SetVisiblePlane(0);
-		//((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(31, 0, 0);
-
 		WH_Initialize();
 		WaitWHState(WH_SYSSTATE_IDLE);
-		((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 0, 31);
 		for (;;)
 		{
 			/* begins WFS initialization, parent search and connection processes */
@@ -280,20 +267,17 @@ static void Init()
 			WFS_InitChild(PORT_WFS, NULL, AllocatorForWFS, NULL);
 			WH_SetGgid(WH_GGID);
 			WH_ChildConnectAuto(WH_CONNECTMODE_DS_CHILD, (const u8 *)MB_GetMultiBootParentBssDesc()->bssid, 0);
-			((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(31, 31, 0);
 			while ((WH_GetSystemState() == WH_SYSSTATE_BUSY) || (WH_GetSystemState() == WH_SYSSTATE_SCANNING))
 				OS_WaitVBlankIntr();
 			/* retries when connection fails */
 			if (WH_GetSystemState() == WH_SYSSTATE_CONNECT_FAIL)
 			{
-				((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 0, 0);
 				WH_Reset();
 				WaitWHState(WH_SYSSTATE_IDLE);
 			}
 			/* end here for unexpected errors */
 			else if (WH_GetSystemState() == WH_SYSSTATE_ERROR)
 			{
-				((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 31, 31);
 				for (;;)
 				{
 					static int over_max_entry_count = 0;
@@ -322,18 +306,15 @@ static void Init()
 			}
 			break;
 		}
-		((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 8, 0);
 		WaitWHState(WH_SYSSTATE_DATASHARING);
 		WFS_Start();
 		while (WFS_GetStatus() != WFS_STATE_READY)
 			OS_WaitVBlankIntr();
-		((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(0, 31, 0);
 	}
 
 	Core_Init();
 	NNS_G3dInit();
 	//MIC_Init();
-	((uint16_t*)HW_BG_PLTT)[0] = GX_RGB(31, 31, 31);
 }
 #include <nitro/codereset.h>
 

@@ -69,7 +69,6 @@ static void OnVRAMCopyComplete(void* arg)
 
 void TerrainTextureManager8::UpdateVramC()
 {
-	//maybe we should flush the cache here?!
 	GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_C);
 	MI_DmaCopy32Async(0, &mVramCTexData, (void*)HW_LCDC_VRAM_C, 128 * 1024, OnVRAMCopyComplete, NULL);
 }

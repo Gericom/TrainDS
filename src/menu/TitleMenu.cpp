@@ -74,7 +74,7 @@ void TitleMenu::Initialize(int arg)
 
 	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
 
-	mFontData = Util_LoadLZ77FileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR.lz", NULL, false);
+	mFontData = Util_LoadLHFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR.lh", NULL, false);
 	MI_CpuClear8(&mFont, sizeof(mFont));
 	NNS_G2dFontInitAuto(&mFont, mFontData);
 
@@ -82,7 +82,8 @@ void TitleMenu::Initialize(int arg)
 	NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
 	NNS_G2dCharCanvasClear(&mCanvas, 0);
 	NNS_G2dTextCanvasDrawTextRect(
-		&mTextCanvas, 0, 0, 256, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"© 2016-2017 Expand Productions");
+		&mTextCanvas, 0, 0, 256, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE,
+		(NNSG2dChar*)L"© 2016-2017 Expand Productions");
 
 	for (int i = 0; i < 16; i++)
 	{
@@ -95,9 +96,9 @@ void TitleMenu::Initialize(int arg)
 	NNS_G2dArrangeOBJ1D((GXOamAttr*)HW_OAM, 32, 2, 0, 168 + 6, GX_OAM_COLORMODE_16, 0, NNS_G2D_OBJVRAMMODE_32K);
 
 	NNSG2dScreenData* mScreenDataSubUnpacked;
-	void* mScreenDataSub = Util_LoadFileToBuffer("/data/game/BG.NSCR", NULL, TRUE);
+	void* mScreenDataSub = Util_LoadLHFileToBuffer("/data/game/BG.NSCR.lh", NULL, TRUE);
 	NNS_G2dGetUnpackedScreenData(mScreenDataSub, &mScreenDataSubUnpacked);
-	void* mCharDataSub = Util_LoadLZ77FileToBuffer("/data/game/IngameBG.NCGR.lz", NULL, TRUE);
+	void* mCharDataSub = Util_LoadLHFileToBuffer("/data/game/IngameBG.NCGR.lh", NULL, TRUE);
 	NNSG2dCharacterData* mCharDataSubUnpacked;
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
 	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCLR", NULL, TRUE);
@@ -108,11 +109,11 @@ void TitleMenu::Initialize(int arg)
 	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
 	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
 
-	Util_LoadTextureFromCard("/data/menu/title/titlelogolarge.ntft", "/data/menu/title/titlelogolarge.ntfp", mLogoLargeTexture.texKey, mLogoLargeTexture.plttKey);
+	Util_LoadLHTextureFromCard("/data/menu/title/titlelogolarge.ntft.lh", "/data/menu/title/titlelogolarge.ntfp", mLogoLargeTexture.texKey, mLogoLargeTexture.plttKey);
 
 	mGameController = new GameController();
 
-	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, 134 * FX32_ONE/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
+	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, /*118*/133 * FX32_ONE/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
 	mGameController->mWagon->mDriving = true;
 
 	mTSPlayer = new TitleSequencePlayer(mGameController, gTitleSequence);

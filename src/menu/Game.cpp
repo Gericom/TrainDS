@@ -16,7 +16,6 @@
 #include "ui/components/Button.h"
 #include "engine/Camera.h"
 #include "engine/LookAtCamera.h"
-#include "engine/ThirdPersonCamera.h"
 #include "engine/FreeRoamCamera.h"
 #include "inih/INIReader.h"
 #include "tools/DragTool.h"
@@ -26,10 +25,6 @@
 
 #define SWAP_BUFFERS_SORTMODE	GX_SORTMODE_MANUAL //AUTO
 #define SWAP_BUFFERS_BUFFERMODE	GX_BUFFERMODE_Z
-
-//static tile_t sDummyMap[64][64];
-//static trackpiece_t sDummyPieces[8];
-//static TrackPieceEx* sDummyPieces[120];//10];
 
 static const GXRgb sEdgeMarkingColorTable[8] =
 {
@@ -51,12 +46,6 @@ static const GXRgb sAmbSelectionColorTable[8] =
 	GX_RGB(11, 14, 15),
 	0, 0, 0, 0, 0, 0
 };
-
-
-
-//Camera tempoarly
-//#define FIRST_PERSON
-//#define TOP_VIEW
 
 void Game::Initialize(int arg)
 {
@@ -125,7 +114,7 @@ void Game::Initialize(int arg)
 	NNS_G2dLoadPalette(palDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxyMain);
 	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
 
-	mCharDataSub = Util_LoadLZ77FileToBuffer("/data/game/IngameOBJ.NCGR.lz", NULL, TRUE);
+	mCharDataSub = Util_LoadLHFileToBuffer("/data/game/IngameOBJ.NCGR.lh", NULL, TRUE);
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &charDataUnpacked);
 	NNS_G2dInitImageProxy(&mImageProxy);
 	NNS_G2dLoadImage2DMapping(charDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImageProxy);
@@ -137,9 +126,9 @@ void Game::Initialize(int arg)
 	NNS_G2dLoadPalette(palDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImagePaletteProxy);
 	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
 	
-	void* mScreenDataSub = Util_LoadFileToBuffer("/data/game/BG.NSCR", NULL, TRUE);
+	void* mScreenDataSub = Util_LoadLHFileToBuffer("/data/game/BG.NSCR.lh", NULL, TRUE);
 	NNS_G2dGetUnpackedScreenData(mScreenDataSub, &screenDataUnpacked);
-	mCharDataSub = Util_LoadLZ77FileToBuffer("/data/game/IngameBG.NCGR.lz", NULL, TRUE);
+	mCharDataSub = Util_LoadLHFileToBuffer("/data/game/IngameBG.NCGR.lh", NULL, TRUE);
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &charDataUnpacked);
 	mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCLR", NULL, TRUE);
 	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &palDataUnpacked);
@@ -158,27 +147,9 @@ void Game::Initialize(int arg)
 
 	mGameController->mWagon->PutOnTrack(tmp, 0, 10 * FX32_ONE);
 
-	//GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
-
-	mFontData = Util_LoadLZ77FileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR.lz", NULL, false);
-	MI_CpuClear8(&mFont, sizeof(mFont));
-	NNS_G2dFontInitAuto(&mFont, mFontData);
-
-	//NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, (uint8_t*)G2_GetOBJCharPtr(), 8, 4, NNS_G2D_CHARA_COLORMODE_16);
-	//NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
-	//NNS_G2dCharCanvasClear(&mCanvas, 0);
-	//NNS_G2dTextCanvasDrawTextRect(
-	//	&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Tri's Test");
-
-	//for(int i = 0; i < 16; i++)
-	//	((uint16_t*)HW_OBJ_PLTT)[i] = 0x7FFF;
-	//((uint16_t*)HW_OBJ_PLTT)[0] = 0;
-
-	//G2_SetOBJAttr(&GXOamAttrArray[0], 0, 0, 0, GX_OAM_MODE_NORMAL, FALSE, GX_OAM_EFFECT_NONE, GX_OAM_SHAPE_64x32, GX_OAM_COLORMODE_16, 0, 0, 0);
-
 	reg_G2_BLDCNT = 0x2801;
 
-	mSubFontData = Util_LoadLZ77FileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR.lz", NULL, false);
+	mSubFontData = Util_LoadLHFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR.lh", NULL, false);
 	MI_CpuClear8(&mSubFont, sizeof(mSubFont));
 	NNS_G2dFontInitAuto(&mSubFont, mSubFontData);
 
@@ -200,7 +171,7 @@ void Game::Initialize(int arg)
 	NNS_G2dTextCanvasDrawTextRect(
 		&mSubTextCanvas, 0, 0, 64, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Headlight");
 
-	mSubFontData2 = Util_LoadLZ77FileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_b_13pt.NFTR.lz", NULL, false);
+	mSubFontData2 = Util_LoadLHFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_b_13pt.NFTR.lh", NULL, false);
 	MI_CpuClear8(&mSubFont2, sizeof(mSubFont2));
 	NNS_G2dFontInitAuto(&mSubFont2, mSubFontData2);
 

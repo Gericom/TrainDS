@@ -21,7 +21,8 @@ Map::Map()
 
 	mHMap = new hvtx_t[128 * 128];
 
-	uint8_t* vtx = (uint8_t*)Util_LoadLZ77FileToBuffer("/data/map/terrain.hmap.lz", NULL, true);
+	uint8_t* vtx = (uint8_t*)Util_LoadLHFileToBuffer("/data/map/terrain.hmap.diff.lh", NULL, true);
+	MI_UnfilterDiff8(vtx, vtx);
 	for (int y = 0; y < 128; y++)
 	{
 		for (int x = 0; x < 128; x++)
@@ -31,7 +32,7 @@ Map::Map()
 	}
 	NNS_FndFreeToExpHeap(gHeapHandle, vtx);
 
-	uint8_t* tex = (uint8_t*)Util_LoadLZ77FileToBuffer("/data/map/terrain.tmap.lz", NULL, true);
+	uint8_t* tex = (uint8_t*)Util_LoadLHFileToBuffer("/data/map/terrain.tmap.lh", NULL, true);
 	for (int y = 0; y < 128; y++)
 	{
 		for (int x = 0; x < 128; x++)
@@ -43,7 +44,7 @@ Map::Map()
 	NNS_FndFreeToExpHeap(gHeapHandle, tex);
 
 	//mount the tex data archive
-	mTexArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.carc", NULL, FALSE);
+	mTexArcData = Util_LoadLHFileToBuffer("/data/map/britain.narc.lh", NULL, FALSE);
 	NNS_FndMountArchive(&mTexArc, "mtx", mTexArcData);
 
 	//mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);

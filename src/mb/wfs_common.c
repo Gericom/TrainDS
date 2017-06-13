@@ -649,7 +649,7 @@ void WFS_InitParent(int port, WFSStateCallback callback,
         {
             OS_TPanic("WFS_ExecuteRomServerThread() failed! (specified SRL file seems to be wrong)");
         }
-		//OS_SetThreadPriority((OSThread*)server->thread_work, OS_THREAD_LAUNCHER_PRIORITY + 14);
+		OS_SetThreadPriority((OSThread*)server->thread_work, OS_THREAD_PRIORITY_MIN);// OS_THREAD_LAUNCHER_PRIORITY + 14);
     }
     static_work->state = WFS_STATE_IDLE;
     static_work->initialized = TRUE;

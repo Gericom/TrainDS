@@ -100,5 +100,6 @@ void TerrainTextureManager16::WorkerThreadMain()
 			mTextureDatas[(block->tag >> 16) & 0xFF],
 			mTextureDatas[(block->tag >> 24) & 0xFF],
 			(u16*)&mVramCTexData[cacheBlock << 9]);
+		DC_FlushRange(&mVramCTexData[cacheBlock << 9], 512);
 	}
 }

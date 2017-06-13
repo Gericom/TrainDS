@@ -60,7 +60,7 @@
 #define WH_DATA_PORT              14
 
  // Priority to use for normal MP communications
-#define WH_DATA_PRIO              WM_PRIORITY_URGENT
+#define WH_DATA_PRIO              WM_PRIORITY_NORMAL
 
  // to continuous transfer mode to combine WFS and data sharing */
 #define WH_MP_FREQUENCY           0

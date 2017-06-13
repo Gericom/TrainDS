@@ -72,11 +72,6 @@ private:
 	NNSG2dImageProxy mImageProxyMain;
 	NNSG2dImagePaletteProxy mImagePaletteProxyMain;
 
-	NNSG2dFont mFont;
-	void* mFontData;
-	NNSG2dCharCanvas mCanvas;
-	NNSG2dTextCanvas mTextCanvas;
-
 	NNSG2dFont mSubFont;
 	void* mSubFontData;
 	NNSG2dCharCanvas mSubCanvas;
