@@ -56,6 +56,8 @@ void Game::Initialize(int arg)
 
 	GX_SetBankForOBJ(GX_VRAM_OBJ_16_F);
 
+	GX_SetBankForBG(GX_VRAM_BG_16_G);
+
 	GX_SetBankForSubBG(GX_VRAM_SUB_BG_32_H);
 	GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_16_I);
 
@@ -516,6 +518,28 @@ void Game::OnSub3DCopyVAlarm()
 	MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_B, (void*)(HW_DB_BG_VRAM + 0x2000), 128 * 96 * 2, NULL, NULL);
 }
 
+void Game::OnFarCopyVAlarm()
+{
+	//MI_CpuCopyFast((void*)(HW_LCDC_VRAM_D + mFarCopyLine * 512), (void*)(HW_BG_VRAM + ((mFarCopyLine * 512) & 0x3FFF)), 8 * 1024);
+	MI_DmaCopy32Async(3, (void*)(HW_LCDC_VRAM_D + mFarCopyLine * 512), (void*)(HW_BG_VRAM + ((mFarCopyLine * 512) & 0x3FFF)), 8 * 1024, NULL, NULL);
+	MtxFx22 identity = { FX32_ONE, 0, 0, FX32_ONE };
+	//G2_SetBG2Affine(&identity, 128, 128, 0, ((mFarCopyLine - 16) & ~0x3F) + 32);
+	//G2_SetBG3Affine(&identity, 128, 128, 0, ((mFarCopyLine - 16) & ~0x3F));
+	if (mFarCopyLine >= 80)
+	{
+		G2_SetBG2ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x74000);
+		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x74000);
+	}
+	mFarCopyLine += 16;
+	if (mFarCopyLine < 192)
+	{
+		if (mFarCopyVAlarm != NULL)
+			delete mFarCopyVAlarm;
+		mFarCopyVAlarm = new OS::VAlarm();
+		mFarCopyVAlarm->Set(mFarCopyLine - 16, 5, Game::OnFarCopyVAlarm, this);
+	}
+}
+
 void Game::VBlank()
 {
 	//handle it as early as possible to prevent problems with the shared vram d
@@ -537,17 +561,29 @@ void Game::VBlank()
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0);
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 		mCurFrameType = FRAME_TYPE_MAIN_NEAR;
 	}
 	else if (mCurFrameType == FRAME_TYPE_MAIN_NEAR)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_D);
-		GX_SetBankForBG(GX_VRAM_BG_128_B);
+		//GX_SetBankForBG(GX_VRAM_BG_128_B);
+		MI_DmaCopy32Async(3, (void*)HW_LCDC_VRAM_D, (void*)HW_BG_VRAM, 16 * 1024, NULL, NULL);
+		//MtxFx22 identity = { FX32_ONE, 0, 0, FX32_ONE };
+		//G2_SetBG3Affine(&identity, 128, 128, 0, 0);
+		mFarCopyLine = 32;
+		if (mFarCopyVAlarm != NULL)
+			delete mFarCopyVAlarm;
+		mFarCopyVAlarm = new OS::VAlarm();
+		mFarCopyVAlarm->Set(16, 5, Game::OnFarCopyVAlarm, this);
 		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG2 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
+		G2_SetBG2ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+		MtxFx22 identity = { FX32_ONE, 0, 0, FX32_ONE };
+		G2_SetBG2Affine(&identity, 128, 128, 0, 32);
 		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
 		G2_SetBG3Priority(3);
+		G2_SetBG2Priority(3);
 		G2_SetBG0Priority(0);
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 		mCurFrameType = FRAME_TYPE_MAIN_FAR;

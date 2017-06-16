@@ -104,6 +104,8 @@ private:
 
 	OS::VAlarm* mVRAMCopyVAlarm;
 	OS::VAlarm* mSub3DCopyVAlarm;
+	OS::VAlarm* mFarCopyVAlarm;
+	int mFarCopyLine;
 
 	FrameType mCurFrameType;
 	FrameType mLastFrameType;
@@ -122,6 +124,7 @@ private:
 
 	void OnVRAMCopyVAlarm();
 	void OnSub3DCopyVAlarm();
+	void OnFarCopyVAlarm();
 public:
 	GameController* mGameController;
 
@@ -141,6 +144,11 @@ public:
 	static void OnSub3DCopyVAlarm(void* arg)
 	{
 		((Game*)arg)->OnSub3DCopyVAlarm();
+	}
+
+	static void OnFarCopyVAlarm(void* arg)
+	{
+		((Game*)arg)->OnFarCopyVAlarm();
 	}
 
 	static void OnPenDown(void* arg, int x, int y)
