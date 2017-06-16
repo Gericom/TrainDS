@@ -12,6 +12,13 @@ protected:
 		uint32_t last_accessed;
 	};
 	uint32_t mResourceCounter;
+
+#pragma options align=packed
+	struct coefd_texture_sample_t
+	{
+		u16 r, g, b;
+	};
+#pragma options align=reset
 public:
 	TerrainTextureManager()
 		: mResourceCounter(0)

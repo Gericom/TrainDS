@@ -16,6 +16,8 @@ public:
 	uint16_t* mTextureDatas[26] ATTRIBUTE_ALIGN(32);
 
 private:
+	coefd_texture_sample_t mCoefdTextureDatas[26][4][16 * 16];
+
 	uint8_t mVramCTexData[128 * 1024] ATTRIBUTE_ALIGN(32);
 
 	void WorkerThreadMain();

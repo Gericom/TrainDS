@@ -4,6 +4,8 @@
 #include "util.h"
 #include "TerrainTextureManager16.h"
 
+extern u8 gen_terrain_texture_coeftable[];
+
 TerrainTextureManager16::TerrainTextureManager16()
 	: TerrainTextureManager()
 {
@@ -40,6 +42,19 @@ TerrainTextureManager16::TerrainTextureManager16()
 		for (int k = 0; k < 16 * 16; k++)
 		{
 			mTextureDatas[j][k] &= 0x7FFF;
+		}
+		for (int k = 0; k < 4; k++)
+		{
+			for (int l = 0; l < 16 * 16; l++)
+			{
+				int r = mTextureDatas[j][l] & 0x1F;
+				int g = (mTextureDatas[j][l] >> 5) & 0x1F;
+				int b = (mTextureDatas[j][l] >> 10) & 0x1F;
+				int coef = gen_terrain_texture_coeftable[l * 4 + k];
+				mCoefdTextureDatas[j][k][l].r = r * coef;
+				mCoefdTextureDatas[j][k][l].g = g * coef;
+				mCoefdTextureDatas[j][k][l].b = b * coef;
+			}
 		}
 	}
 

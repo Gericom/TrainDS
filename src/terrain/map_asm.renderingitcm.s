@@ -155,192 +155,68 @@ render_lod0:
 
 //((15 - x)*(15 - y))*tl + (x*(15 - y))*tr + (y*(15 - x))*bl + (x*y)*br
 
-//void gen_terrain_texture(u16* tl, u16* tr, u16* bl, u16* br, u16* dst)
-.global gen_terrain_texture
-gen_terrain_texture:
-arg_dst	= 4 * 9
-	stmfd sp!, {r4-r11,lr}
+//void gen_terrain_texture_precoefd(u16* tl, u16* tr, u16* bl, u16* br, u16* dst)
+//.global gen_terrain_texture_precoefd
+//gen_terrain_texture_precoefd:
+.macro macro_gen_terrain_texture_precoefd div, cnt
+arg_dst	= 4 * 8
+	stmfd sp!, {r4-r11}
 	ldr r4, [sp, #arg_dst]	//dst
-	ldr r5,= gen_terrain_texture_coeftable
-	mov r6, #256
-	gen_terrain_texture_yloop:
+	ldr r12,= \div //291
+	mov r5, #\cnt //256
+	1:
 	//{
-		//gen_terrain_texture_xloop:
-		.rept 16
+		.rept 8
 		//{
-			//(x*y)*br
-			ldr lr, [r5], #4
+			ldmia r0!, {r6, r7, r8}
+			ldmia r1!, {r9, r10, r11}
+			add r6, r6, r9
+			add r7, r7, r10
+			add r8, r8, r11
+			ldmia r2!, {r9, r10, r11}
+			add r6, r6, r9
+			add r7, r7, r10
+			add r8, r8, r11
+			ldmia r3!, {r9, r10, r11}
+			add r6, r6, r9
+			add r7, r7, r10
+			add r8, r8, r11
 
-			ldrh r8, [r3], #2
+			smulwb r9, r12, r6 //r
+			smulwt r10, r12, r6 //g
 
-			and r7, lr, #0xFF
-
-			and r12, r8, #0x1F
-			smulbb r9, r12, r7
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smulbb r10, r12, r7
-
-			mov r8, r8, lsr #5
-			smulbb r11, r8, r7
-
-			//(y*(15 - x))*bl
-			ldrh r8, [r2], #2
-
-			mov r7, lr, lsr #8
-			and r7, r7, #0xFF
-
-			and r12, r8, #0x1F
-			smlabb r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabb r10, r12, r7, r10
-
-			mov r8, r8, lsr #5
-			smlabb r11, r8, r7, r11
-
-			//((15 - x)*(15 - y))*tl
-			ldrh r8, [r0], #2
-
-			and r7, lr, #0xFF0000
-
-			and r12, r8, #0x1F
-			smlabt r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabt r10, r12, r7, r10
-
-			mov r8, r8, lsr #5
-			smlabt r11, r8, r7, r11
-
-			//(x*(15 - y))*tr
-			ldrh r8, [r1], #2
-
-			mov r7, lr, lsr #24
-
-			and r12, r8, #0x1F
-			smlabb r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabb r10, r12, r7, r10
-
-			//prevent interlock
-			ldr lr,= 291
-
-			mov r8, r8, lsr #5
-			smlabb r11, r8, r7, r11
-
-			smulwb r9, r9, lr
-			smulwb r10, r10, lr
-			smulwb r11, r11, lr
+			smulwb r11, r12, r7 //b
 
 			orr r9, r9, r10, lsl #5
 			orr r9, r9, r11, lsl #10
+
+			smulwt r11, r12, r7 //r
+
 			orr r9, r9, #0x8000
-			strh r9, [r4], #2
+
+			orr r9, r9, r11, lsl #16
+
+			smulwb r10, r12, r8 //g
+			smulwt r11, r12, r8 //b
+
+			orr r9, r9, r10, lsl #21
+			orr r9, r9, r11, lsl #26
+			orr r9, r9, #0x80000000
+
+			str r9, [r4], #4
 		//}
 		.endr
-		subs r6, r6, #16
-		bgt gen_terrain_texture_yloop
+		subs r5, r5, #16
+		bgt 1b
 	//}
-	ldmfd sp!, {r4-r11,pc}
+	ldmfd sp!, {r4-r11}
+	bx lr
+.endm
 
-.pool
+.global gen_terrain_texture_precoefd
+gen_terrain_texture_precoefd:
+	macro_gen_terrain_texture_precoefd 291, 256
 
-//void gen_terrain_texture(u16* tl, u16* tr, u16* bl, u16* br, u16* dst)
-.global gen_terrain_texture_8
-gen_terrain_texture_8:
-arg_dst	= 4 * 9
-	stmfd sp!, {r4-r11,lr}
-	ldr r4, [sp, #arg_dst]	//dst
-	ldr r5,= gen_terrain_texture_8_coeftable
-	mov r6, #128
-	gen_terrain_texture_8_yloop:
-	//{
-		//gen_terrain_texture_xloop:
-		.rept 16
-		//{
-			//(x*y)*br
-			ldr lr, [r5], #4
-
-			ldrh r8, [r3], #2
-
-			and r7, lr, #0xFF
-
-			and r12, r8, #0x1F
-			smulbb r9, r12, r7
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smulbb r10, r12, r7
-
-			mov r8, r8, lsr #5
-			smulbb r11, r8, r7
-
-			//(y*(15 - x))*bl
-			ldrh r8, [r2], #2
-
-			mov r7, lr, lsr #8
-			and r7, r7, #0xFF
-
-			and r12, r8, #0x1F
-			smlabb r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabb r10, r12, r7, r10
-
-			mov r8, r8, lsr #5
-			smlabb r11, r8, r7, r11
-
-			//((15 - x)*(15 - y))*tl
-			ldrh r8, [r0], #2
-
-			and r7, lr, #0xFF0000
-
-			and r12, r8, #0x1F
-			smlabt r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabt r10, r12, r7, r10
-
-			mov r8, r8, lsr #5
-			smlabt r11, r8, r7, r11
-
-			//(x*(15 - y))*tr
-			ldrh r8, [r1], #2
-
-			mov r7, lr, lsr #24
-
-			and r12, r8, #0x1F
-			smlabb r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabb r10, r12, r7, r10
-
-			//prevent interlock
-			ldr lr,= 624 //1337
-
-			mov r8, r8, lsr #5
-			smlabb r11, r8, r7, r11
-
-			smulwb r9, r9, lr
-			smulwb r10, r10, lr
-			smulwb r11, r11, lr
-
-			orr r9, r9, r10, lsl #5
-			orr r9, r9, r11, lsl #10
-			orr r9, r9, #0x8000
-			strh r9, [r4], #2
-		//}
-		.endr
-		subs r6, r6, #16
-		bgt gen_terrain_texture_8_yloop
-	//}
-	ldmfd sp!, {r4-r11,pc}
+.global gen_terrain_texture_precoefd_8
+gen_terrain_texture_precoefd_8:
+	macro_gen_terrain_texture_precoefd 624, 128

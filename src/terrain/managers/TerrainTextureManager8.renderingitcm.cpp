@@ -5,6 +5,7 @@
 #include "TerrainTextureManager8.h"
 
 extern "C" void gen_terrain_texture_8(u16* tl, u16* tr, u16* bl, u16* br, u16* dst);
+extern "C" void gen_terrain_texture_precoefd_8(u16* tl, u16* tr, u16* bl, u16* br, u16* dst);
 
 asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, int br, uint32_t oldTexKey)
 {
@@ -96,11 +97,17 @@ void TerrainTextureManager8::WorkerThreadMain()
 		OS_ReceiveMessage(&mMessageQueue, &msg, OS_MESSAGE_BLOCK);
 		int cacheBlock = (int)msg;
 		texture_cache_block_t* block = &mCacheBlocks[cacheBlock];
-		gen_terrain_texture_8(
-			mTextureDatas[block->tag & 0xFF], 
-			mTextureDatas[(block->tag >> 8) & 0xFF], 
-			mTextureDatas[(block->tag >> 16) & 0xFF], 
-			mTextureDatas[(block->tag >> 24) & 0xFF], 
+		//gen_terrain_texture_8(
+		//	mTextureDatas[block->tag & 0xFF], 
+		//	mTextureDatas[(block->tag >> 8) & 0xFF], 
+		//	mTextureDatas[(block->tag >> 16) & 0xFF], 
+		//	mTextureDatas[(block->tag >> 24) & 0xFF], 
+		//	(u16*)&mVramCTexData[cacheBlock << 8]);
+		gen_terrain_texture_precoefd_8(
+			(u16*)mCoefdTextureDatas[block->tag & 0xFF][0],
+			(u16*)mCoefdTextureDatas[(block->tag >> 8) & 0xFF][1],
+			(u16*)mCoefdTextureDatas[(block->tag >> 16) & 0xFF][2],
+			(u16*)mCoefdTextureDatas[(block->tag >> 24) & 0xFF][3],
 			(u16*)&mVramCTexData[cacheBlock << 8]);
 		DC_FlushRange(&mVramCTexData[cacheBlock << 8], 256);
 	}

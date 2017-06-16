@@ -4,13 +4,7 @@
 #include "util.h"
 #include "TerrainTextureManager8.h"
 
-static int ditherTable[] = 
-{
-	0 , 12  , 3,  15,
-	8 ,  4 , 11,   7,
-	2 , 14 ,  1 , 13,
-	10 ,  6  , 9 ,  5
-};
+extern u8 gen_terrain_texture_8_coeftable[];
 
 TerrainTextureManager8::TerrainTextureManager8()
 	: TerrainTextureManager()
@@ -43,11 +37,26 @@ TerrainTextureManager8::TerrainTextureManager8()
 	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_a2.ntft");
 	mTextureDatas[i++] = (uint16_t*)NNS_FndGetArchiveFileByName("mtx:/16x8/grass_a_b.ntft");
 
+	static int tmpFix[] = { 3, 2, 0, 1 };
+
 	for (int j = 0; j < i; j++)
 	{
 		for (int k = 0; k < 16 * 8; k++)
 		{
 			mTextureDatas[j][k] &= 0x7FFF;
+		}
+		for (int k = 0; k < 4; k++)
+		{
+			for (int l = 0; l < 16 * 8; l++)
+			{
+				int r = mTextureDatas[j][l] & 0x1F;
+				int g = (mTextureDatas[j][l] >> 5) & 0x1F;
+				int b = (mTextureDatas[j][l] >> 10) & 0x1F;
+				int coef = gen_terrain_texture_8_coeftable[l * 4 + k];
+				mCoefdTextureDatas[j][k][l].r = r * coef;
+				mCoefdTextureDatas[j][k][l].g = g * coef;
+				mCoefdTextureDatas[j][k][l].b = b * coef;
+			}
 		}
 	}
 
