@@ -1,11 +1,13 @@
 #ifndef __MAP_H__
 #define __MAP_H__
 
+#include "io/TerrainData.h"
+#include "managers/TerrainTextureManager16.h"
+#include "managers/TerrainTextureManager8.h"
+
 class TerrainManager;
 class TrackPieceEx;
 class SceneryObject;
-class TerrainTextureManager16;
-class TerrainTextureManager8;
 
 /*typedef struct
 {
@@ -28,29 +30,43 @@ typedef uint16_t picking_result_t;
 
 #define Y_OFFSET 128 //40 //100
 
+#define MAP_BLOCK_WIDTH		132
+#define MAP_BLOCK_HEIGHT	132
+
+class Water;
+
 class Map
 {
-public:
-	struct hvtx_t
+private:
+	struct hmap_block_data_t
 	{
-		VecFx10 normal;
-		uint8_t y;
-		uint8_t tex;
-		uint16_t texAddress;
+		uint16_t x, y;
+		uint32_t last_accessed : 31;
+		uint32_t has_normals : 1;
 	};
-
-	hvtx_t* mHMap;
-
+public:
+	//hvtx_t* pHMap;
+	TerrainData* mTerrainData;
+	//4 blocks of 128x128
+	hvtx_t mHeightMap[4][MAP_BLOCK_WIDTH * MAP_BLOCK_HEIGHT];
+	hmap_block_data_t mHeightMapBlockData[4];
 	//uint8_t* mVtx;
 	//uint8_t* mTextures;
 	//VecFx10* mNormals;
 	//uint32_t* mTexAddresses;
 	uint8_t* mLodLevels;
+	u8* mLastLod;
+	int mLastXStart;
+	int mLastZStart;
 
 	TerrainTextureManager16* mTerrainTextureManager16;
 	TerrainTextureManager8* mTerrainTextureManager8;
-private:
+
 	TerrainManager* mTerrainManager;
+
+	Water* mWaterTest;
+private:
+	uint32_t mResourceCounter;
 	NNSFndList mTrackList;
 	TrackPieceEx* mGhostPiece;
 	NNSFndList mSceneryList;
@@ -60,6 +76,9 @@ private:
 	NNSFndArchive mTexArc;
 
 	void RecalculateNormals(int xstart, int xend, int zstart, int zend);
+	void RecalculateNormals(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend);
+	hvtx_t* GetMapBlock(int x, int y, bool withNormals);
+	void Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel, u8* lodData, fx32 xshift, fx32 zshift);
 public:
 	Map();
 	~Map();
@@ -110,6 +129,16 @@ public:
 	TrackPieceEx* GetFirstTrackPiece()
 	{
 		return (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, NULL);
+	}
+
+	void UpdateResourceCounter()
+	{
+		if (mResourceCounter == 0x7FFFFFFF)
+			mResourceCounter = 0;
+		else
+			mResourceCounter++;
+		mTerrainTextureManager8->UpdateResourceCounter();
+		mTerrainTextureManager16->UpdateResourceCounter();
 	}
 };
 

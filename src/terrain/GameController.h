@@ -18,11 +18,11 @@ public:
 		RENDER_MODE_PICKING
 	};
 
-	GameController()
+	GameController(LookAtCamera* camera)
 	{
 		mMap = new Map();
 		mSfxManager = new SfxManager();
-		mCamera = new FreeRoamCamera();
+		mCamera = camera;
 		mWagon = new Wagon(this, "a3");
 		mHemisphere = new Hemisphere();
 	}
@@ -31,7 +31,6 @@ public:
 	{
 		delete mMap;
 		delete mSfxManager;
-		delete mCamera;
 		delete mWagon;
 		delete mHemisphere;
 	}
@@ -39,7 +38,7 @@ public:
 	Map* mMap;
 	Wagon* mWagon;
 	SfxManager* mSfxManager;
-	FreeRoamCamera* mCamera;
+	LookAtCamera* mCamera;
 	Hemisphere* mHemisphere;
 
 	int mPickingXStart;

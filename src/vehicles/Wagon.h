@@ -51,6 +51,7 @@ public:
 	void Render();
 	void Update();
 	void GetPosition(VecFx32* dst);
+	void GetOrientation(VecFx32* dst);
 
 	static void StaticModifyBogeyRotation(NNSG3dRS* rs)
 	{
@@ -58,6 +59,11 @@ public:
 	}
 
 	void ModifyBogeyRotation(NNSG3dRS* rs);
+
+	void GetBounds(box2d_t* box)
+	{
+		*box = box2d_t();
+	}
 };
 
 #endif

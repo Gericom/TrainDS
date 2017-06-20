@@ -7,9 +7,9 @@
 #include "TrackPieceEx.h"
 #include "FlexTrack.h"
 
-void FlexTrack::Render(TerrainManager* terrainManager)
+void FlexTrack::Render()
 {
-	texture_t* tex = terrainManager->GetTrackTexture();
+	texture_t* tex = mMap->mTerrainManager->GetTrackTexture();
 	G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
 		GX_TEXGEN_TEXCOORD,    // use texcoord
 		(GXTexSizeS)tex->nitroWidth,        // 16 pixels

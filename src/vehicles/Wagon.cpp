@@ -109,6 +109,13 @@ void Wagon::GetPosition(VecFx32* dst)
 	*dst = center;
 }
 
+void Wagon::GetOrientation(VecFx32* dst)
+{
+	dst->x = FX_CosIdx(FX_RAD_TO_IDX(mCurRot));
+	dst->y = 0;
+	dst->z = FX_SinIdx(FX_RAD_TO_IDX(mCurRot));
+}
+
 void Wagon::ModifyBogeyRotation(NNSG3dRS* rs)
 {
 	for (int i = 0; i < mNrBogeys; i++)
@@ -147,13 +154,12 @@ void Wagon::Render()
 		center.y += (FX32_ONE / 32);//offset of the track from the terrain, to put the wheels on and not through the track
 		NNS_G3dGeTranslateVec(&center);
 
-		VecFx32 dir = { 0, 0, 0 };
+		/*VecFx32 dir = { 0, 0, 0 };
 		VecFx32 tmp;
 		for (int i = 0; i < mNrBogeys; i++)
 		{
 			mBogeys[i].pathWorker->GetCurrent(NULL, &tmp);
 			mBogeys[i].direction = tmp;
-			//int node = NNS_G3dGetNodeIdxByName(NNS_G3dGetNodeInfo(mRenderObj.resMdl), &mBogeys[i].nodeName.resName);
 			VEC_Add(&dir, &tmp, &dir);
 		}
 		dir.x /= mNrBogeys;
@@ -163,12 +169,11 @@ void Wagon::Render()
 		VEC_Normalize(&dir, &dir);
 
 		fx16 trainrot = FX_Atan2(dir.z, dir.x);
-		//OS_Printf("trainrot: %d\n", FX_RAD_TO_DEG(trainrot) / FX32_ONE);
-		mCurRot = trainrot;
+		mCurRot = trainrot;*/
 
 		//just why...
 		MtxFx33 rotmtx;
-		MTX_RotY33(&rotmtx, FX_SinIdx(FX_RAD_TO_IDX(-trainrot)), FX_CosIdx(FX_RAD_TO_IDX(-trainrot)));
+		MTX_RotY33(&rotmtx, FX_SinIdx(FX_RAD_TO_IDX(-mCurRot)), FX_CosIdx(FX_RAD_TO_IDX(-mCurRot)));
 		NNS_G3dGeMultMtx33(&rotmtx);
 		MTX_RotY33(&rotmtx, FX32_SIN90, FX32_COS90);
 		NNS_G3dGeMultMtx33(&rotmtx);
@@ -268,4 +273,20 @@ void Wagon::Update()
 			mSfx = NULL;
 		}
 	}
+	VecFx32 dir = { 0, 0, 0 };
+	VecFx32 tmp;
+	for (int i = 0; i < mNrBogeys; i++)
+	{
+		mBogeys[i].pathWorker->GetCurrent(NULL, &tmp);
+		mBogeys[i].direction = tmp;
+		VEC_Add(&dir, &tmp, &dir);
+	}
+	dir.x /= mNrBogeys;
+	dir.y /= mNrBogeys;
+	dir.z /= mNrBogeys;
+	dir.y = 0;
+	VEC_Normalize(&dir, &dir);
+
+	fx16 trainrot = FX_Atan2(dir.z, dir.x);
+	mCurRot = trainrot;
 }

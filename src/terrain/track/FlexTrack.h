@@ -15,6 +15,7 @@ private:
 	VecFx32 mCurvePoints[FLEXTRACK_NR_POINTS];
 	VecFx32 mCurveNormals[FLEXTRACK_NR_POINTS];
 	fx32 mCurveLength;
+	box2d_t mBounds;
 public:
 	TrackPieceEx* mConnections[2];
 	int mConnectionInPoints[2];
@@ -86,8 +87,8 @@ public:
 		Invalidate();
 	}
 
-	void Render(TerrainManager* terrainManager);
-	void RenderMarkers(TerrainManager* terrainManager);
+	void Render();
+	void RenderMarkers();
 	fx32 GetTrackLength(int inPoint);
 	void CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir);
 	void Invalidate();
@@ -98,6 +99,16 @@ public:
 		Invalidate();
 		if (mConnections[id])
 			mConnections[id]->Invalidate();
+	}
+
+	void GetBounds(box2d_t* box)
+	{
+		*box = mBounds;
+	}
+
+	void GetPosition(VecFx32* dst) 
+	{
+		*dst = mPoints[0];
 	}
 };
 

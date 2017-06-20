@@ -3,7 +3,7 @@
 
 #include <nnsys/fnd.h>
 #include "engine/LookAtCamera.h"
-#include "engine/WorldObject.h"
+#include "engine/objects/WorldObject.h"
 
 class SfxManager;
 

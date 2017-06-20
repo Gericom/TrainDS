@@ -71,7 +71,8 @@ TerrainTextureManager16::TerrainTextureManager16()
 
 static void OnVRAMCopyComplete(void* arg)
 {
-	GX_SetBankForTex(GX_VRAM_TEX_01_AC);
+	GX_SetBankForTex(GX_VRAM_TEX_012_ACD);
+	//GX_SetBankForTex((GXVRamTex)(GX_GetBankForTex() | GX_VRAM_C));//
 }
 
 void TerrainTextureManager16::UpdateVramC()

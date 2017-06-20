@@ -70,7 +70,7 @@ render_tile:
 	mov r4, r1, lsr #16
 	orr r1, r4, r4, lsl #16
 
-	add r2, r0, #(128 * 8)
+	add r2, r0, #(132 * 8)
 	ldmia r2, {r2, r3, r9, r11}
 	and r3, r3, #0xFF
 	orr r3, r10, r3, lsl #11
@@ -117,7 +117,7 @@ render_tile2x2:
 	mov r4, r1, lsr #16
 	orr r1, r4, r4, lsl #16
 
-	add r9, r0, #(2 * 128 * 8)
+	add r9, r0, #(2 * 132 * 8)
 	ldmia r9, {r2, r3}
 
 	add r9, r9, #(2 * 8)

@@ -38,6 +38,8 @@ private:
 		FRAME_TYPE_SUB			//for sub screen 3d
 	};
 
+	FreeRoamCamera* mCamera;
+
 	int mPickingPointX;
 	int mPickingPointY;
 	int mSelectedTrain;

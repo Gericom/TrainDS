@@ -5,6 +5,7 @@
 #include <cmath>
 #include "core.h"
 #include "util.h"
+#include "engine/objects/Water.h"
 #include "GameController.h"
 
 static const GXRgb sToonTable[32] =
@@ -103,17 +104,21 @@ void GameController::Render(RenderMode mode)
 		if (mode == RENDER_MODE_FAR)
 			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31, 0x7fff, 0, true);
 		else
-			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), /*31*/0, 0x7fff, 0, false);
+			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31, 0x7fff, 0, false);
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(true);
 		G3X_AntiAlias(true);
 		if (mode == RENDER_MODE_FAR)
 			G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x2000, 0x8000 - 0x2000);
 		else
-			G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0800, 0x8000 - 0xC00);
+			G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0200, 0x8000 - 0x200);
+
 		//G3X_SetFog(/*true*/false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
 		//G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
-		G3X_SetFogColor(GX_RGB(148 >> 3, 181 >> 3, 206 >> 3), 31);
+		//if (mode == RENDER_MODE_FAR)
+			G3X_SetFogColor(GX_RGB(148 >> 3, 181 >> 3, 206 >> 3), 31);
+		//else
+		//	G3X_SetFogColor(GX_RGB(148 >> 3, 181 >> 3, 206 >> 3), 0);
 		u32 fog_table[8];
 		for (int i = 0; i < 8; i++)
 		{
@@ -125,7 +130,32 @@ void GameController::Render(RenderMode mode)
 		G3X_SetToonTable(&sToonTable[0]);
 	}
 
+	if (mode == RENDER_MODE_NEAR)
+	{
+		//Do some 2d with the 3d engine when needed (AKA, fucking up matrices)
+		G3_MtxMode(GX_MTXMODE_PROJECTION);
+		{
+			G3_Identity();
+			G3_OrthoW(FX32_ONE * 0, FX32_ONE * 192, FX32_ONE * 0, FX32_ONE * 256, FX32_ONE * 0, FX32_ONE * 1024, 40960 * 4, NULL);
+		}
+		G3_MtxMode(GX_MTXMODE_TEXTURE);
+		{
+			G3_Identity();
+		}
+		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+		G3_Identity();
+		G3_Color(GX_RGB(31, 31, 31));
+
+		G3_TexImageParam(GX_TEXFMT_DIRECT, GX_TEXGEN_TEXCOORD, GX_TEXSIZE_S256, GX_TEXSIZE_T256, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0x40000);
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 10, 30, 0);
+		Util_DrawSprite(0 * FX32_ONE, 0 * FX32_ONE, -1024 * FX32_ONE, 256 * FX32_ONE, 192 * FX32_ONE);
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 8, 30, 0);
+		Util_DrawSprite(0 * FX32_ONE, 0 * FX32_ONE, -1024 * FX32_ONE, 256 * FX32_ONE, 192 * FX32_ONE);
+	}
+
 	mCamera->Apply();
+	VecFx32 camDir;
+	mCamera->GetLookDirection(&camDir);
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 	/*VecFx32 vec = { FX32_CONST(0), FX32_CONST(-1), FX32_CONST(-1) };
 	VEC_Normalize(&vec, &vec);
@@ -150,13 +180,28 @@ void GameController::Render(RenderMode mode)
 
 	if (mode != RENDER_MODE_PICKING)
 	{
+		VecFx32 up = { 0, FX32_ONE, 0 };
+		fx32 camY = mCamera->mPosition.y - mMap->GetYOnMap(mCamera->mPosition.x, mCamera->mPosition.z);
+		u16 ang = FX_AcosIdx(VEC_DotProduct(&camDir, &up));
+		if (ang < FX_DEG_TO_IDX(90 * FX32_ONE))
+			ang = FX_DEG_TO_IDX(90 * FX32_ONE);
+		fx32 cosang = FX_CosIdx(ang - FX_DEG_TO_IDX(90 * FX32_ONE));
+		cosang = FX_Mul(cosang, cosang);
+		//OS_Printf("ang: %d\n", FX_IDX_TO_DEG(ang) >> 12);
+		fx32 newDist = camY + FX_Mul(cosang, 50 * 4096);
 		if (mode == RENDER_MODE_FAR)
 		{
-			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * 4096, /*35*/50 * 4096, 40960 * 4);
+			if (newDist < 8 * 4096)
+				newDist = 8 * 4096;
+			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4 * 4096, /*35*//*50 * 4096*/newDist, 40960 * 4);
 		}
 		else
 		{
-			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 10 * 4096, 40960 * 4);
+			if (newDist > 10 * 4096)
+				newDist = 10 * 4096;
+			if (newDist < 2 * 4096)
+				newDist = 2 * 4096;
+			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*10 * 4096*/newDist, 40960 * 4);
 		}
 	}
 	else
@@ -166,14 +211,14 @@ void GameController::Render(RenderMode mode)
 	calculateVisibleGrid(&bbmin, &bbmax);
 
 	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	xstart = MATH_CLAMP(xstart, 0, 128);
+	//xstart = MATH_CLAMP(xstart, 0, 128);
 	int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	zstart = MATH_CLAMP(zstart, 0, 128);
+	//zstart = MATH_CLAMP(zstart, 0, 128);
 
 	int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	xend = MATH_CLAMP(xend, 0, 128);
+	//xend = MATH_CLAMP(xend, 0, 128);
 	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	zend = MATH_CLAMP(zend, 0, 128);
+	//zend = MATH_CLAMP(zend, 0, 128);
 
 	NNS_G3dGlbFlushP();
 	NNS_G3dGeFlushBuffer();
@@ -187,24 +232,53 @@ void GameController::Render(RenderMode mode)
 
 	G3_PushMtx();
 	{
-		VecFx32 camDir;
-		mCamera->GetLookDirection(&camDir);
 		mMap->Render(xstart, xend, zstart, zend, mode == RENDER_MODE_PICKING, &mCamera->mPosition, &camDir, (mode == RENDER_MODE_FAR ? 1 : 0));
-		mWagon->Render();
+		G3_PushMtx();
+		{
+			G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+			mWagon->Render();
+		}
+		G3_PopMtx(1);
+		/*if (mode == RENDER_MODE_NEAR)
+		{
+			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 8 * 4096, 4096 * 4);
+			NNS_G3dGlbFlushP();
+			NNS_G3dGeFlushBuffer();
+			G3_PushMtx();
+			{
+				G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+				mMap->mWaterTest->Render();
+			}
+			G3_PopMtx(1);
+		}
+		else
+		{
+			NNS_G3dGlbFlushP();
+			NNS_G3dGeFlushBuffer();
+			G3_PushMtx();
+			{
+				G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+				mMap->mWaterTest->Render();
+			}
+			G3_PopMtx(1);
+		}*/
 		//skybox
 		if (mode == RENDER_MODE_FAR)
 		{
-			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, 64 * FX32_ONE, 40960 * 4);
+			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, 56 * FX32_ONE, 40960 * 4);
 			NNS_G3dGlbFlushP();
 			NNS_G3dGeFlushBuffer();
-			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, 0);
+			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 62, 30, 0);
 			G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S8, GX_TEXSIZE_T8, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
 			G3_PushMtx();
 			G3_Translate(mCamera->mDestination.x, 0, mCamera->mDestination.z);
 			G3_Scale(50 * FX32_ONE, 50 * FX32_ONE, 50 * FX32_ONE);
 			mHemisphere->Render();
+			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 61, 30, 0);
+			mHemisphere->Render();
 			G3_PopMtx(1);
 		}
 	}
 	G3_PopMtx(1);
+	mMap->UpdateResourceCounter();
 }

@@ -4,7 +4,6 @@
 #include "util.h"
 #include "TerrainTextureManager16.h"
 
-extern "C" void gen_terrain_texture(u16* tl, u16* tr, u16* bl, u16* br, u16* dst);
 extern "C" void gen_terrain_texture_precoefd(u16* tl, u16* tr, u16* bl, u16* br, u16* dst);
 
 asm uint32_t TerrainTextureManager16::GetTextureAddress(int tl, int tr, int bl, int br, uint32_t oldTexKey)
@@ -20,24 +19,20 @@ asm uint32_t TerrainTextureManager16::GetTextureAddress(int tl, int tr, int bl, 
 		offsetof_mMessageQueue = offsetof(TerrainTextureManager16, mMessageQueue)
 	};
 	orr r2, r1, r2, lsl #8
-	ldr r1, [sp, #arg_br]
+	ldmia sp, { r1, r12 }
 	orr r2, r2, r3, lsl #16
 	orr r2, r2, r1, lsl #24
-	ldr r1, [sp, #arg_oldTexKey]
 
-	subs r12, r1, #(128 * 1024)
-		bmi notexkey
-	add r12, r0, r12, lsr #6
-	ldr r3, [r12, #offsetof_mCacheBlocks]!
-	cmp r3, r2
-		bne notexkey
+	subs r1, r12, #(128 * 1024)
+	addge r1, r0, r1, lsr #6
+	ldrge r3, [r1, #offsetof_mCacheBlocks]!
+	cmpge r3, r2
 
-	ldr r3, [r0, #offsetof_mResourceCounter]
-	str r3, [r12, #4]
-	mov r0, r1
-	bx lr
+	ldreq r3, [r0, #offsetof_mResourceCounter]
+	streq r3, [r1, #4]
+	moveq r0, r12
+	bxeq lr
 
-notexkey:
 	add r12, r0, #offsetof_mCacheBlocks
 	add r1, r12, #(256 * 8)
 	str r2, [r1], #8
@@ -81,7 +76,8 @@ loop2:
 	add r0, r0, r1
 	mov r1, r5
 	mov r2, #OS_MESSAGE_NOBLOCK
-	bl OS_JamMessage
+	bl OS_SendMessage
+	//bl OS_JamMessage
 	mov r0, r5, lsl #9
 	add r0, r0, #(128 * 1024)
 	ldmfd sp!, { r4, r5, pc }
@@ -95,12 +91,6 @@ void TerrainTextureManager16::WorkerThreadMain()
 		OS_ReceiveMessage(&mMessageQueue, &msg, OS_MESSAGE_BLOCK);
 		int cacheBlock = (int)msg;
 		texture_cache_block_t* block = &mCacheBlocks[cacheBlock];
-		/*gen_terrain_texture(
-			mTextureDatas[block->tag & 0xFF],
-			mTextureDatas[(block->tag >> 8) & 0xFF],
-			mTextureDatas[(block->tag >> 16) & 0xFF],
-			mTextureDatas[(block->tag >> 24) & 0xFF],
-			(u16*)&mVramCTexData[cacheBlock << 9]);*/
 		gen_terrain_texture_precoefd(
 			(u16*)mCoefdTextureDatas[block->tag & 0xFF][0],
 			(u16*)mCoefdTextureDatas[(block->tag >> 8) & 0xFF][1],

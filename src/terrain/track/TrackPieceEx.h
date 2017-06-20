@@ -1,9 +1,12 @@
 #ifndef __TRACKPIECEEX_H__
 #define __TRACKPIECEEX_H__
 
+#include "box2d.h"
+#include "engine/objects/WorldObject.h"
+
 class TerrainManager;
 
-class TrackPieceEx
+class TrackPieceEx : public WorldObject
 {
 	friend class Map;
 private:
@@ -22,12 +25,15 @@ public:
 	virtual void Connect(int id, TrackPieceEx* track, int inPoint, bool updatePos) = 0;
 	virtual void Disconnect(int id) = 0;
 
-	virtual void Render(TerrainManager* terrainManager) = 0;
-	virtual void RenderMarkers(TerrainManager* terrainManager) = 0;
+	virtual void Render() = 0;
+	virtual void RenderMarkers() = 0;
 	virtual fx32 GetTrackLength(int inPoint) = 0;
 	virtual void CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir) = 0;
 
 	virtual void Invalidate() = 0;
+
+	virtual void GetPosition(VecFx32* dst) = 0;
+	virtual void GetBounds(box2d_t* box) = 0;
 };
 
 #endif

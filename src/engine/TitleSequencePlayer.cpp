@@ -1,5 +1,6 @@
 #include <nitro.h>
 #include "core.h"
+#include "engine/VehicleCamera.h"
 #include "terrain/GameController.h"
 #include "TitleSequencePlayer.h"
 
@@ -7,10 +8,10 @@ void TitleSequencePlayer::Update()
 {	
 	if (mUpdateDstToTrainId >= 0)
 	{
-		mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
-		mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
-		mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
-		mGameController->mCamera->mDestination.y += FX32_CONST(0.2f);
+		//mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
+		//mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
+		//mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
+		//mGameController->mCamera->mDestination.y += FX32_CONST(0.2f);
 	}
 
 	if (mFinished)
@@ -38,11 +39,15 @@ void TitleSequencePlayer::Update()
 			rot.y = *mCurSequencePos++;
 			rot.z = *mCurSequencePos++;
 			mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
-			mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
-			mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
-			mGameController->mCamera->mDestination.y += FX32_CONST(0.2f);
-			mGameController->mCamera->mCamDistance = FX32_CONST(1.25f);
-			mGameController->mCamera->SetRotation(&rot);
+			//mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
+			//mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
+			//mGameController->mCamera->mDestination.y += FX32_CONST(0.2f);
+			if (mGameController->mCamera)
+				delete mGameController->mCamera;
+			mGameController->mCamera = new VehicleCamera(mGameController->mWagon);
+
+			((VehicleCamera*)mGameController->mCamera)->mCamDistance = FX32_CONST(1.25f);
+			((VehicleCamera*)mGameController->mCamera)->SetRotation(&rot);
 			break;
 		}
 		case TITLE_SEQUENCE_COMMAND_ID_FIXED_CAM:
@@ -56,9 +61,12 @@ void TitleSequencePlayer::Update()
 			rot.x = *mCurSequencePos++;
 			rot.y = *mCurSequencePos++;
 			rot.z = *mCurSequencePos++;
+			if (mGameController->mCamera)
+				delete mGameController->mCamera;
+			mGameController->mCamera = new FreeRoamCamera();
 			mGameController->mCamera->mDestination = dst;
-			mGameController->mCamera->mCamDistance = 2 * FX32_ONE;
-			mGameController->mCamera->SetRotation(&rot);
+			((FreeRoamCamera*)mGameController->mCamera)->mCamDistance = 2 * FX32_ONE;
+			((FreeRoamCamera*)mGameController->mCamera)->SetRotation(&rot);
 			break;
 		}
 		case TITLE_SEQUENCE_COMMAND_ID_END_OF_SEQUENCE:

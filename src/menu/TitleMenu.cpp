@@ -111,7 +111,7 @@ void TitleMenu::Initialize(int arg)
 
 	Util_LoadLHTextureFromCard("/data/menu/title/titlelogolarge.ntft.lh", "/data/menu/title/titlelogolarge.ntfp", mLogoLargeTexture.texKey, mLogoLargeTexture.plttKey);
 
-	mGameController = new GameController();
+	mGameController = new GameController(NULL);
 
 	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, /*118*/133 * FX32_ONE/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
 	mGameController->mWagon->mDriving = true;
@@ -221,22 +221,23 @@ void TitleMenu::VBlank()
 	if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
-		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
+		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0);
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 		mRenderMode = GameController::RENDER_MODE_NEAR;
 	}
 	else if (mRenderMode == GameController::RENDER_MODE_NEAR)
 	{
-		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_D);
-		GX_SetBankForBG(GX_VRAM_BG_128_B);
+		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B);
+		GX_SetBankForTex(GX_VRAM_TEX_012_ACD);
+		//GX_SetBankForBG(GX_VRAM_BG_128_D);
 		//set this to GX_DISPMODE_VRAM_D to prevent flickering, but it will introduce one frame of lag (don't know if that really matters though)
 		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
-		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
-		G2_SetBG3Priority(3);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG3*/ | GX_PLANEMASK_OBJ);
+		//G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+		//G2_SetBG3Priority(3);
 		G2_SetBG0Priority(0);
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
 		mRenderMode = GameController::RENDER_MODE_FAR;
 	}
 }

@@ -139,7 +139,9 @@ void Game::Initialize(int arg)
 
 	MI_CpuClear8(&mTmpSubOamBuffer[0], sizeof(mTmpSubOamBuffer));
 
-	mGameController = new GameController();
+	mCamera = new FreeRoamCamera();
+
+	mGameController = new GameController(mCamera);
 
 	VecFx32 a = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 24) * FX32_ONE - 32 * FX32_ONE };
 	VecFx32 b = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 20 + 24) * FX32_ONE - 32 * FX32_ONE };
@@ -219,11 +221,14 @@ void Game::Initialize(int arg)
 
 	mPickingCallback = NULL;
 
-	mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
-	mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
-	mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
-	VecFx32 camRot = { 0, 22 * FX32_ONE, 0 };
-	mGameController->mCamera->SetRotation(&camRot);
+	//mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
+	//mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
+	//mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
+	mCamera->mDestination.x = 373680;
+	mCamera->mDestination.y = 0;
+	mCamera->mDestination.z = 1153947;
+	VecFx32 camRot = { -1259520, 86016, 0 };//0, 22 * FX32_ONE, 0 };
+	mCamera->SetRotation(&camRot);
 
 	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*//*31*/8 * 4096, 40960 * 4);
 
@@ -357,14 +362,14 @@ void Game::Render()
 		mKeyTimer--;
 
 	VecFx32 camRot;
-	mGameController->mCamera->GetRotation(&camRot);
+	mCamera->GetRotation(&camRot);
 	if (mTrainMode)
 	{
 		mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
-		mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
-		mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
-		mGameController->mCamera->mCamDistance = FX32_CONST(1.25f);
-		mGameController->mCamera->mDestination.y += FX32_CONST(0.2f);
+		mCamera->mDestination.x -= 32 * FX32_ONE;
+		mCamera->mDestination.z -= 32 * FX32_ONE;
+		mCamera->mCamDistance = FX32_CONST(1.25f);
+		mCamera->mDestination.y += FX32_CONST(0.2f);
 	}
 
 
@@ -390,26 +395,26 @@ void Game::Render()
 		else if (keyData & PAD_KEY_DOWN)
 			camRot.y -= FX32_ONE >> 2;
 		if (keyData & PAD_BUTTON_L && !(keyData & PAD_BUTTON_R))
-			mGameController->mCamera->MoveY(-FX32_ONE >> 5);
+			mCamera->MoveY(-FX32_ONE >> 5);
 		else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))
-			mGameController->mCamera->MoveY(FX32_ONE >> 5);
+			mCamera->MoveY(FX32_ONE >> 5);
 	}
 	else
 	{
 		if (keyData & PAD_KEY_LEFT)
-			mGameController->mCamera->MoveX(-FX32_ONE / 50);// 24);
+			mCamera->MoveX(-FX32_ONE / 50);// 24);
 		else if (keyData & PAD_KEY_RIGHT)
-			mGameController->mCamera->MoveX(FX32_ONE / 50);// 24);
+			mCamera->MoveX(FX32_ONE / 50);// 24);
 		if (keyData & PAD_KEY_UP)
-			mGameController->mCamera->MoveZ(FX32_ONE / 50);// 24);
+			mCamera->MoveZ(FX32_ONE / 50);// 24);
 		else if (keyData & PAD_KEY_DOWN)
-			mGameController->mCamera->MoveZ(-FX32_ONE / 50);// 24);
+			mCamera->MoveZ(-FX32_ONE / 50);// 24);
 		if (keyData & PAD_BUTTON_L && !(keyData & PAD_BUTTON_R))
 			camRot.x -= FX32_ONE >> 1;
 		else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))
 			camRot.x += FX32_ONE >> 1;
 	}
-	mGameController->mCamera->SetRotation(&camRot);
+	mCamera->SetRotation(&camRot);
 
 	if (keyData & PAD_BUTTON_START)
 		Game::GotoMenu();
@@ -513,7 +518,7 @@ void Game::Render()
 void Game::OnSub3DCopyVAlarm()
 {
 	//this might cause glitches, because we update in the middle of a frame
-	MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_B, (void*)(HW_DB_BG_VRAM + 0x2000), 128 * 96 * 2, NULL, NULL);
+	MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_D, (void*)(HW_DB_BG_VRAM + 0x2000), 128 * 96 * 2, NULL, NULL);
 }
 
 void Game::VBlank()
@@ -527,36 +532,37 @@ void Game::VBlank()
 	if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)//mPickingState == PICKING_STATE_RENDERING)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
-		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
+		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
 		//Capture the picking data
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 		mCurFrameType = FRAME_TYPE_MAIN_FAR;
 	}
 	else if (mCurFrameType == FRAME_TYPE_MAIN_FAR)//mRenderState == 0)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
-		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
+		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0);
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 		mCurFrameType = FRAME_TYPE_MAIN_NEAR;
 	}
 	else if (mCurFrameType == FRAME_TYPE_MAIN_NEAR)
 	{
-		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_D);
-		GX_SetBankForBG(GX_VRAM_BG_128_B);
+		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B);
+		GX_SetBankForTex(GX_VRAM_TEX_012_ACD);
+		//GX_SetBankForBG(GX_VRAM_BG_128_B);
 		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
-		G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
-		G2_SetBG3Priority(3);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG3*/ | GX_PLANEMASK_OBJ);
+		//G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+		//G2_SetBG3Priority(3);
 		G2_SetBG0Priority(0);
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
 		mCurFrameType = FRAME_TYPE_MAIN_FAR;
 	}
 	else if (mCurFrameType == FRAME_TYPE_SUB)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
-		GX_SetGraphicsMode(GX_DISPMODE_VRAM_D, GX_BGMODE_0, GX_BG0_AS_3D);
-		GX_SetCapture(GX_CAPTURE_SIZE_128x128, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
+		GX_SetCapture(GX_CAPTURE_SIZE_128x128, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 		mCurFrameType = FRAME_TYPE_MAIN_FAR;
 		//todo: remove the need for reallocation
 		if (mSub3DCopyVAlarm != NULL)
