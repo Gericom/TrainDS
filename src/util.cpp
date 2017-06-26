@@ -6,7 +6,7 @@
 //#include "lrc.h"
 #include "util.h"
 
-void* Util_LoadFileToBuffer(char* path, uint32_t* size, bool tempoarly)
+void* Util_LoadFileToBuffer(const char* path, uint32_t* size, bool tempoarly)
 {
 	FSFile file;
 	FS_InitFile(&file);
@@ -21,7 +21,7 @@ void* Util_LoadFileToBuffer(char* path, uint32_t* size, bool tempoarly)
 	return buffer;
 }
 
-void* Util_LoadLZ77FileToBuffer(char* path, uint32_t* size, bool tempoarly)
+void* Util_LoadLZ77FileToBuffer(const char* path, uint32_t* size, bool tempoarly)
 {
 	FSFile file;
 	FS_InitFile(&file);
@@ -50,7 +50,7 @@ void* Util_LoadLZ77FileToBuffer(char* path, uint32_t* size, bool tempoarly)
 	return buffer;
 }
 
-void* Util_LoadLHFileToBuffer(char* path, uint32_t* size, bool tempoarly)
+void* Util_LoadLHFileToBuffer(const char* path, uint32_t* size, bool tempoarly)
 {
 	FSFile file;
 	FS_InitFile(&file);
@@ -135,7 +135,7 @@ void Util_LoadTexture4x4WithKey(NNSGfdTexKey key, void* data, void* indexData)
 	GX_EndLoadTex();
 }
 
-void Util_LoadTextureFromCard(char* texPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+void Util_LoadTextureFromCard(const char* texPath, const char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
 {
 	uint32_t size;
 	void* buffer = Util_LoadFileToBuffer(texPath, &size, TRUE);
@@ -153,7 +153,7 @@ void Util_LoadTextureFromCard(char* texPath, char* plttPath, NNSGfdTexKey &texKe
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 }
 
-void Util_LoadLZ77TextureFromCard(char* texPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+void Util_LoadLZ77TextureFromCard(const char* texPath, const char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
 {
 	uint32_t size;
 	void* buffer = Util_LoadLZ77FileToBuffer(texPath, &size, TRUE);
@@ -171,7 +171,7 @@ void Util_LoadLZ77TextureFromCard(char* texPath, char* plttPath, NNSGfdTexKey &t
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 }
 
-void Util_LoadLHTextureFromCard(char* texPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+void Util_LoadLHTextureFromCard(const char* texPath, const char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
 {
 	uint32_t size;
 	void* buffer = Util_LoadLHFileToBuffer(texPath, &size, TRUE);
@@ -189,7 +189,7 @@ void Util_LoadLHTextureFromCard(char* texPath, char* plttPath, NNSGfdTexKey &tex
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 }
 
-void Util_LoadTexture4x4FromCard(char* texPath, char* texIndexPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+void Util_LoadTexture4x4FromCard(const char* texPath, const char* texIndexPath, const char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
 {
 	uint32_t size;
 	void* buffer = Util_LoadFileToBuffer(texPath, &size, TRUE);
@@ -210,7 +210,7 @@ void Util_LoadTexture4x4FromCard(char* texPath, char* texIndexPath, char* plttPa
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 }
 
-void Util_LoadLZ77Texture4x4FromCard(char* texPath, char* texIndexPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+void Util_LoadLZ77Texture4x4FromCard(const char* texPath, const char* texIndexPath, const char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
 {
 	uint32_t size;
 	void* buffer = Util_LoadLZ77FileToBuffer(texPath, &size, TRUE);
@@ -231,7 +231,7 @@ void Util_LoadLZ77Texture4x4FromCard(char* texPath, char* texIndexPath, char* pl
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 }
 
-void Util_LoadLHTexture4x4FromCard(char* texPath, char* texIndexPath, char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
+void Util_LoadLHTexture4x4FromCard(const char* texPath, const char* texIndexPath, const char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
 {
 	uint32_t size;
 	void* buffer = Util_LoadLHFileToBuffer(texPath, &size, TRUE);

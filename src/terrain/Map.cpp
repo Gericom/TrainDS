@@ -6,20 +6,22 @@
 #include "TerrainManager.h"
 #include "terrain/track/TrackPieceEx.h"
 #include "terrain/track/FlexTrack.h"
-#include "terrain/scenery/SceneryObject.h"
+#include "terrain/scenery/SimpleSceneryObject.h"
 #include "terrain/scenery/RCT2Tree1.h"
 #include "managers/TerrainTextureManager16.h"
 #include "managers/TerrainTextureManager8.h"
 #include "io/TerrainData.h"
+#include "io/ObjectData.h"
 #include "engine/objects/Water.h"
 #include "box2d.h"
+#include "engine/QuadTree.h"
 #include "Map.h"
 
 Map::Map()
 	: mGridEnabled(FALSE), mGhostPiece(NULL), mResourceCounter(0)
 {
 	NNS_FND_INIT_LIST(&mTrackList, TrackPieceEx, mLink);
-	NNS_FND_INIT_LIST(&mSceneryList, SceneryObject, mLink);
+	NNS_FND_INIT_LIST(&mSceneryList, SimpleSceneryObject, mLink);
 	mTerrainManager = new TerrainManager();
 
 	mTerrainData = new TerrainData("/data/map/britainmap.tdat");
@@ -32,6 +34,17 @@ Map::Map()
 
 	VecFx32 wpos = { 373680, -6 * FX32_ONE + (FX32_ONE >> 2), 1153947 };
 	mWaterTest = new Water(&wpos, 50 * FX32_ONE, 50 * FX32_ONE, 4 * FX32_ONE);
+
+	mObjectData = new ObjectData("/data/map/objects.objd");
+	mObjectTree = new QuadTree(-32 * FX32_ONE, -32 * FX32_ONE, mTerrainData->GetWidth() * FX32_ONE, mTerrainData->GetHeight() * FX32_ONE, 6);
+	for (int i = 0; i < mObjectData->mFileData->header.nr_sceneries; i++)
+	{
+		ObjectData::object_data_scenery_entry_t* s = &mObjectData->mSceneryEntries[i];
+		SimpleSceneryObject* ob = new SimpleSceneryObject(this, s->object_type, s->x - 32 * FX32_ONE, s->z - 32 * FX32_ONE, s->roty);
+		ob->Invalidate();
+		mObjectTree->Insert(ob);
+		//AddSceneryObject(new SimpleSceneryObject(this, s->object_type, s->x - 32 * FX32_ONE, s->z - 32 * FX32_ONE));
+	}
 
 	//pHMap = new hvtx_t[128 * 128];
 	/*hvtx_t* pHMap = mHeightMap[0];
@@ -95,6 +108,13 @@ Map::Map()
 		TrySnapTrack(trackPiece, 0);
 		TrySnapTrack(trackPiece, 1);
 	}
+
+	/*SimpleSceneryObject* sceneryObject = NULL;
+	while ((sceneryObject = (SimpleSceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
+	{
+		sceneryObject->Invalidate();
+	}*/
+
 	NNS_FndFreeToExpHeap(gHeapHandle, trackdata);
 }
 
@@ -190,116 +210,6 @@ void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
 				RecalculateNormals(pMap, xstart2, xend2, zstart2, zend2);
 		}
 	}
-}
-
-void Map::Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel)
-{
-	if (!picking && lodLevel == 1)
-	{
-		MI_CpuClearFast(mLodLevels, 128 * 128);
-		//center the stuff
-		int lodx = (128 - (xend - xstart)) >> 1;
-		int lody = (128 - (zend - zstart)) >> 1;
-		mLastLod = &mLodLevels[lody * 128 + lodx];
-		mLastXStart = xstart;
-		mLastZStart = zstart;
-	}
-	G3_PushMtx();
-	{
-		G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
-		for (int y = zstart >> 7; y < (zend + 127) >> 7; y++)
-		{
-			for (int x = xstart >> 7; x < (xend + 127) >> 7; x++)
-			{
-				G3_PushMtx();
-				{
-					G3_Translate(x * 128 * FX32_ONE, 0, y * 128 * FX32_ONE);
-					int xstart2 = xstart - x * 128;
-					if (xstart2 < 0)
-						xstart2 = 0;
-					if (xstart2 > 128)
-						xstart2 = 128;
-					int xend2 = xend - x * 128;
-					if (xend2 < 0)
-						xend2 = 0;
-					if (xend2 > 128)
-						xend2 = 128;
-					int zstart2 = zstart - y * 128;
-					if (zstart2 < 0)
-						zstart2 = 0;
-					if (zstart2 > 128)
-						zstart2 = 128;
-					int zend2 = zend - y * 128;
-					if (zend2 < 0)
-						zend2 = 0;
-					if (zend2 > 128)
-						zend2 = 128;
-
-					VecFx32 cam2 = *camPos;
-					cam2.x -= x * 128 * FX32_ONE;
-					cam2.z -= y * 128 * FX32_ONE;
-
-					hvtx_t* pMap = GetMapBlock(x, y, true);
-					if(pMap)
-						Render(pMap, xstart2, xend2, zstart2, zend2, picking, &cam2, camDir, lodLevel, &mLastLod[(y * 128 - mLastZStart) * 128 + x * 128 - mLastXStart], x * 128 * FX32_ONE, y * 128 * FX32_ONE);
-				}
-				G3_PopMtx(1);
-			}
-		}
-		if (!picking)
-		{
-			box2d_t frustumbox = { xstart * FX32_ONE - 32 * FX32_ONE, zstart * FX32_ONE - 32 * FX32_ONE, xend * FX32_ONE - 32 * FX32_ONE, zend * FX32_ONE - 32 * FX32_ONE };
-			TrackPieceEx* trackPiece = NULL;
-			while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
-			{
-				box2d_t bounds;
-				trackPiece->GetBounds(&bounds);
-				if (!bounds.Intersects(&frustumbox))
-					continue;
-				//if (trackPiece->mPosition.x >= xstart && trackPiece->mPosition.x < xend &&
-				//	trackPiece->mPosition.z >= zstart && trackPiece->mPosition.z < zend)
-				//{
-				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-				trackPiece->Render();
-				//}
-			}
-			if (mGhostPiece != NULL)
-			{
-				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-				mGhostPiece->Render();
-			}
-			trackPiece = NULL;
-			while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
-			{
-				box2d_t bounds;
-				trackPiece->GetBounds(&bounds);
-				if (!bounds.Intersects(&frustumbox))
-					continue;
-				trackPiece->RenderMarkers();
-			}
-			if (mGhostPiece != NULL)
-			{
-				mGhostPiece->RenderMarkers();
-			}
-			SceneryObject* sceneryObject = NULL;
-			while ((sceneryObject = (SceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
-			{
-				if (sceneryObject->mPosition.x >= xstart && sceneryObject->mPosition.x < xend &&
-					sceneryObject->mPosition.z >= zstart && sceneryObject->mPosition.z < zend)
-				{
-					if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-					sceneryObject->Render(mTerrainManager);
-				}
-			}
-			mWaterTest->Render();
-			mWaterTest->Render2();
-		}
-	}
-	G3_PopMtx(1);
-	//TODO: move this elsewhere, since this doesn't update with sub 3d rendering
-	mTerrainManager->mTrackMarkerRotation += FX32_CONST(2);
-	if (mTerrainManager->mTrackMarkerRotation >= 360 * FX32_ONE)
-		mTerrainManager->mTrackMarkerRotation -= 360 * FX32_ONE;
 }
 
 static inline fx32 sign(VecFx32* p1, VecFx32* p2, VecFx32* p3)

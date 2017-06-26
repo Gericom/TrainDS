@@ -6,10 +6,15 @@
 #include "TerrainManager.h"
 #include "terrain/track/TrackPieceEx.h"
 #include "terrain/track/FlexTrack.h"
-#include "terrain/scenery/SceneryObject.h"
+#include "terrain/scenery/SimpleSceneryObject.h"
 #include "terrain/scenery/RCT2Tree1.h"
 #include "managers/TerrainTextureManager16.h"
 #include "managers/TerrainTextureManager8.h"
+#include "io/TerrainData.h"
+#include "io/ObjectData.h"
+#include "engine/objects/Water.h"
+#include "box2d.h"
+#include "engine/QuadTree.h"
 #include "Map.h"
 
 void Map::RecalculateNormals(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend)
@@ -37,6 +42,122 @@ void Map::RecalculateNormals(hvtx_t* pHMap, int xstart, int xend, int zstart, in
 			pHMap[y * MAP_BLOCK_WIDTH + x].normal = GX_VECFX10(norm.x, norm.y, norm.z);
 		}
 	}
+}
+
+void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel)
+{
+	if (!picking && lodLevel == 1)
+	{
+		MI_CpuClearFast(mLodLevels, 128 * 128);
+		//center the stuff
+		int lodx = (128 - (xend - xstart)) >> 1;
+		int lody = (128 - (zend - zstart)) >> 1;
+		mLastLod = &mLodLevels[lody * 128 + lodx];
+		mLastXStart = xstart;
+		mLastZStart = zstart;
+	}
+	G3_PushMtx();
+	{
+		G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+		for (int y = zstart >> 7; y < (zend + 127) >> 7; y++)
+		{
+			for (int x = xstart >> 7; x < (xend + 127) >> 7; x++)
+			{
+				G3_PushMtx();
+				{
+					G3_Translate(x * 128 * FX32_ONE, 0, y * 128 * FX32_ONE);
+					int xstart2 = xstart - x * 128;
+					if (xstart2 < 0)
+						xstart2 = 0;
+					if (xstart2 > 128)
+						xstart2 = 128;
+					int xend2 = xend - x * 128;
+					if (xend2 < 0)
+						xend2 = 0;
+					if (xend2 > 128)
+						xend2 = 128;
+					int zstart2 = zstart - y * 128;
+					if (zstart2 < 0)
+						zstart2 = 0;
+					if (zstart2 > 128)
+						zstart2 = 128;
+					int zend2 = zend - y * 128;
+					if (zend2 < 0)
+						zend2 = 0;
+					if (zend2 > 128)
+						zend2 = 128;
+
+					VecFx32 cam2 = *camPos;
+					cam2.x -= x * 128 * FX32_ONE;
+					cam2.z -= y * 128 * FX32_ONE;
+
+					hvtx_t* pMap = GetMapBlock(x, y, true);
+					if (pMap)
+						Render(pMap, xstart2, xend2, zstart2, zend2, picking, &cam2, camDir, lodLevel, &mLastLod[(y * 128 - mLastZStart) * 128 + x * 128 - mLastXStart], x * 128 * FX32_ONE, y * 128 * FX32_ONE);
+				}
+				G3_PopMtx(1);
+			}
+		}
+		if (!picking)
+		{
+			box2d_t frustumbox = { xstart2 * FX32_ONE - 32 * FX32_ONE, zstart2 * FX32_ONE - 32 * FX32_ONE, xend2 * FX32_ONE - 32 * FX32_ONE, zend2 * FX32_ONE - 32 * FX32_ONE };
+			/*TrackPieceEx* trackPiece = NULL;
+			while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
+			{
+				box2d_t bounds;
+				trackPiece->GetBounds(&bounds);
+				if (!bounds.Intersects(&frustumbox))
+					continue;
+				//if (trackPiece->mPosition.x >= xstart && trackPiece->mPosition.x < xend &&
+				//	trackPiece->mPosition.z >= zstart && trackPiece->mPosition.z < zend)
+				//{
+				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
+				trackPiece->Render();
+				//}
+			}*/
+			if (mGhostPiece != NULL)
+			{
+				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
+				mGhostPiece->Render();
+			}
+			/*TrackPieceEx* trackPiece = NULL;
+			while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
+			{
+				box2d_t bounds;
+				trackPiece->GetBounds(&bounds);
+				if (!bounds.Intersects(&frustumbox))
+					continue;
+				trackPiece->RenderMarkers();
+			}
+			if (mGhostPiece != NULL)
+			{
+				mGhostPiece->RenderMarkers();
+			}*/
+			/*SimpleSceneryObject* sceneryObject = NULL;
+			while ((sceneryObject = (SimpleSceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
+			{
+				if (!sceneryObject->Intersects(&frustumbox))
+					continue;
+				sceneryObject->Render();
+			}*/
+			if (lodLevel == 0)
+			{
+				G3_PushMtx();
+				{
+					G3_Translate(32 * FX32_ONE, (FX32_ONE / 32), 32 * FX32_ONE);
+					mObjectTree->Render(&frustumbox);
+				}
+				G3_PopMtx(1);
+			}
+			mWaterTest->Render();
+			mWaterTest->Render2();
+		}
+	}
+	G3_PopMtx(1);
+	//TODO: move this elsewhere, since this doesn't update with sub 3d rendering
+	mTerrainManager->mTrackMarkerRotation += FX32_CONST(2);
+	if (mTerrainManager->mTrackMarkerRotation >= 360 * FX32_ONE)
+		mTerrainManager->mTrackMarkerRotation -= 360 * FX32_ONE;
 }
 
 //extern "C" void render_tile(VecFx10* pNorm, uint8_t* pVtx, int x, int y);
@@ -331,22 +452,22 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 							}
 							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_LIGHT_COLOR, G3OP_NORMAL, G3OP_VTX_10);
 							{
-								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);//GX_PACK_VTX10_PARAM(x << 6, mVtx[y * 128 + x] << 6, y << 6);
+								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
 								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mTextureDatas[pmap2[2 * MAP_BLOCK_WIDTH].tex][15 * 16]);
 								reg_G3X_GXFIFO = pmap2[2 * MAP_BLOCK_WIDTH].normal;
-								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);//GX_PACK_VTX10_PARAM(x << 6, mVtx[(y + 2) * 128 + x] << 6, (y << 6) + (2 << 6));					
+								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
 							}
 							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_LIGHT_COLOR, G3OP_NORMAL, G3OP_VTX_10, G3OP_LIGHT_COLOR);
 							{
 								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mTextureDatas[pmap2[2].tex][15]);
 								reg_G3X_GXFIFO = pmap2[2].normal;
-								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);//GX_PACK_VTX10_PARAM((x << 6) + (2 << 6), mVtx[y * 128 + (x + 2)] << 6, y << 6);
+								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
 								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mTextureDatas[pmap2[2 * MAP_BLOCK_WIDTH + 2].tex][15 * 16 + 15]);
 							}
 							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_END, G3OP_LIGHT_COLOR);
 							{
 								reg_G3X_GXFIFO = pmap2[2 * MAP_BLOCK_WIDTH + 2].normal;
-								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH + 2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);//GX_PACK_VTX10_PARAM((x << 6) + (2 << 6), mVtx[(y + 2) * 128 + (x + 2)] << 6, (y << 6) + (2 << 6));
+								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH + 2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
 								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, 0x7FFF);
 							}
 #ifdef DEBUG_TILE_COUNT

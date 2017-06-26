@@ -178,6 +178,7 @@ void GameController::Render(RenderMode mode)
 		NNS_G3dGlbMaterialColorSpecEmi(/*GX_RGB(3, 3, 3)*/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), false);
 	}
 
+	fx32 newDist = 0;
 	if (mode != RENDER_MODE_PICKING)
 	{
 		VecFx32 up = { 0, FX32_ONE, 0 };
@@ -188,7 +189,7 @@ void GameController::Render(RenderMode mode)
 		fx32 cosang = FX_CosIdx(ang - FX_DEG_TO_IDX(90 * FX32_ONE));
 		cosang = FX_Mul(cosang, cosang);
 		//OS_Printf("ang: %d\n", FX_IDX_TO_DEG(ang) >> 12);
-		fx32 newDist = camY + FX_Mul(cosang, 50 * 4096);
+		newDist = camY + FX_Mul(cosang, 50 * 4096);
 		if (mode == RENDER_MODE_FAR)
 		{
 			if (newDist < 8 * 4096)
@@ -211,14 +212,31 @@ void GameController::Render(RenderMode mode)
 	calculateVisibleGrid(&bbmin, &bbmax);
 
 	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	//xstart = MATH_CLAMP(xstart, 0, 128);
 	int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	//zstart = MATH_CLAMP(zstart, 0, 128);
 
 	int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	//xend = MATH_CLAMP(xend, 0, 128);
 	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	//zend = MATH_CLAMP(zend, 0, 128);
+
+	int xstart2 = xstart;
+	int xend2 = xend;
+	int zstart2 = zstart;
+	int zend2 = zend;
+
+	if (mode == RENDER_MODE_FAR)
+	{
+		//if (newDist > 12 * FX32_ONE)
+		//{
+			/*NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * 4096, 11 * FX32_ONE, 40960 * 4);
+			VecFx32 bbmin2, bbmax2;
+			calculateVisibleGrid(&bbmin2, &bbmax2);
+			xstart2 = (bbmin2.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+			zstart2 = (bbmin2.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+
+			xend2 = (bbmax2.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+			zend2 = (bbmax2.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;*/
+		//}
+		NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4 * 4096, 50 * FX32_ONE, 40960 * 4);
+	}
 
 	NNS_G3dGlbFlushP();
 	NNS_G3dGeFlushBuffer();
@@ -232,7 +250,7 @@ void GameController::Render(RenderMode mode)
 
 	G3_PushMtx();
 	{
-		mMap->Render(xstart, xend, zstart, zend, mode == RENDER_MODE_PICKING, &mCamera->mPosition, &camDir, (mode == RENDER_MODE_FAR ? 1 : 0));
+		mMap->Render(xstart, xend, zstart, zend, xstart2, xend2, zstart2, zend2, mode == RENDER_MODE_PICKING, &mCamera->mPosition, &camDir, (mode == RENDER_MODE_FAR ? 1 : 0));
 		G3_PushMtx();
 		{
 			G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);

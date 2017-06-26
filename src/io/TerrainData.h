@@ -30,6 +30,11 @@ public:
 		FS_ReadFile(&mDataFile, &mDataHeader, sizeof(terrain_data_header_t));
 	}
 
+	~TerrainData()
+	{
+		FS_CloseFile(&mDataFile);
+	}
+
 	int GetHBlockCount() { return mDataHeader.h_block_count; }
 	int GetWidth() { return mDataHeader.width; }
 	int GetVBlockCount() { return mDataHeader.v_block_count; }

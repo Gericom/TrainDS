@@ -4,10 +4,12 @@
 #include "io/TerrainData.h"
 #include "managers/TerrainTextureManager16.h"
 #include "managers/TerrainTextureManager8.h"
+#include "engine/QuadTree.h"
 
 class TerrainManager;
 class TrackPieceEx;
 class SceneryObject;
+class ObjectData;
 
 /*typedef struct
 {
@@ -34,6 +36,7 @@ typedef uint16_t picking_result_t;
 #define MAP_BLOCK_HEIGHT	132
 
 class Water;
+class SimpleSceneryObject;
 
 class Map
 {
@@ -65,12 +68,16 @@ public:
 	TerrainManager* mTerrainManager;
 
 	Water* mWaterTest;
+
+	ObjectData* mObjectData;
 private:
 	uint32_t mResourceCounter;
 	NNSFndList mTrackList;
 	TrackPieceEx* mGhostPiece;
 	NNSFndList mSceneryList;
 	bool mGridEnabled;
+
+	QuadTree* mObjectTree;
 
 	void* mTexArcData;
 	NNSFndArchive mTexArc;
@@ -86,6 +93,7 @@ public:
 	void AddTrackPiece(TrackPieceEx* piece)
 	{
 		NNS_FndAppendListObject(&mTrackList, piece);
+		mObjectTree->Insert((WorldObject*)piece);
 	}
 
 	void BeginAddTrackPiece(TrackPieceEx* piece)
@@ -102,12 +110,12 @@ public:
 		}
 	}
 
-	void AddSceneryObject(SceneryObject* object)
+	void AddSceneryObject(SimpleSceneryObject* object)
 	{
 		NNS_FndAppendListObject(&mSceneryList, object);
 	}
 
-	void Render(int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel);
+	void Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel);
 
 	bool GetGridEnabled()
 	{

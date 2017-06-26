@@ -24,7 +24,7 @@ void FlexTrack::Render()
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 	G3_PushMtx();
 	{
-		G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
+		//G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
 		G3_Begin(GX_BEGIN_QUAD_STRIP);
 		{
 			G3_Normal(0, GX_FX16_FX10_MAX, 0);

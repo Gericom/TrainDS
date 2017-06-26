@@ -137,7 +137,7 @@ void FlexTrack::RenderMarkers()
 	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 60, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 	G3_PushMtx();
 	{
-		G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
+		//G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
 		G3_MtxMode(GX_MTXMODE_TEXTURE);
 		G3_Translate((8 << tex->nitroWidth) * FX32_HALF, (8 << tex->nitroHeight) * FX32_HALF, 0);
 		G3_RotZ(FX_SinIdx(FX_DEG_TO_IDX(mMap->mTerrainManager->mTrackMarkerRotation)), FX_CosIdx(FX_DEG_TO_IDX(mMap->mTerrainManager->mTrackMarkerRotation)));

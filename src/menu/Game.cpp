@@ -221,13 +221,13 @@ void Game::Initialize(int arg)
 
 	mPickingCallback = NULL;
 
-	//mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
-	//mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
-	//mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
-	mCamera->mDestination.x = 373680;
-	mCamera->mDestination.y = 0;
-	mCamera->mDestination.z = 1153947;
-	VecFx32 camRot = { -1259520, 86016, 0 };//0, 22 * FX32_ONE, 0 };
+	mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
+	mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
+	mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
+	//mCamera->mDestination.x = 373680;
+	//mCamera->mDestination.y = 0;
+	//mCamera->mDestination.z = 1153947;
+	VecFx32 camRot = { /*-1259520, 86016, 0 };//*//*-604160, 90112, 0 };//*/0, 22 * FX32_ONE, 0 };
 	mCamera->SetRotation(&camRot);
 
 	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, /*64*//*18*//*24*//*31*/8 * 4096, 40960 * 4);
