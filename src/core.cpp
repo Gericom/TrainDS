@@ -5,6 +5,10 @@
 #include "core.h"
 #include "util.h"
 
+#include <nitro/dtcm_begin.h>
+static NNSG3dGeBuffer sGeBuffer;
+#include <nitro/dtcm_end.h>
+
 GXOamAttr gOamTmpBuffer[128];
 
 NNSFndHeapHandle gHeapHandle;
@@ -99,6 +103,9 @@ void Core_Init()
 	uint32_t szWork = NNS_GfdGetLnkPlttVramManagerWorkSize(4096);
 	void* pMgrWork = NNS_FndAllocFromExpHeapEx(gHeapHandle, szWork, 16);
 	NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
+
+	NNS_G3dGeSetBuffer(&sGeBuffer);
+	NNS_G3dGeUseFastDma(true);
 
 	TP_RequestAutoSamplingStart(192, 2, &mTPData[0], 4);
 }

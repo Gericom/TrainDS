@@ -15,10 +15,11 @@ private:
 	Map* mMap;
 	VecFx32 mPosition;
 	u16 mRotY;
+	bool mBillboard;
 	bool mUse1Mat1ShpRendering;
 
 public:
-	SimpleSceneryObject(Map* map, u32 type, fx32 x, fx32 z, fx32 rotY);
+	SimpleSceneryObject(Map* map, u32 type, fx32 x, fx32 z, fx32 rotY, bool billboard);
 
 	void Render();
 

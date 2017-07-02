@@ -402,13 +402,13 @@ void Game::Render()
 	else
 	{
 		if (keyData & PAD_KEY_LEFT)
-			mCamera->MoveX(-FX32_ONE / 50);// 24);
+			mCamera->MoveX(-FX32_ONE / 25);// 24);
 		else if (keyData & PAD_KEY_RIGHT)
-			mCamera->MoveX(FX32_ONE / 50);// 24);
+			mCamera->MoveX(FX32_ONE / 25);// 24);
 		if (keyData & PAD_KEY_UP)
-			mCamera->MoveZ(FX32_ONE / 50);// 24);
+			mCamera->MoveZ(FX32_ONE / 25);// 24);
 		else if (keyData & PAD_KEY_DOWN)
-			mCamera->MoveZ(-FX32_ONE / 50);// 24);
+			mCamera->MoveZ(-FX32_ONE / 25);// 24);
 		if (keyData & PAD_BUTTON_L && !(keyData & PAD_BUTTON_R))
 			camRot.x -= FX32_ONE >> 1;
 		else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))

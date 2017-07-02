@@ -45,6 +45,37 @@ TerrainTextureManager8::TerrainTextureManager8()
 		{
 			mTextureDatas[j][k] &= 0x7FFF;
 		}
+		uint16_t newtex[128];
+		for (int y = 0; y < 4; y++)
+		{
+			for (int x = 0; x < 8; x++)
+			{
+				//create new color
+				int r = 0, g = 0, b = 0;
+				for (int y2 = 0; y2 < 2; y2++)
+				{
+					for (int x2 = 0; x2 < 2; x2++)
+					{
+						int color = mTextureDatas[j][(y * 2 + y2) * 16 + x * 2 + x2];
+						r += color & 0x1F;
+						g += (color >> 5) & 0x1F;
+						b += (color >> 10) & 0x1F;
+					}
+				}
+				int dither = 2;
+				r = (r + dither) >> 2;
+				g = (g + dither) >> 2;
+				b = (b + dither) >> 2;
+
+				int newcolor = GX_RGB(r, g, b);
+
+				newtex[y * 16 + x] = newcolor;
+				newtex[y * 16 + x + 8] = newcolor;
+				newtex[(y + 4) * 16 + x] = newcolor;
+				newtex[(y + 4) * 16 + x + 8] = newcolor;
+			}
+		}
+		MI_CpuCopyFast(newtex, mTextureDatas[j], sizeof(newtex));
 		for (int k = 0; k < 4; k++)
 		{
 			for (int l = 0; l < 16 * 8; l++)

@@ -85,7 +85,7 @@ private:
 	void RecalculateNormals(int xstart, int xend, int zstart, int zend);
 	void RecalculateNormals(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend);
 	hvtx_t* GetMapBlock(int x, int y, bool withNormals);
-	void Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel, u8* lodData, fx32 xshift, fx32 zshift);
+	void Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel, u8* lodData);
 public:
 	Map();
 	~Map();

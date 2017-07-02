@@ -37,7 +37,7 @@ Wagon::Wagon(GameController* gameController, char* name)
 	mAcceleration = FX64C_ONE / 2400;
 	mDeceleration = -8192 * 32;
 	mSpeed = 0;
-	mMaxSpeed = FX64C_ONE / 30;
+	mMaxSpeed = FX64C_ONE / 20;
 
 	//load model
 	GEN_FILE_PATH(name, "low.nsbmd.lh", path);

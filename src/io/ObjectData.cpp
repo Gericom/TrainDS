@@ -24,7 +24,7 @@ ObjectData::ObjectData(const char* filePath)
 		NNSG3dResFileHeader* mTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer(path, NULL, true);
 		NNS_G3dResDefaultSetup(mTextures);
 		NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(modelData), 0);
-		NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);
+		//NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);
 		NNS_G3dMdlSetMdlDiffAll(model, GX_RGB(31, 31, 31));
 		NNS_G3dMdlSetMdlAmbAll(model, GX_RGB(20, 20, 20));
 		NNS_G3dMdlSetMdlSpecAll(model, GX_RGB(0, 0, 0));

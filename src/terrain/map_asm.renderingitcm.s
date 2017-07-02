@@ -144,12 +144,80 @@ render_tile2x2:
 	ldmfd sp!, {r4-r11}
 	bx lr
 
+FX32_ONE = 4096
+MAP_BLOCK_WIDTH = 132
+
+//void render_lod0(int xstart, int xend, int zstart, int zend, fx32 distbase, fx32 camdirx, fx32 camdirz, hvtx_t* pmap, fx32 ymul, TerrainTextureManager16* texturemanager)
 .global render_lod0
 render_lod0:
+arg_distbase = 4 * 9
+arg_camdirx = 4 * 10
+arg_camdirz = 4 * 11
+arg_pmap = 4 * 12
+arg_ymul = 4 * 13
+arg_texturemanager = 4 * 14
 	stmfd sp!, {r4-r11,lr}
-
-
-
+	//r4 = x | (xend << 16)
+	orr r4, r0, r1, lsl #16
+	//r5 = z | (zend << 16)
+	orr r5, r2, r3, lsl #16
+	//r6 = distbase
+	ldr r6, [sp, #arg_distbase]
+	//r7 = camdirx
+	ldr r7, [sp, #arg_camdirx]
+	//r8 = camdirz
+	ldr r8, [sp, #arg_camdirz]
+	//r9 = pmap
+	ldr r9, [sp, #arg_pmap]
+	//r10 = ymul
+	ldr r10, [sp, #arg_ymul]
+	//r11 = texturemanager
+	ldr r11, [sp, #arg_texturemanager]
+z_loop:
+//{
+	stmfd sp!, {r4, r6, r9}
+	x_loop:
+	//{
+		ldrb r0, [r9, #4]//pmap2[0].y
+		smlawb r1, r10, r0, r10
+		cmp r1, #(10 * FX32_ONE * FX32_ONE)
+		bgt x_loop_finish
+		ldrb r1, [r9, #5]
+		ldrb r2, [r9, #(5 + 8)]
+		ldrb r3, [r9, #(5 + (MAP_BLOCK_WIDTH * 8))]
+		orr r2, r1, r2, lsl #8
+		ldrb r1, [r9, #(5 + (MAP_BLOCK_WIDTH * 8 + 8))]
+		orr r2, r2, r3, lsl #16
+		orr r2, r2, r1, lsl #24
+		ldrh r12, [r9, #6]
+		mov r0, r11
+		mov r12, r12, lsl #3
+		bl _ZN23TerrainTextureManager1617GetTextureAddressEiiiim
+		mov r0, r0, lsr #3
+		strh r0, [r9, #6]
+		ldr r12,= 0xDC900000
+		orr r12, r12, r0
+		mov r0, #0x04000000
+		str r12, [r0, #0x4A8]//teximageparam
+		//todo: lod stuff
+		mov r0, r9
+		and r1, r4, #0xFF
+		and r2, r5, #0xFF
+		bl render_tile
+	x_loop_finish:
+		add r6, r6, r7, lsl #12
+		add r9, r9, #8
+		add r4, r4, #1
+		cmp r4, r4, ror #16 //if the top and bottom are the same the ror of 16 should be equals to original
+		bne x_loop
+	//}
+	ldmfd sp!, {r4, r6, r9}
+	add r6, r6, r8, lsl #12
+	add r9, r9, #(8 * MAP_BLOCK_WIDTH)
+	add r5, r5, #1
+	cmp r5, r5, ror #16 //if the top and bottom are the same the ror of 16 should be equals to original
+	bne z_loop
+//}
 	ldmfd sp!, {r4-r11,pc}
 
 

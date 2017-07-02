@@ -40,7 +40,10 @@ Map::Map()
 	for (int i = 0; i < mObjectData->mFileData->header.nr_sceneries; i++)
 	{
 		ObjectData::object_data_scenery_entry_t* s = &mObjectData->mSceneryEntries[i];
-		SimpleSceneryObject* ob = new SimpleSceneryObject(this, s->object_type, s->x - 32 * FX32_ONE, s->z - 32 * FX32_ONE, s->roty);
+		bool billboard =
+			STD_StrNCmp("tree_g", mObjectData->mFileData->object_ref_entries[s->object_type].string_offset, 6) &&
+			!STD_StrNCmp("tree", mObjectData->mFileData->object_ref_entries[s->object_type].string_offset, 4);
+		SimpleSceneryObject* ob = new SimpleSceneryObject(this, s->object_type, s->x - 32 * FX32_ONE, s->z - 32 * FX32_ONE, s->roty, billboard);
 		ob->Invalidate();
 		mObjectTree->Insert(ob);
 		//AddSceneryObject(new SimpleSceneryObject(this, s->object_type, s->x - 32 * FX32_ONE, s->z - 32 * FX32_ONE));

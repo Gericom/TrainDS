@@ -93,7 +93,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 
 					hvtx_t* pMap = GetMapBlock(x, y, true);
 					if (pMap)
-						Render(pMap, xstart2, xend2, zstart2, zend2, picking, &cam2, camDir, lodLevel, &mLastLod[(y * 128 - mLastZStart) * 128 + x * 128 - mLastXStart], x * 128 * FX32_ONE, y * 128 * FX32_ONE);
+						Render(pMap, xstart2, xend2, zstart2, zend2, picking, &cam2, camDir, lodLevel, &mLastLod[(y * 128 - mLastZStart) * 128 + x * 128 - mLastXStart]);
 				}
 				G3_PopMtx(1);
 			}
@@ -140,7 +140,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 					continue;
 				sceneryObject->Render();
 			}*/
-			if (lodLevel == 0)
+			//if (lodLevel == 0)
 			{
 				G3_PushMtx();
 				{
@@ -166,11 +166,11 @@ extern "C" void render_tile2x2(hvtx_t* vtx, int x, int y);
 
 //#define DEBUG_TILE_COUNT
 
-//TODO: Fix mLodLevels
-void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel, u8* lodData, fx32 xshift, fx32 zshift)
+extern "C" void render_lod0(int xstart, int xend, int zstart, int zend, fx32 distbase, fx32 camdirx, fx32 camdirz, hvtx_t* pmap, fx32 ymul, TerrainTextureManager16* texturemanager);
+
+void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel, u8* lodData)
 {
 	pHMap += 2 * MAP_BLOCK_WIDTH + 2;
-	//fx32 d = -(FX_Mul(camDir->x, camPos->x) + FX_Mul(camDir->y, camPos->y) + FX_Mul(camDir->z, camPos->z));
 #ifdef DEBUG_TILE_COUNT
 	int count = 0;
 #endif
@@ -232,31 +232,31 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 
 				G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 
-				fx32 xadd = FX32_HALF - camPos->x - 32 * FX32_ONE;
-				fx32 zadd = FX32_HALF - camPos->z - 32 * FX32_ONE;
-				//fx32 ything = camDir->y * ((pHMap[((zstart + zend) / 2) * 128 + ((xstart + xend) / 2)].y - Y_OFFSET) * Y_SCALE - camPos->y);
-				//fx32 dist = camDir->x * (xstart * FX32_ONE + xadd) + camDir->z * (zstart * FX32_ONE + zadd);
-				//fx32 distbase = camDir->x * (xstart * FX32_ONE + xadd) + camDir->z * (zstart * FX32_ONE + zadd) - camDir->y * camPos->y - camDir->y * Y_OFFSET * Y_SCALE;
 				if (zend > 128)
 					zend = 128;
 				if (xend > 128)
 					xend = 128;
 				hvtx_t* pmap = pHMap + zstart * MAP_BLOCK_WIDTH + xstart;
+				fx32 ymul = camDir->y * Y_SCALE;
+				fx32 distbase = 
+					camDir->x * (xstart * FX32_ONE + FX32_HALF - camPos->x - 32 * FX32_ONE) +
+					camDir->z * (zstart * FX32_ONE + FX32_HALF - camPos->z - 32 * FX32_ONE) -
+					camDir->y * camPos->y - 
+					ymul * Y_OFFSET;
+				//render_lod0(xstart, xend, zstart, zend, distbase, camDir->x, camDir->z, pmap, ymul, mTerrainTextureManager16);
+				fx32 xadd2 = camDir->x * FX32_ONE;
+				fx32 zadd2 = camDir->z * FX32_ONE;
 				for (int y = zstart; y < zend; y++)
 				{
-					//fx32 dist = distbase;
 					hvtx_t* pmap2 = pmap;
+					fx32 distbase2 = distbase;
 					for (int x = xstart; x < xend; x++)
 					{
-						fx32 top = 
-							camDir->x * (x * FX32_ONE + xadd) + 
-							camDir->y * ((pmap2[0].y - Y_OFFSET) * Y_SCALE - camPos->y) +
-							camDir->z * (y * FX32_ONE + zadd); //VEC_DotProduct(camDir, &diff);
-						//fx32 top = dist + camDir->y * pHMap[y * 128 + x].y * Y_SCALE;
+						fx32 top = distbase2 + ymul * pmap2[0].y;
 						if (top <= (10 * FX32_ONE * FX32_ONE))
 						{
-							if (mGridEnabled)
-								G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+							//if (mGridEnabled)
+							//	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 
 							uint32_t texOffset = mTerrainTextureManager16->GetTextureAddress(
 								pmap2[0].tex,
@@ -265,7 +265,6 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 								pmap2[MAP_BLOCK_WIDTH + 1].tex,
 								pmap2[0].texAddress << 3);
 							pmap2[0].texAddress = texOffset >> 3;
-							//reg_G3_TEXIMAGE_PARAM = 0x1C900000 | (texOffset >> 3);
 							reg_G3_TEXIMAGE_PARAM = 0xDC900000 | (texOffset >> 3);
 
 							if (lodData[y * 128 + x] || lodData[y * 128 + (x + 1)] || lodData[(y + 1) * 128 + x] || lodData[(y + 1) * 128 + (x + 1)])
@@ -369,11 +368,11 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 							count++;
 #endif
 						}
+						distbase2 += xadd2;
 						pmap2++;
-						//dist += camDir->x * FX32_ONE;
 					}
+					distbase += zadd2;
 					pmap += MAP_BLOCK_WIDTH;
-					//distbase += camDir->z * FX32_ONE;
 				}
 			}
 			else if (lodLevel == 1)
@@ -391,9 +390,6 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 				//int count = 0;
 				G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 
-				fx32 xadd = FX32_ONE - camPos->x - 32 * FX32_ONE;
-				fx32 zadd = FX32_ONE - camPos->z - 32 * FX32_ONE;
-				//fx32 ything = camDir->y * ((pHMap[((zstart + zend) / 2) * 128 + ((xstart + xend) / 2)].y - Y_OFFSET) * Y_SCALE - camPos->y);
 				zstart &= ~1;
 				xstart &= ~1;
 				zend |= 1;
@@ -403,15 +399,21 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 				if (xend > 127)
 					xend = 127;
 				hvtx_t* pmap = pHMap + zstart * MAP_BLOCK_WIDTH + xstart;
+				fx32 ymul = camDir->y * Y_SCALE;
+				fx32 distbase = 
+					camDir->x * (xstart * FX32_ONE + FX32_ONE - camPos->x - 32 * FX32_ONE) + 
+					camDir->z * (zstart * FX32_ONE + FX32_ONE - camPos->z - 32 * FX32_ONE) - 
+					camDir->y * camPos->y - 
+					ymul * Y_OFFSET;
+				fx32 xadd2 = camDir->x * 2 * FX32_ONE;
+				fx32 zadd2 = camDir->z * 2 * FX32_ONE;
 				for (int y = zstart; y < zend; y += 2)
 				{
 					hvtx_t* pmap2 = pmap;
+					fx32 distbase2 = distbase;
 					for (int x = xstart; x < xend; x += 2)
 					{
-						fx32 top = 
-							camDir->x * (x * FX32_ONE + xadd) + 
-							camDir->y * ((pmap2[0].y - Y_OFFSET) * Y_SCALE - camPos->y) + 
-							camDir->z * (y * FX32_ONE + zadd);//FX_Mul(camDir->x, diff.x) + FX_Mul(camDir->y, diff.y) + FX_Mul(camDir->z, diff.z);////VEC_DotProduct(camDir, &diff);
+						fx32 top = distbase2 + ymul * pmap2[0].y;
 
 						if (top >= (8 * FX32_ONE * FX32_ONE) && top <= (/*35*/25 * FX32_ONE * FX32_ONE))
 						{
@@ -474,8 +476,10 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 							count++;
 #endif
 						}
+						distbase2 += xadd2;
 						pmap2 += 2;
 					}
+					distbase += zadd2;
 					pmap += 2 * MAP_BLOCK_WIDTH;
 				}
 			}

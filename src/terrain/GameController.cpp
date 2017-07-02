@@ -224,17 +224,17 @@ void GameController::Render(RenderMode mode)
 
 	if (mode == RENDER_MODE_FAR)
 	{
-		//if (newDist > 12 * FX32_ONE)
-		//{
-			/*NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * 4096, 11 * FX32_ONE, 40960 * 4);
+		if (newDist > 17 * FX32_ONE)
+		{
+			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 14 * 4096, 17 * FX32_ONE, 40960 * 4);
 			VecFx32 bbmin2, bbmax2;
 			calculateVisibleGrid(&bbmin2, &bbmax2);
 			xstart2 = (bbmin2.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
 			zstart2 = (bbmin2.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
 
 			xend2 = (bbmax2.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-			zend2 = (bbmax2.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;*/
-		//}
+			zend2 = (bbmax2.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+		}
 		NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4 * 4096, 50 * FX32_ONE, 40960 * 4);
 	}
 
