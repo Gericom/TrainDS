@@ -2,10 +2,11 @@
 #define __GAMECONTROLLER_H__
 
 #include "Map.h"
-#include "engine/FreeRoamCamera.h"
+#include "engine/cameras/FreeRoamCamera.h"
 #include "managers/SfxManager.h"
 #include "vehicles/Wagon.h"
 #include "engine/Hemisphere.h"
+#include "engine/TOTDController.h"
 class LookAtCamera;
 
 class GameController
@@ -19,12 +20,18 @@ public:
 	};
 
 	GameController(LookAtCamera* camera)
+		: mFogColor(GX_RGB(148 >> 3, 181 >> 3, 206 >> 3)), mLightColor(0x7FFF)
 	{
-		mMap = new Map();
+		mLightDirection.x = -2048;
+		mLightDirection.y = -2897;
+		mLightDirection.z = -2048;
+		mMap = new Map(this);
 		mSfxManager = new SfxManager();
 		mCamera = camera;
 		mWagon = new Wagon(this, "a3");
 		mHemisphere = new Hemisphere();
+		mTOTDController = new TOTDController(this);
+		mTOTDController->Update();
 	}
 
 	~GameController()
@@ -40,10 +47,16 @@ public:
 	SfxManager* mSfxManager;
 	LookAtCamera* mCamera;
 	Hemisphere* mHemisphere;
+	TOTDController* mTOTDController;
 
 	int mPickingXStart;
 	int mPickingXEnd;
 	int mPickingZStart;
+
+	GXRgb mFogColor;
+	GXRgb mLightColor;
+	VecFx16 mLightDirection;
+	VecFx32 mSunPosition;
 
 	void Render(RenderMode mode);
 

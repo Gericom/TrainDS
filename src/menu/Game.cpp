@@ -14,9 +14,9 @@
 #include "engine/PathWorker.h"
 #include "ui/UIManager.h"
 #include "ui/components/Button.h"
-#include "engine/Camera.h"
-#include "engine/LookAtCamera.h"
-#include "engine/FreeRoamCamera.h"
+#include "engine/cameras/Camera.h"
+#include "engine/cameras/LookAtCamera.h"
+#include "engine/cameras/FreeRoamCamera.h"
 #include "inih/INIReader.h"
 #include "tools/DragTool.h"
 #include "tools/AddTrackTool.h"
@@ -326,7 +326,8 @@ void Game::Render()
 	HandlePickingEarly();
 
 	mUIManager->ProcessInput();
-	u16 keyData = PAD_Read();
+	Core_ReadInput();
+	u16 keyData = gKeys;
 
 	HandlePickingLate();
 

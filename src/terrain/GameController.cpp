@@ -116,7 +116,7 @@ void GameController::Render(RenderMode mode)
 		//G3X_SetFog(/*true*/false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
 		//G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
 		//if (mode == RENDER_MODE_FAR)
-			G3X_SetFogColor(GX_RGB(148 >> 3, 181 >> 3, 206 >> 3), 31);
+			G3X_SetFogColor(mFogColor, 31);
 		//else
 		//	G3X_SetFogColor(GX_RGB(148 >> 3, 181 >> 3, 206 >> 3), 0);
 		u32 fog_table[8];
@@ -165,8 +165,8 @@ void GameController::Render(RenderMode mode)
 	else if (vec.y < GX_FX32_FX10_MIN) vec.y = GX_FX32_FX10_MIN;
 	if (vec.z > GX_FX32_FX10_MAX) vec.z = GX_FX32_FX10_MAX;
 	else if (vec.z < GX_FX32_FX10_MIN) vec.z = GX_FX32_FX10_MIN;*/
-	NNS_G3dGlbLightVector(GX_LIGHTID_0, /*vec.x, vec.y, vec.z);//*/-2048, -2897, -2048);
-	NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/GX_RGB(31, 31, 31));
+	NNS_G3dGlbLightVector(GX_LIGHTID_0, /*vec.x, vec.y, vec.z);//*/mLightDirection.x, mLightDirection.y, mLightDirection.z);
+	NNS_G3dGlbLightColor(GX_LIGHTID_0, /*GX_RGB(20, 12, 3));//*/mLightColor);
 	if (mode == RENDER_MODE_PICKING)
 	{
 		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), false);
@@ -283,6 +283,9 @@ void GameController::Render(RenderMode mode)
 		//skybox
 		if (mode == RENDER_MODE_FAR)
 		{
+			if (gKeys & PAD_BUTTON_X)
+				mTOTDController->Update();
+
 			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, 56 * FX32_ONE, 40960 * 4);
 			NNS_G3dGlbFlushP();
 			NNS_G3dGeFlushBuffer();
@@ -290,10 +293,38 @@ void GameController::Render(RenderMode mode)
 			G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S8, GX_TEXSIZE_T8, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
 			G3_PushMtx();
 			G3_Translate(mCamera->mDestination.x, 0, mCamera->mDestination.z);
+			G3_PushMtx();
 			G3_Scale(50 * FX32_ONE, 50 * FX32_ONE, 50 * FX32_ONE);
 			mHemisphere->Render();
-			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 61, 30, 0);
-			mHemisphere->Render();
+			//G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 61, 30, 0);
+			//mHemisphere->Render();
+			G3_PopMtx(1);
+			G3_Translate(mSunPosition.x, mSunPosition.y, mSunPosition.z);
+			Util_SetupBillboardYMatrix();
+			G3_Translate(0, -4 * FX32_ONE, 2 * FX32_ONE);
+			G3_Scale(6 * FX32_ONE, 6 * FX32_ONE, 6 * FX32_ONE);
+			
+			int r = (mLightColor & 0x1F) * 2;
+			if (r > 31)
+				r = 31;
+			int g = ((mLightColor >> 5) & 0x1F) * 2;
+			if (g > 31)
+				g = 31;
+			int b = ((mLightColor >> 10) & 0x1F) * 2;
+			if (b > 31)
+				b = 31;
+
+			G3_Color(GX_RGB(r, g, b));
+
+			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, 0);
+			G3_Begin(GX_BEGIN_QUADS);
+			{
+				G3_Vtx(-FX32_HALF, FX32_HALF, 0);
+				G3_Vtx(-FX32_HALF, -FX32_HALF, 0);
+				G3_Vtx(FX32_HALF, -FX32_HALF, 0);
+				G3_Vtx(FX32_HALF, FX32_HALF, 0);
+			}
+			G3_End();
 			G3_PopMtx(1);
 		}
 	}

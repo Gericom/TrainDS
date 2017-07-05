@@ -1,7 +1,7 @@
 #include <nitro.h>
 #include <nnsys/g3d.h>
 #include "core.h"
-#include "Quaternion.h"
+#include "../Quaternion.h"
 #include "Camera.h"
 #include "vehicles\Vehicle.h"
 #include "LookAtCamera.h"

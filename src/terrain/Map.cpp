@@ -17,8 +17,8 @@
 #include "engine/QuadTree.h"
 #include "Map.h"
 
-Map::Map()
-	: mGridEnabled(FALSE), mGhostPiece(NULL), mResourceCounter(0)
+Map::Map(GameController* gameController)
+	: mGridEnabled(FALSE), mGhostPiece(NULL), mResourceCounter(0), mGameController(gameController)
 {
 	NNS_FND_INIT_LIST(&mTrackList, TrackPieceEx, mLink);
 	NNS_FND_INIT_LIST(&mSceneryList, SimpleSceneryObject, mLink);

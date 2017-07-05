@@ -52,9 +52,6 @@
     <ClCompile Include="src\ui\UIManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\LookAtCamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\print.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,9 +68,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\terrain\managers\SfxManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\engine\FreeRoamCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tools\DragTool.cpp">
@@ -151,9 +145,6 @@
     <ClCompile Include="src\io\TerrainData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\VehicleCamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\engine\objects\Water.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -164,6 +155,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\engine\QuadTree.renderingitcm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine\cameras\FreeRoamCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine\cameras\LookAtCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine\cameras\VehicleCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine\TOTDController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -193,12 +196,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\UIManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\engine\Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\engine\LookAtCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\print.h">
@@ -241,9 +238,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\terrain\managers\SeqArcSfx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\engine\FreeRoamCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\tools\Tool.h">
@@ -336,9 +330,6 @@
     <ClInclude Include="src\box2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\engine\VehicleCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\engine\objects\WorldObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -352,6 +343,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\engine\QuadTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\cameras\FreeRoamCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\cameras\LookAtCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\cameras\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\cameras\VehicleCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\TOTDController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

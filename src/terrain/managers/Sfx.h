@@ -2,7 +2,7 @@
 #define __SFX_H__
 
 #include <nnsys/fnd.h>
-#include "engine/LookAtCamera.h"
+#include "engine/cameras/LookAtCamera.h"
 #include "engine/objects/WorldObject.h"
 
 class SfxManager;

@@ -4,7 +4,7 @@
 #include "Camera.h"
 #include "LookAtCamera.h"
 #include "FreeRoamCamera.h"
-#include "Quaternion.h"
+#include "../Quaternion.h"
 
 void FreeRoamCamera::Apply()
 {

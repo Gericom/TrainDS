@@ -10,6 +10,7 @@
 #include "terrain/scenery/RCT2Tree1.h"
 #include "managers/TerrainTextureManager16.h"
 #include "managers/TerrainTextureManager8.h"
+#include "GameController.h"
 #include "io/TerrainData.h"
 #include "io/ObjectData.h"
 #include "engine/objects/Water.h"
@@ -390,6 +391,8 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 				//int count = 0;
 				G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 
+				GXRgb clr = mGameController->mLightColor;
+
 				zstart &= ~1;
 				xstart &= ~1;
 				zend |= 1;
@@ -470,7 +473,7 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 							{
 								reg_G3X_GXFIFO = pmap2[2 * MAP_BLOCK_WIDTH + 2].normal;
 								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH + 2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, 0x7FFF);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, clr);
 							}
 #ifdef DEBUG_TILE_COUNT
 							count++;

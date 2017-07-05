@@ -2,7 +2,7 @@
 #define __FREEROAMCAMERA_H__
 
 #include "LookAtCamera.h"
-#include "Quaternion.h"
+#include "../Quaternion.h"
 
 class FreeRoamCamera : public LookAtCamera
 {

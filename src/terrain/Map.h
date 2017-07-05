@@ -37,6 +37,7 @@ typedef uint16_t picking_result_t;
 
 class Water;
 class SimpleSceneryObject;
+class GameController;
 
 class Map
 {
@@ -48,6 +49,7 @@ private:
 		uint32_t has_normals : 1;
 	};
 public:
+	GameController* mGameController;
 	//hvtx_t* pHMap;
 	TerrainData* mTerrainData;
 	//4 blocks of 128x128
@@ -87,7 +89,7 @@ private:
 	hvtx_t* GetMapBlock(int x, int y, bool withNormals);
 	void Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel, u8* lodData);
 public:
-	Map();
+	Map(GameController* gameController);
 	~Map();
 
 	void AddTrackPiece(TrackPieceEx* piece)

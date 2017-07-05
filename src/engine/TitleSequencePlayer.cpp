@@ -1,6 +1,6 @@
 #include <nitro.h>
 #include "core.h"
-#include "engine/VehicleCamera.h"
+#include "engine/cameras/VehicleCamera.h"
 #include "terrain/GameController.h"
 #include "TitleSequencePlayer.h"
 
