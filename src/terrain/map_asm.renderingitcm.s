@@ -48,236 +48,243 @@
 
 #define G3OP_DUMMY_COMMAND      0xFF   /* Dummy command */
 
-//void render_tile(pNorm, pVtx, x, y)
+//void render_tile(pVtx, x, y)
 .global render_tile
 render_tile:
 	stmfd sp!, {r4-r11}
-	ldr r4,= G3OP_BEGIN | (G3OP_TEXCOORD << 8) | (G3OP_NORMAL << 16) | (G3OP_VTX_10 << 24)
-	mov r5, #2 //GX_BEGIN_TRIANGLE_STRIP
-	mov r6, #0
-	ldr r7, [r0]
-	ldrb r8, [r1]
-	orr r2, r2, r3, lsl #20
-	orr r8, r2, r8, lsl #10
+	orr r10, r1, r2, lsl #20
+	mvn r3, r1, lsl #8
+	eor r3, r3, r2, lsl #24
+	ldr r1,= G3OP_BEGIN | (G3OP_TEXCOORD << 8) | (G3OP_NORMAL << 16) | (G3OP_VTX_10 << 24)
+	mov r2, #2 //GX_BEGIN_TRIANGLE_STRIP
+	ldmia r0, {r4, r5, r6, r7}
+	and r5, r5, #0xFF
+	orr r5, r10, r5, lsl #11
+	//ldr r8,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_NORMAL << 16) | (G3OP_VTX_10 << 24)
 
-	ldr r9,= G3OP_TEXCOORD | (G3OP_NORMAL << 8) | (G3OP_VTX_10 << 16) | (G3OP_TEXCOORD << 24)
-	mov r10, #0x01000000
-	ldr r11, [r0, #(128 << 2)]
-	ldrb r12, [r1, #128]
-	orr r12, r2, r12, lsl #10
-	add r12, r12, #(1 << 20)
+	//ldr r12,= 0x04000400
+	mov r12, #0x04000000
+	orr r12, r12, #0x00000400
+	stmia r12, {r1-r5}
 
-	ldr r3,= 0x04000400
-	stmia r3, {r4-r12}
+	mov r4, r1, lsr #16
+	orr r1, r4, r4, lsl #16
 
-	mov r4, #0x00000100
-	ldr r5,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_TEXCOORD << 16) | (G3OP_NORMAL << 24)
-	ldr r6, [r0, #4]
-	ldrb r7, [r1, #1]
-	add r2, r2, #1
-	orr r7, r2, r7, lsl #10
-	orr r8, r4, #0x01000000		//=0x01000100
-	ldr r9, [r0, #((128 << 2) + 4)]
+	add r2, r0, #(132 * 8)
+	ldmia r2, {r2, r3, r9, r11}
+	and r3, r3, #0xFF
+	orr r3, r10, r3, lsl #11
+	add r3, r3, #(1 << 20)
+	
+	and r7, r7, #0xFF
+	add r10, r10, #1
+	orr r7, r10, r7, lsl #11
 
-	ldr r10,= G3OP_VTX_10 | (G3OP_END << 8) | (G3OP_NOP << 16) | (G3OP_NOP << 24)
-	ldrb r11, [r1, #(128 + 1)]
-	orr r11, r2, r11, lsl #10
-	add r11, r11, #(1 << 20)
+	//ldr r8,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_END << 16) | (G3OP_NOP << 24)
+	orr r8, r4, #((G3OP_END << 16) | (G3OP_NOP << 24))
 
-	stmia r3, {r4-r11}
+	and r11, r11, #0xFF
+	orr r10, r10, r11, lsl #11
+	add r10, r10, #(1 << 20)
+
+	stmia r12, {r1-r3,r6-r10}
 
 	ldmfd sp!, {r4-r11}
 	bx lr
 
+//void render_tile2x2(pVtx, x, y)
+.global render_tile2x2
+render_tile2x2:
+	stmfd sp!, {r4-r11}
+	orr r10, r1, r2, lsl #20
+	mvn r3, r1, lsl #7
+	eor r3, r3, r2, lsl #22
+	ldr r1,= G3OP_BEGIN | (G3OP_TEXCOORD << 8) | (G3OP_NORMAL << 16) | (G3OP_VTX_10 << 24)
+	mov r2, #2 //GX_BEGIN_TRIANGLE_STRIP
+	ldmia r0, {r4, r5}
+
+	add r6, r0, #(2 * 8)
+	ldmia r6, {r6, r7}
+
+	and r5, r5, #0xFF
+	orr r5, r10, r5, lsl #11
+	//ldr r8,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_NORMAL << 16) | (G3OP_VTX_10 << 24)
+
+	mov r12, #0x04000000
+	orr r12, r12, #0x00000400
+	stmia r12, {r1-r5}//,r8}
+
+	mov r4, r1, lsr #16
+	orr r1, r4, r4, lsl #16
+
+	add r9, r0, #(2 * 132 * 8)
+	ldmia r9, {r2, r3}
+
+	add r9, r9, #(2 * 8)
+	ldmia r9, {r9, r11}
+
+	and r3, r3, #0xFF
+	orr r3, r10, r3, lsl #11
+	add r3, r3, #(2 << 20)
+	
+	and r7, r7, #0xFF
+	add r10, r10, #2
+	orr r7, r10, r7, lsl #11
+
+	//ldr r8,= G3OP_NORMAL | (G3OP_VTX_10 << 8) | (G3OP_END << 16) | (G3OP_NOP << 24)
+	orr r8, r4, #((G3OP_END << 16) | (G3OP_NOP << 24))
+
+	and r11, r11, #0xFF
+	orr r10, r10, r11, lsl #11
+	add r10, r10, #(2 << 20)
+
+
+	stmia r12, {r1-r3,r6-r10}
+
+	ldmfd sp!, {r4-r11}
+	bx lr
+
+FX32_ONE = 4096
+MAP_BLOCK_WIDTH = 132
+
+//void render_lod0(int xstart, int xend, int zstart, int zend, fx32 distbase, fx32 camdirx, fx32 camdirz, hvtx_t* pmap, fx32 ymul, TerrainTextureManager16* texturemanager)
+.global render_lod0
+render_lod0:
+arg_distbase = 4 * 9
+arg_camdirx = 4 * 10
+arg_camdirz = 4 * 11
+arg_pmap = 4 * 12
+arg_ymul = 4 * 13
+arg_texturemanager = 4 * 14
+	stmfd sp!, {r4-r11,lr}
+	//r4 = x | (xend << 16)
+	orr r4, r0, r1, lsl #16
+	//r5 = z | (zend << 16)
+	orr r5, r2, r3, lsl #16
+	//r6 = distbase
+	ldr r6, [sp, #arg_distbase]
+	//r7 = camdirx
+	ldr r7, [sp, #arg_camdirx]
+	//r8 = camdirz
+	ldr r8, [sp, #arg_camdirz]
+	//r9 = pmap
+	ldr r9, [sp, #arg_pmap]
+	//r10 = ymul
+	ldr r10, [sp, #arg_ymul]
+	//r11 = texturemanager
+	ldr r11, [sp, #arg_texturemanager]
+z_loop:
+//{
+	stmfd sp!, {r4, r6, r9}
+	x_loop:
+	//{
+		ldrb r0, [r9, #4]//pmap2[0].y
+		smlawb r1, r10, r0, r10
+		cmp r1, #(10 * FX32_ONE * FX32_ONE)
+		bgt x_loop_finish
+		ldrb r1, [r9, #5]
+		ldrb r2, [r9, #(5 + 8)]
+		ldrb r3, [r9, #(5 + (MAP_BLOCK_WIDTH * 8))]
+		orr r2, r1, r2, lsl #8
+		ldrb r1, [r9, #(5 + (MAP_BLOCK_WIDTH * 8 + 8))]
+		orr r2, r2, r3, lsl #16
+		orr r2, r2, r1, lsl #24
+		ldrh r12, [r9, #6]
+		mov r0, r11
+		mov r12, r12, lsl #3
+		bl _ZN23TerrainTextureManager1617GetTextureAddressEiiiim
+		mov r0, r0, lsr #3
+		strh r0, [r9, #6]
+		ldr r12,= 0xDC900000
+		orr r12, r12, r0
+		mov r0, #0x04000000
+		str r12, [r0, #0x4A8]//teximageparam
+		//todo: lod stuff
+		mov r0, r9
+		and r1, r4, #0xFF
+		and r2, r5, #0xFF
+		bl render_tile
+	x_loop_finish:
+		add r6, r6, r7, lsl #12
+		add r9, r9, #8
+		add r4, r4, #1
+		cmp r4, r4, ror #16 //if the top and bottom are the same the ror of 16 should be equals to original
+		bne x_loop
+	//}
+	ldmfd sp!, {r4, r6, r9}
+	add r6, r6, r8, lsl #12
+	add r9, r9, #(8 * MAP_BLOCK_WIDTH)
+	add r5, r5, #1
+	cmp r5, r5, ror #16 //if the top and bottom are the same the ror of 16 should be equals to original
+	bne z_loop
+//}
+	ldmfd sp!, {r4-r11,pc}
+
 
 //((15 - x)*(15 - y))*tl + (x*(15 - y))*tr + (y*(15 - x))*bl + (x*y)*br
 
-//void gen_terrain_texture(u16* tl, u16* tr, u16* bl, u16* br, u16* dst)
-.global gen_terrain_texture
-gen_terrain_texture:
-arg_dst	= 4 * 9
-	stmfd sp!, {r4-r11,lr}
-	//ldr r4, [sp, #arg_dst]	//dst
-	ldr r5,= gen_terrain_texture_coeftable
-	mov r6, #256
-	gen_terrain_texture_yloop:
+//void gen_terrain_texture_precoefd(u16* tl, u16* tr, u16* bl, u16* br, u16* dst)
+//.global gen_terrain_texture_precoefd
+//gen_terrain_texture_precoefd:
+.macro macro_gen_terrain_texture_precoefd div, cnt
+arg_dst	= 4 * 8
+	stmfd sp!, {r4-r11}
+	ldr r4, [sp, #arg_dst]	//dst
+	ldr r12,= \div //291
+	mov r5, #\cnt //256
+	1:
 	//{
-		//gen_terrain_texture_xloop:
-		.rept 16
-		//{
-			//(x*y)*br
-			ldr lr, [r5], #4
-
-			ldrh r8, [r3], #2
-
-			and r7, lr, #0xFF
-
-			and r12, r8, #0x1F
-			smulbb r9, r12, r7
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smulbb r10, r12, r7
-
-			mov r8, r8, lsr #5
-			smulbb r11, r8, r7
-
-			//(y*(15 - x))*bl
-			ldrh r8, [r2], #2
-
-			mov r7, lr, lsr #8
-			and r7, r7, #0xFF
-
-			and r12, r8, #0x1F
-			smlabb r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabb r10, r12, r7, r10
-
-			mov r8, r8, lsr #5
-			smlabb r11, r8, r7, r11
-
-			//((15 - x)*(15 - y))*tl
-			ldrh r8, [r0], #2
-
-			and r7, lr, #0xFF0000
-
-			and r12, r8, #0x1F
-			smlabt r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabt r10, r12, r7, r10
-
-			mov r8, r8, lsr #5
-			smlabt r11, r8, r7, r11
-
-			//(x*(15 - y))*tr
-			ldrh r8, [r1], #2
-
-			mov r7, lr, lsr #24
-
-			and r12, r8, #0x1F
-			smlabb r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabb r10, r12, r7, r10
-
-			//prevent interlock
-			ldr lr,= 291
-
-			mov r8, r8, lsr #5
-			smlabb r11, r8, r7, r11
-
-			smulwb r9, r9, lr
-			smulwb r10, r10, lr
-			smulwb r11, r11, lr
-
-			orr r9, r9, r10, lsl #5
-			orr r9, r9, r11, lsl #10
-			orr r9, r9, #0x8000
-			strh r9, [r4], #2
-		//}
-		.endr
-		subs r6, r6, #16
-		bgt gen_terrain_texture_yloop
-	//}
-	ldmfd sp!, {r4-r11,pc}
-
-.pool
-
-//void gen_terrain_texture(u16* tl, u16* tr, u16* bl, u16* br, u16* dst)
-.global gen_terrain_texture_8
-gen_terrain_texture_8:
-arg_dst	= 4 * 9
-	stmfd sp!, {r4-r11,lr}
-	//ldr r4, [sp, #arg_dst]	//dst
-	ldr r5,= gen_terrain_texture_8_coeftable
-	mov r6, #64
-	gen_terrain_texture_8_yloop:
-	//{
-		//gen_terrain_texture_xloop:
 		.rept 8
 		//{
-			//(x*y)*br
-			ldr lr, [r5], #4
+			ldmia r0!, {r6, r7, r8}
+			ldmia r1!, {r9, r10, r11}
+			add r6, r6, r9
+			add r7, r7, r10
+			add r8, r8, r11
+			ldmia r2!, {r9, r10, r11}
+			add r6, r6, r9
+			add r7, r7, r10
+			add r8, r8, r11
+			ldmia r3!, {r9, r10, r11}
+			add r6, r6, r9
+			add r7, r7, r10
+			add r8, r8, r11
 
-			ldrh r8, [r3], #2
+			smulwb r9, r12, r6 //r
+			smulwt r10, r12, r6 //g
 
-			and r7, lr, #0xFF
-
-			and r12, r8, #0x1F
-			smulbb r9, r12, r7
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smulbb r10, r12, r7
-
-			mov r8, r8, lsr #5
-			smulbb r11, r8, r7
-
-			//(y*(15 - x))*bl
-			ldrh r8, [r2], #2
-
-			mov r7, lr, lsr #8
-			and r7, r7, #0xFF
-
-			and r12, r8, #0x1F
-			smlabb r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabb r10, r12, r7, r10
-
-			mov r8, r8, lsr #5
-			smlabb r11, r8, r7, r11
-
-			//((15 - x)*(15 - y))*tl
-			ldrh r8, [r0], #2
-
-			and r7, lr, #0xFF0000
-
-			and r12, r8, #0x1F
-			smlabt r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabt r10, r12, r7, r10
-
-			mov r8, r8, lsr #5
-			smlabt r11, r8, r7, r11
-
-			//(x*(15 - y))*tr
-			ldrh r8, [r1], #2
-
-			mov r7, lr, lsr #24
-
-			and r12, r8, #0x1F
-			smlabb r9, r12, r7, r9
-
-			mov r8, r8, lsr #5
-			and r12, r8, #0x1F
-			smlabb r10, r12, r7, r10
-
-			//prevent interlock
-			ldr lr,= 1337
-
-			mov r8, r8, lsr #5
-			smlabb r11, r8, r7, r11
-
-			smulwb r9, r9, lr
-			smulwb r10, r10, lr
-			smulwb r11, r11, lr
+			smulwb r11, r12, r7 //b
 
 			orr r9, r9, r10, lsl #5
 			orr r9, r9, r11, lsl #10
+
+			smulwt r11, r12, r7 //r
+
 			orr r9, r9, #0x8000
-			strh r9, [r4], #2
+
+			orr r9, r9, r11, lsl #16
+
+			smulwb r10, r12, r8 //g
+			smulwt r11, r12, r8 //b
+
+			orr r9, r9, r10, lsl #21
+			orr r9, r9, r11, lsl #26
+			orr r9, r9, #0x80000000
+
+			str r9, [r4], #4
 		//}
 		.endr
-		subs r6, r6, #8
-		bgt gen_terrain_texture_8_yloop
+		subs r5, r5, #16
+		bgt 1b
 	//}
-	ldmfd sp!, {r4-r11,pc}
+	ldmfd sp!, {r4-r11}
+	bx lr
+.endm
+
+.global gen_terrain_texture_precoefd
+gen_terrain_texture_precoefd:
+	macro_gen_terrain_texture_precoefd 291, 256
+
+.global gen_terrain_texture_precoefd_8
+gen_terrain_texture_precoefd_8:
+	macro_gen_terrain_texture_precoefd 624, 128

@@ -1,10 +1,9 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 #include "SimpleMenu.h"
-#include "vehicles/train.h"
-#include "terrain/terrain.h"
-#include "terrain/Map.h"
-#include "terrain/managers/SfxManager.h"
+#include "core/os/VAlarm.h"
+#include "terrain/TerrainManager.h"
+#include "terrain/GameController.h"
 
 class TerrainManager;
 class UIManager;
@@ -13,6 +12,8 @@ class LookAtCamera;
 class ThirdPersonCamera;
 class FreeRoamCamera;
 class DragTool;
+class Wagon;
+class Button;
 
 class Game : public SimpleMenu
 {
@@ -27,15 +28,20 @@ private:
 		PICKING_STATE_CAPTURING
 	};
 
-	NNSG3dResFileHeader* mLocModel;
-	train_t mTrain;
-	train_part_t mTrainPart;
+	enum FrameType
+	{
+		//regular rendering, these frames should always appear in pairs
+		FRAME_TYPE_MAIN_FAR,	//for the far part
+		FRAME_TYPE_MAIN_NEAR,	//for the near part
+		//injected frames
+		FRAME_TYPE_MAIN_PICKING,//for picking
+		FRAME_TYPE_SUB			//for sub screen 3d
+	};
+
+	FreeRoamCamera* mCamera;
 
 	int mPickingPointX;
 	int mPickingPointY;
-	int mPickingXStart;
-	int mPickingXEnd;
-	int mPickingZStart;
 	int mSelectedTrain;
 	int mSelectedMapX;
 	int mSelectedMapZ;
@@ -50,32 +56,59 @@ private:
 	PickingState mPickingState;
 	bool mPickingRequested;
 
-	bool mAntiAliasEnabled;
+	bool mSub3DInvalidated;
+
+	void InvalidateSub3D()
+	{
+		mSub3DInvalidated = true;
+	}
 
 	int mKeyTimer;
+	int mDebugKeyTimer;
 
 	void* mTrackBuildCellData;
 	NNSG2dCellDataBank* mTrackBuildCellDataBank;
 	NNSG2dImageProxy mImageProxy;
 	NNSG2dImagePaletteProxy mImagePaletteProxy;
 
-	NNSG2dFont mFont;
-	void* mFontData;
-	NNSG2dCharCanvas mCanvas;
-	NNSG2dTextCanvas mTextCanvas;
+	NNSG2dImageProxy mImageProxyMain;
+	NNSG2dImagePaletteProxy mImagePaletteProxyMain;
+
+	NNSG2dFont mSubFont;
+	void* mSubFontData;
+	NNSG2dCharCanvas mSubCanvas;
+	NNSG2dTextCanvas mSubTextCanvas;
+
+	NNSG2dFont mSubFont2;
+	void* mSubFontData2;
+	NNSG2dCharCanvas mSubCanvas2;
+	NNSG2dTextCanvas mSubTextCanvas2;
 
 	UIManager* mUIManager;
 	TrackBuildUISlice* mTrackBuildUISlice;
+
+	NNSG2dCellDataBank* mCellDataMainBank;
+	void* mCellDataMain;
+
+	NNSG2dOamManagerInstance mSubObjOamManager;
+	GXOamAttr mTmpSubOamBuffer[128];
+
+	NNSG2dCellDataBank* mCellDataSubBank;
+	void* mCellDataSub;
+
+	Button* mPointerButton;
+
+	bool mTrainMode;
 
 	texture_t mShadowTex;
 
 	DragTool* mDragTool;
 
-	OSVAlarm mVRAMCopyVAlarm;
+	OS::VAlarm* mVRAMCopyVAlarm;
+	OS::VAlarm* mSub3DCopyVAlarm;
 
-	int mRenderState;
-
-	//void Pick(int x, int y, PickingCallbackFunc callback);
+	FrameType mCurFrameType;
+	FrameType mLastFrameType;
 
 	void OnPenDown(int x, int y);
 	void OnPenMove(int x, int y);
@@ -86,17 +119,18 @@ private:
 	void HandlePickingVBlank();
 	void HandlePickingEarly();
 	void HandlePickingLate();
-public:
-	FreeRoamCamera*/*ThirdPersonCamera**/ mCamera;
 
-	Map* mMap;
-	SfxManager* mSfxManager;
+	int MakeTextCell(GXOamAttr* pOAM, int x, int y, int w, int h, int palette, u32 address);
 
 	void OnVRAMCopyVAlarm();
+	void OnSub3DCopyVAlarm();
+public:
+	GameController* mGameController;
 
 public:
-	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mAntiAliasEnabled(TRUE), mKeyTimer(0), 
-		mPickingState(PICKING_STATE_READY), mPickingRequested(false) 
+	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mKeyTimer(0), mDebugKeyTimer(0), mTrainMode(false), 
+		mPickingState(PICKING_STATE_READY), mPickingRequested(false), mCurFrameType(FRAME_TYPE_MAIN_FAR), mLastFrameType(FRAME_TYPE_MAIN_FAR),
+		mSub3DCopyVAlarm(NULL), mSub3DInvalidated(false)
 	{ }
 
 	void Initialize(int arg);
@@ -106,34 +140,25 @@ public:
 		((Game*)arg)->OnVRAMCopyVAlarm();
 	}
 
-	static void OnPenDown(Menu* context, int x, int y)
+	static void OnSub3DCopyVAlarm(void* arg)
 	{
-		((Game*)context)->OnPenDown(x, y);
+		((Game*)arg)->OnSub3DCopyVAlarm();
 	}
 
-	static void OnPenMove(Menu* context, int x, int y)
+	static void OnPenDown(void* arg, int x, int y)
 	{
-		((Game*)context)->OnPenMove(x, y);
+		((Game*)arg)->OnPenDown(x, y);
 	}
 
-	static void OnPenUp(Menu* context, int x, int y)
+	static void OnPenMove(void* arg, int x, int y)
 	{
-		((Game*)context)->OnPenUp(x, y);
+		((Game*)arg)->OnPenMove(x, y);
 	}
 
-	static void OnPenDownPickingCallback(void* arg, picking_result_t result)
+	static void OnPenUp(void* arg, int x, int y)
 	{
-		((Game*)arg)->OnPenDownPickingCallback(result);
+		((Game*)arg)->OnPenUp(x, y);
 	}
-
-	void OnPenDownPickingCallback(picking_result_t result);
-
-	static void OnPenUpPickingCallback(void* arg, picking_result_t result)
-	{
-		((Game*)arg)->OnPenUpPickingCallback(result);
-	}
-
-	void OnPenUpPickingCallback(picking_result_t result);
 
 	void RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg);
 
@@ -145,19 +170,6 @@ public:
 	{
 		gNextMenuArg = 0;
 		gNextMenuCreateFunc = CreateMenu;
-	}
-
-	void GetMapPosFromPickingResult(picking_result_t result, int &mapX, int &mapY)
-	{
-		if (PICKING_IDX(result) <= 0 || PICKING_TYPE(result) != PICKING_TYPE_MAP)
-		{
-			mapX = -1;
-			mapY = -1;
-			return;
-		}
-		int idx = PICKING_IDX(result) - 1;
-		mapX = mPickingXStart + idx % (mPickingXEnd - mPickingXStart);
-		mapY = mPickingZStart + idx / (mPickingXEnd - mPickingXStart);
 	}
 
 private:

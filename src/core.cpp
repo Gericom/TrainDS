@@ -5,6 +5,10 @@
 #include "core.h"
 #include "util.h"
 
+#include <nitro/dtcm_begin.h>
+static NNSG3dGeBuffer sGeBuffer;
+#include <nitro/dtcm_end.h>
+
 GXOamAttr gOamTmpBuffer[128];
 
 NNSFndHeapHandle gHeapHandle;
@@ -51,6 +55,22 @@ void operator delete[](void* block) throw()
     NNS_FndFreeToExpHeap(gHeapHandle, block);
 }
 
+extern "C" void* mb_alloc(int size)
+{
+	void* result;
+	OSIntrMode cur = OS_DisableInterrupts();
+	{
+		int curHeapGroup = NNS_FndGetGroupIDForExpHeap(gHeapHandle);
+		NNS_FndSetGroupIDForExpHeap(gHeapHandle, WFS_HEAP_GROUP_ID);
+		{			
+			result = NNS_FndAllocFromExpHeapEx(gHeapHandle, size, 16);
+		}
+		NNS_FndSetGroupIDForExpHeap(gHeapHandle, curHeapGroup);
+	}
+	OS_RestoreInterrupts(cur);
+	return result;
+}
+
 #define SOUND_HEAP_SIZE 0x80000
 
 NNSSndArc gSndArc;
@@ -62,6 +82,8 @@ NNSSndHeapHandle gSndHeapHandle;
 
 static uint32_t mSzWork;
 static void* mPMgrWork;
+
+static TPData mTPData[4];
 
 void Core_Init()
 {
@@ -81,6 +103,11 @@ void Core_Init()
 	uint32_t szWork = NNS_GfdGetLnkPlttVramManagerWorkSize(4096);
 	void* pMgrWork = NNS_FndAllocFromExpHeapEx(gHeapHandle, szWork, 16);
 	NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
+
+	NNS_G3dGeSetBuffer(&sGeBuffer);
+	NNS_G3dGeUseFastDma(true);
+
+	TP_RequestAutoSamplingStart(192, 2, &mTPData[0], 4);
 }
 
 uint16_t gKeys;
@@ -88,4 +115,9 @@ uint16_t gKeys;
 void Core_ReadInput()
 {
 	gKeys = PAD_Read();
+}
+
+void Core_GetTouchInput(TPData* dst)
+{
+	*dst = mTPData[TP_GetLatestIndexInAuto()];
 }

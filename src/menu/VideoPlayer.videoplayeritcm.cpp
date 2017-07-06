@@ -8,7 +8,7 @@
 #include "Game.h"
 #include "VideoPlayer.h"
 
-extern bool videoPlayer_mWaveDataOffs_write;
+extern int videoPlayer_mWaveDataOffs_write;
 extern volatile int videoPlayer_curBlock;
 extern volatile int videoPlayer_nrFramesInQueue;
 extern volatile int videoPlayer_firstQueueBlock;

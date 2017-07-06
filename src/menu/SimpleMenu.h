@@ -22,6 +22,7 @@ public:
 			int brightness = -16 + ((0 - -16) * i) / (mFadeInFrames - 1);
 			Render();
 			NNS_SndMain();
+			NNS_SndUpdateDriverInfo();
 			OS_WaitVBlankIntr();
 			VBlank();
 			GX_SetMasterBrightness(brightness);
@@ -31,6 +32,7 @@ public:
 		{
 			Render();
 			NNS_SndMain();
+			NNS_SndUpdateDriverInfo();
 			OS_WaitVBlankIntr();
 			VBlank();
 		}
@@ -40,6 +42,7 @@ public:
 			int brightness = 0 + ((-16 - 0) * i) / (mFadeOutFrames - 1);
 			Render();
 			NNS_SndMain();
+			NNS_SndUpdateDriverInfo();
 			OS_WaitVBlankIntr();
 			VBlank();
 			GX_SetMasterBrightness(brightness);

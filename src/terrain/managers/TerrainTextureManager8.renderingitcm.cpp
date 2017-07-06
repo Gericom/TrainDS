@@ -4,92 +4,101 @@
 #include "util.h"
 #include "TerrainTextureManager8.h"
 
-extern "C" void gen_terrain_texture_8(u16* tl, u16* tr, u16* bl, u16* br, u16* dst);
+extern "C" void gen_terrain_texture_precoefd_8(u16* tl, u16* tr, u16* bl, u16* br, u16* dst);
 
 asm uint32_t TerrainTextureManager8::GetTextureAddress(int tl, int tr, int bl, int br, uint32_t oldTexKey)
 {
-#define arg_br (4 * 9)
-#define arg_oldTexKey (4 * 10)
+//#define arg_br (4 * 9)
+//#define arg_oldTexKey (4 * 10)
+#define arg_br (4 * 0)
+#define arg_oldTexKey (4 * 1)
 	enum
 	{
 		offsetof_mResourceCounter = offsetof(TerrainTextureManager8, mResourceCounter),
 		offsetof_mCacheBlocks = offsetof(TerrainTextureManager8, mCacheBlocks),
 		offsetof_mTextureDatas = offsetof(TerrainTextureManager8, mTextureDatas),
-		offsetof_mVramCTexData = offsetof(TerrainTextureManager8, mVramCTexData)
+		offsetof_mVramCTexData = offsetof(TerrainTextureManager8, mVramCTexData),
+		offsetof_mMessageQueue = offsetof(TerrainTextureManager8, mMessageQueue)
 	};
-	stmfd sp!, { r4 - r11,lr }
-	ldr r4, [sp, #arg_br]
-	ldr r7, [r0, #offsetof_mResourceCounter]
-	add r7, r7, #1
-	str r7, [r0, #offsetof_mResourceCounter]
-	//create tag
-	orr r6, r1, r2, lsl #8
-	orr r6, r6, r3, lsl #16
-	orr r6, r6, r4, lsl #24
+	orr r2, r1, r2, lsl #8
+	ldmia sp, { r1, r12 }
+	orr r2, r2, r3, lsl #16
+	orr r2, r2, r1, lsl #24
 
-	ldr r11, [sp, #arg_oldTexKey]
-	cmp r11, #0
-	beq notexkey
-	sub r9, r11, #(128 * 1024)
-	add r9, r0, r9, lsr #4
-	ldr r8, [r9, #offsetof_mCacheBlocks]!
-	cmp r8, r6
-	beq tag_found_old
+	subs r1, r12, #(128 * 1024)
+	addge r1, r0, r1, lsr #5
+	ldrge r3, [r1, #offsetof_mCacheBlocks]!
+	cmpge r3, r2
 
-notexkey:
-	add r9, r0, #offsetof_mCacheBlocks
-	add r8, r9, #(1024 * 8)
-	str r6, [r8], #8
-loop:	
-	ldr r10, [r9], #8
-	teq r10, r6
-	bne loop
+	ldreq r3, [r0, #offsetof_mResourceCounter]
+	streq r3, [r1, #4]
+	moveq r0, r12
+	bxeq lr
 
-	cmp r9, r8
-	bne tag_found
+	add r12, r0, #offsetof_mCacheBlocks
+	add r1, r12, #(512 * 8)
+	str r2, [r1], #8
+loop:
+	ldr r3, [r12], #8
+	teq r3, r2
+		bne loop
 
-	mvn r5, #1
-	mvn r8, #0x80000000
-	add r9, r0, #(offsetof_mCacheBlocks + 4)
-	mov r12, #1024
+	cmp r12, r1
+		beq no_tag_found
+
+	ldr r3, [r0, #offsetof_mResourceCounter]
+	sub r1, r1, r12
+	rsb r1, r1, #(512 * 8)
+	str r3, [r12, #-4]
+	mov r1, r1, lsl #5
+	add r0, r1, #(128 * 1024)
+	bx lr
+
+no_tag_found:
+	stmfd sp!, { r4, r5, lr }
+	mvn r1, #1
+	mvn r4, #0x80000000
+	add r12, r0, #(offsetof_mCacheBlocks + 4)
+	mov r5, #512
 loop2:
-	ldr r10, [r9], #8
-	cmp r10, r8
-		movlt r8, r10
-		movlt r5, r12
-	subs r12, r12, #1
-	bgt loop2
-	rsb r5, r5, #1024
+	ldr r3, [r12], #8
+	cmp r3, r4
+		movlt r4, r3
+		movlt r1, r5
+	subs r5, r5, #1
+		bgt loop2
+
+	ldr r3, [r0, #offsetof_mResourceCounter]
+	rsb r5, r1, #512
 	add r12, r0, #offsetof_mCacheBlocks
 	add r12, r12, r5, lsl #3
-	strd r6, [r12]
+	strd r2, [r12]
 
-	add r12, r0, r5, lsl #7
-
-	ldr r11,= offsetof_mTextureDatas
-	add lr, r0, r11
-	ldr r0, [lr, r1, lsl #2]
-	ldr r1, [lr, r2, lsl #2]
-	ldr r2, [lr, r3, lsl #2]
-	ldr r3, [lr, r4, lsl #2]
-
-	ldr r11, = offsetof_mVramCTexData
-	add r4, r12, r11//#offsetof_mVramCTexData
-
-	bl gen_terrain_texture_8
-	mov r0, r5, lsl #7
+	ldr r1,= offsetof_mMessageQueue
+	add r0, r0, r1
+	mov r1, r5
+	mov r2, #OS_MESSAGE_NOBLOCK
+	bl OS_SendMessage
+	//bl OS_JamMessage
+	mov r0, r5, lsl #8
 	add r0, r0, #(128 * 1024)
-	ldmfd sp!, { r4 - r11,pc }
-tag_found:
-	sub r12, r8, r9
-	rsb r12, r12, #(1024 * 8)
-	str r7, [r9, #-4]
-	mov r12, r12, lsl #4
-	add r0, r12, #(128 * 1024)
-	ldmfd sp!, { r4 - r11,pc }
+	ldmfd sp!, { r4, r5, pc }
+}
 
-tag_found_old:
-	str r7, [r9, #4]
-	mov r0, r11
-	ldmfd sp!, { r4 - r11,pc }
+void TerrainTextureManager8::WorkerThreadMain()
+{
+	OSMessage msg;
+	while (1)
+	{
+		OS_ReceiveMessage(&mMessageQueue, &msg, OS_MESSAGE_BLOCK);
+		int cacheBlock = (int)msg;
+		texture_cache_block_t* block = &mCacheBlocks[cacheBlock];
+		gen_terrain_texture_precoefd_8(
+			(u16*)mCoefdTextureDatas[block->tag & 0xFF][0],
+			(u16*)mCoefdTextureDatas[(block->tag >> 8) & 0xFF][1],
+			(u16*)mCoefdTextureDatas[(block->tag >> 16) & 0xFF][2],
+			(u16*)mCoefdTextureDatas[(block->tag >> 24) & 0xFF][3],
+			(u16*)&mVramCTexData[cacheBlock << 8]);
+		DC_FlushRange(&mVramCTexData[cacheBlock << 8], 256);
+	}
 }

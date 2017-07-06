@@ -3,27 +3,33 @@
 #include <nnsys/g3d.h>
 #include "core.h"
 #include "util.h"
-#include "terrain.h"
 #include "TerrainManager.h"
 #include "terrain/track/TrackPieceEx.h"
 #include "terrain/track/FlexTrack.h"
-#include "terrain/scenery/SceneryObject.h"
+#include "terrain/scenery/SimpleSceneryObject.h"
 #include "terrain/scenery/RCT2Tree1.h"
 #include "managers/TerrainTextureManager16.h"
 #include "managers/TerrainTextureManager8.h"
+#include "GameController.h"
+#include "io/TerrainData.h"
+#include "io/ObjectData.h"
+#include "engine/objects/Water.h"
+#include "box2d.h"
+#include "engine/QuadTree.h"
 #include "Map.h"
 
-void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
+void Map::RecalculateNormals(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend)
 {
-	for (int y = zstart; y < zend && y < 127; y++)
+	pHMap += 2 * MAP_BLOCK_WIDTH + 2;
+	for (int y = zstart; y < zend && y < 129; y++)
 	{
-		for (int x = xstart; x < xend && x < 127; x++)
+		for (int x = xstart; x < xend && x < 129; x++)
 		{
-			fx32 hl = (mVtx[y * 128 + x - 1] - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x - 1, z);
-			fx32 hr = (mVtx[y * 128 + x + 1] - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x + 1, z);
-			fx32 hd = (mVtx[(y + 1) * 128 + x] - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x, z + 1); /* Terrain expands towards -Z /
-			fx32 hu = (mVtx[(y - 1) * 128 + x] - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x, z - 1);
-			VecFx32 norm = { hl - hr, 2 * FX32_ONE, hd - hu };
+			fx32 hl = (pHMap[y * MAP_BLOCK_WIDTH + x - 1].y - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x - 1, z);
+			fx32 hr = (pHMap[y * MAP_BLOCK_WIDTH + x + 1].y - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x + 1, z);
+			fx32 hd = (pHMap[(y + 1) * MAP_BLOCK_WIDTH + x].y - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x, z + 1); /* Terrain expands towards -Z /
+			fx32 hu = (pHMap[(y - 1) * MAP_BLOCK_WIDTH + x].y - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x, z - 1);
+			VecFx32 norm = { hl - hr, 2 * FX32_ONE, hu - hd };
 
 			VEC_Normalize(&norm, &norm);
 
@@ -34,661 +40,459 @@ void Map::RecalculateNormals(int xstart, int xend, int zstart, int zend)
 			if (norm.z > GX_FX32_FX10_MAX) norm.z = GX_FX32_FX10_MAX;
 			else if (norm.z < GX_FX32_FX10_MIN) norm.z = GX_FX32_FX10_MIN;
 
-			mNormals[y * 128 + x] = GX_VECFX10(norm.x, norm.y, norm.z);
+			pHMap[y * MAP_BLOCK_WIDTH + x].normal = GX_VECFX10(norm.x, norm.y, norm.z);
 		}
 	}
 }
 
-extern "C" void render_tile(VecFx10* pNorm, uint8_t* pVtx, int x, int y);
-
-void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, int selectedMapX, int selectedMapZ, VecFx32* camPos, VecFx32* camDir, int lodLevel)
+void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xend2, int zstart2, int zend2, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel)
 {
-	texture_t* tex = mTerrainManager->GetTerrainTexture(0);
-	/*G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
-		GX_TEXGEN_TEXCOORD,    // use texcoord
-		(GXTexSizeS)tex->nitroWidth,        // 16 pixels
-		(GXTexSizeT)tex->nitroHeight,        // 16 pixels
-		GX_TEXREPEAT_ST,     // no repeat
-		GX_TEXFLIP_NONE,       // no flip
-		GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-		NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-	);
-	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);*/
-
-	//fx32 d = -(camDir->x * camPos->x + camDir->y * camPos->y + camDir->z * camPos->z);
-	int count = 0;
-	G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+	if (!picking && lodLevel == 1)
+	{
+		MI_CpuClearFast(mLodLevels, 128 * 128);
+		//center the stuff
+		int lodx = (128 - (xend - xstart)) >> 1;
+		int lody = (128 - (zend - zstart)) >> 1;
+		mLastLod = &mLodLevels[lody * 128 + lodx];
+		mLastXStart = xstart;
+		mLastZStart = zstart;
+	}
 	G3_PushMtx();
 	{
-		G3_Scale(FX32_ONE / 64 * FX32_ONE, Y_SCALE * FX32_ONE / 64, FX32_ONE / 64 * FX32_ONE);
-		G3_Translate(0, -Y_OFFSET * 64, 0);
-		//MI_CpuClearFast(mLodLevels, 128 * 128);
-		if (lodLevel == 0 || picking)
+		G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
+		for (int y = zstart >> 7; y < (zend + 127) >> 7; y++)
 		{
-			int i = 0;
-			for (int y = zstart; y < zend && y < 127; y++)
+			for (int x = xstart >> 7; x < (xend + 127) >> 7; x++)
 			{
-				for (int x = xstart; x < xend && x < 127; x++)
+				G3_PushMtx();
 				{
-					VecFx32 diff = {
-						x * FX32_ONE + FX32_HALF - camPos->x - 32 * FX32_ONE,
-						(mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y,
-						y * FX32_ONE + FX32_HALF - camPos->z - 32 * FX32_ONE
-					};
+					G3_Translate(x * 128 * FX32_ONE, 0, y * 128 * FX32_ONE);
+					int xstart2 = xstart - x * 128;
+					if (xstart2 < 0)
+						xstart2 = 0;
+					if (xstart2 > 128)
+						xstart2 = 128;
+					int xend2 = xend - x * 128;
+					if (xend2 < 0)
+						xend2 = 0;
+					if (xend2 > 128)
+						xend2 = 128;
+					int zstart2 = zstart - y * 128;
+					if (zstart2 < 0)
+						zstart2 = 0;
+					if (zstart2 > 128)
+						zstart2 = 128;
+					int zend2 = zend - y * 128;
+					if (zend2 < 0)
+						zend2 = 0;
+					if (zend2 > 128)
+						zend2 = 128;
 
-					fx32 top = FX_Mul(camDir->x, diff.x) + FX_Mul(camDir->y, diff.y) + FX_Mul(camDir->z, diff.z);// +d; //VEC_DotProduct(camDir, &diff);*/
-					//if (top < 0) top = 0;
-					//fx32 dist = FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
-					//NOCASH_Printf("old: %d; new: %d", FX_Sqrt(dist), top);
+					VecFx32 cam2 = *camPos;
+					cam2.x -= x * 128 * FX32_ONE;
+					cam2.z -= y * 128 * FX32_ONE;
 
-					//fx32 dist = FX_Mul(top, top);//FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
-					if ((!picking && top <= (10 * FX32_ONE)) || (picking && top <= (20 * FX32_ONE)))
-					{
-						//mLodLevels[y * 128 + x] = 1;
-						//mLodLevels[y * 128 + x + 1] = 1;
-						//mLodLevels[(y + 1) * 128 + x] = 1;
-						//mLodLevels[(y + 1) * 128 + x + 1] = 1;
-						if (picking)
-							G3_MaterialColorSpecEmi(0, PICKING_COLOR(PICKING_TYPE_MAP, i + 1), FALSE);
-						/*else if (selectedMapX == x && selectedMapZ == y)
-						{
-							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_DIF_AMB, G3OP_SPE_EMI, G3OP_POLYGON_ATTR, G3OP_NOP);
-							{
-								reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), FALSE);
-								reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(GX_RGB(0, 0, 0), GX_RGB(31, 31, 31), FALSE);
-								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_TOON, GX_CULL_NONE, 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-							}
-						}*/
-						else if (mGridEnabled)
-							G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-
-						if (!picking)
-						{
-							uint32_t texOffset = mTerrainTextureManager16->GetTextureAddress(
-								mTextures[y * 128 + x],
-								mTextures[y * 128 + x + 1],
-								mTextures[(y + 1) * 128 + x],
-								mTextures[(y + 1) * 128 + x + 1],
-								mTexAddresses[y * 128 + x]);
-							mTexAddresses[y * 128 + x] = texOffset;
-							G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
-								GX_TEXGEN_TEXCOORD,    // use texcoord
-								GX_TEXSIZE_S16,        // 16 pixels
-								GX_TEXSIZE_T16,        // 16 pixels
-								GX_TEXREPEAT_NONE,     // no repeat
-								GX_TEXFLIP_NONE,       // no flip
-								GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-								texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-							);
-						}
-
-						/*#include <nitro/itcm_end.h>
-											static u32 commandList[] =
-											{
-												GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10),
-												GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP),
-												GX_PACK_TEXCOORD_PARAM(0, 0),
-												0,
-												0,
-												GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD),
-												GX_PACK_TEXCOORD_PARAM(0, 16 * FX32_ONE),
-												0,
-												0,
-												GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 0),
-												GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL),
-												0,
-												0,
-												GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 16 * FX32_ONE),
-												0,
-												GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP),
-												0
-											};
-						#include <nitro/itcm_begin.h>
-
-											commandList[3] = mNormals[y * 128 + x];
-											commandList[4] = GX_PACK_VTX10_PARAM(x << 6, (mVtx[y * 128 + x] - Y_OFFSET) << 6, y << 6);
-											commandList[7] = mNormals[(y + 1) * 128 + x];
-											commandList[8] = GX_PACK_VTX10_PARAM(x << 6, (mVtx[(y + 1) * 128 + x] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
-											commandList[11] = mNormals[y * 128 + (x + 1)];
-											commandList[12] = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[y * 128 + (x + 1)] - Y_OFFSET) << 6, y << 6);
-											commandList[14] = mNormals[(y + 1) * 128 + (x + 1)];
-											commandList[16] = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
-
-											//MI_CpuSend32(&commandList[0], &reg_G3X_GXFIFO, sizeof(commandList));
-											MI_SendGXCommandFast(3, &commandList[0], sizeof(commandList));*/
-
-											//TODO: Include the loop in this function:
-						render_tile(&mNormals[y * 128 + x], &mVtx[y * 128 + x], x, y);
-						/*reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
-						{
-							reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 0);
-							reg_G3X_GXFIFO = mNormals[y * 128 + x];
-							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, (mVtx[y * 128 + x] - Y_OFFSET) << 6, y << 6);
-						}*/
-						//reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD);
-						//{
-						//	reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 16 * FX32_ONE);
-						//	reg_G3X_GXFIFO = mNormals[(y + 1) * 128 + x];
-						//	reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, (mVtx[(y + 1) * 128 + x] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
-						//	reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 0);
-						//}
-						//reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL);
-						//{						
-						//	reg_G3X_GXFIFO = mNormals[y * 128 + (x + 1)];
-						//	reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[y * 128 + (x + 1)] - Y_OFFSET) << 6, y << 6);
-						//	reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(16 * FX32_ONE, 16 * FX32_ONE);
-						//	reg_G3X_GXFIFO = mNormals[(y + 1) * 128 + (x + 1)];
-						//}
-						//reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP);
-						//{
-						//	reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (1 << 6), (mVtx[(y + 1) * 128 + (x + 1)] - Y_OFFSET) << 6, (y << 6) + (1 << 6));
-						//}
-
-						/*if (!picking && selectedMapX == x && selectedMapZ == y)
-						{
-							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_DIF_AMB, G3OP_SPE_EMI, G3OP_POLYGON_ATTR, G3OP_NOP);
-							{
-								reg_G3X_GXFIFO = GX_PACK_DIFFAMB_PARAM(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)/GX_RGB(10, 10, 10), FALSE);
-								reg_G3X_GXFIFO = GX_PACK_SPECEMI_PARAM(/*GX_RGB(3, 3, 3)/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), FALSE);
-								reg_G3X_GXFIFO = GX_PACK_POLYGONATTR_PARAM(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-							}
-						}*/
-						count++;
-					}
-					i++;
+					hvtx_t* pMap = GetMapBlock(x, y, true);
+					if (pMap)
+						Render(pMap, xstart2, xend2, zstart2, zend2, picking, &cam2, camDir, lodLevel, &mLastLod[(y * 128 - mLastZStart) * 128 + x * 128 - mLastXStart]);
 				}
+				G3_PopMtx(1);
 			}
 		}
-		//if (!picking)
-		if(lodLevel == 1 && !picking)
+		if (!picking)
 		{
-			//int count = 0;
-			G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
-			for (int y = zstart2 & ~1; y < (zend2 | 1) && y < 127; y += 2)
+			box2d_t frustumbox = { xstart2 * FX32_ONE - 32 * FX32_ONE, zstart2 * FX32_ONE - 32 * FX32_ONE, xend2 * FX32_ONE - 32 * FX32_ONE, zend2 * FX32_ONE - 32 * FX32_ONE };
+			/*TrackPieceEx* trackPiece = NULL;
+			while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 			{
-				for (int x = xstart2 & ~1; x < (xend2 | 1) && x < 127; x += 2)
-				{
-					//fx32 diff_x = x * FX32_ONE + FX32_ONE - camPos->x - 32 * FX32_ONE;
-					//fx32 diff_y = (mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y;
-					//fx32 diff_z = y * FX32_ONE + FX32_ONE - camPos->z - 32 * FX32_ONE;
-					//fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_y, diff_y) + FX_Mul(diff_z, diff_z);
-
-					VecFx32 diff = {
-						x * FX32_ONE + FX32_ONE - camPos->x - 32 * FX32_ONE,
-						(mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y,
-						y * FX32_ONE + FX32_ONE - camPos->z - 32 * FX32_ONE
-					};
-
-					fx32 top = FX_Mul(camDir->x, diff.x) + FX_Mul(camDir->y, diff.y) + FX_Mul(camDir->z, diff.z);////VEC_DotProduct(camDir, &diff);
-
-					//fx32 dist = FX_Mul(top, top);//FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
-					if (top >= /*(6 * 6 * FX32_ONE)*/(8 * FX32_ONE) && top <= (35 * FX32_ONE))
-					{
-						/*for (int y2 = 0; y2 < 3; y2++)
-						{
-							for (int x2 = 0; x2 < 3; x2++)
-							{
-								if (mLodLevels[(y + y2) * 128 + (x + x2)] & 1)
-									goto skip_tile;
-							}
-						}
-						for (int y2 = 0; y2 < 3; y2++)
-						{
-							for (int x2 = 0; x2 < 3; x2++)
-							{
-								mLodLevels[(y + y2) * 128 + (x + x2)] = 2;
-							}
-						}*/
-						/*tex = mTerrainManager->GetTerrainTexture(mTextures[(y + 1) * 128 + x + 1]);
-						G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
-							GX_TEXGEN_TEXCOORD,    // use texcoord
-							(GXTexSizeS)tex->nitroWidth,        // 16 pixels
-							(GXTexSizeT)tex->nitroHeight,        // 16 pixels
-							GX_TEXREPEAT_ST,     // no repeat
-							GX_TEXFLIP_NONE,       // no flip
-							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-							NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-						);
-						G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);*/
-
-						uint32_t texOffset = mTerrainTextureManager8->GetTextureAddress(
-							mTextures[y * 128 + x],
-							mTextures[y * 128 + x + 2],
-							mTextures[(y + 2) * 128 + x],
-							mTextures[(y + 2) * 128 + x + 2],
-							mTexAddresses[y * 128 + x]);
-						mTexAddresses[y * 128 + x] = texOffset;
-						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
-							GX_TEXGEN_NONE,    // use texcoord
-							GX_TEXSIZE_S8,        // 16 pixels
-							GX_TEXSIZE_T8,        // 16 pixels
-							GX_TEXREPEAT_NONE,     // no repeat
-							GX_TEXFLIP_NONE,       // no flip
-							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-							texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-						);
-
-/*#include <nitro/itcm_end.h>
-						static u32 commandList2[] =
-						{
-							GX_PACK_OP(G3OP_MTX_PUSH, G3OP_MTX_TRANS, G3OP_BEGIN, G3OP_TEXCOORD),
-							0,0,0,
-							GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP),
-							GX_PACK_TEXCOORD_PARAM(0, 0),
-							GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL),
-							0,
-							0,
-							0,
-							0,
-							GX_PACK_OP(G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10),
-							0,
-							0,
-							0,
-							0,
-							GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_END),
-							0,
-							0,
-							0
-						};
-#include <nitro/itcm_begin.h>
-						commandList2[1] = x * FX32_ONE;
-						commandList2[3] = y * FX32_ONE;
-						commandList2[7] = mNormals[y * 128 + x];
-						commandList2[8] = GX_PACK_VTX10_PARAM(0, (mVtx[y * 128 + x] - Y_OFFSET) << 6, 0);
-						commandList2[9] = GX_PACK_TEXCOORD_PARAM(0, (8 << tex->nitroHeight) * FX32_ONE * 2);
-						commandList2[10] = mNormals[(y + 2) * 128 + x];
-						commandList2[12] = GX_PACK_VTX10_PARAM(0, (mVtx[(y + 2) * 128 + x] - Y_OFFSET) << 6, 2 * FX32_ONE);
-						commandList2[13] = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, 0);
-						commandList2[14] = mNormals[y * 128 + (x + 2)];
-						commandList2[15] = GX_PACK_VTX10_PARAM(2 * FX32_ONE, (mVtx[y * 128 + (x + 2)] - Y_OFFSET) << 6, 0);
-						commandList2[17] = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, (8 << tex->nitroHeight) * FX32_ONE * 2);
-						commandList2[18] = mNormals[(y + 2) * 128 + (x + 2)];
-						commandList2[19] = GX_PACK_VTX10_PARAM(2 * FX32_ONE, (mVtx[(y + 2) * 128 + (x + 2)] - Y_OFFSET) << 6, 2 * FX32_ONE);
-
-						MI_SendGXCommandFast(3, &commandList2[0], sizeof(commandList2));*/
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
-						{
-							reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 0);
-							reg_G3X_GXFIFO = mNormals[y * 128 + x];
-							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-						}
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD);
-						{
-							//reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, (8 << tex->nitroHeight) * FX32_ONE * 2);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 8 * FX32_ONE);
-							reg_G3X_GXFIFO = mNormals[(y + 2) * 128 + x];
-							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, mVtx[(y + 2) * 128 + x] << 6, (y << 6) + (2 << 6));
-							//reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, 0);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(8 * FX32_ONE, 0);
-						}
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL);
-						{
-							reg_G3X_GXFIFO = mNormals[y * 128 + (x + 2)];
-							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (2 << 6), mVtx[y * 128 + (x + 2)] << 6, y << 6);
-							//reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 2, (8 << tex->nitroHeight) * FX32_ONE * 2);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(8 * FX32_ONE, 8 * FX32_ONE);
-							reg_G3X_GXFIFO = mNormals[(y + 2) * 128 + (x + 2)];
-						}
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP);
-						{
-							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (2 << 6), mVtx[(y + 2) * 128 + (x + 2)] << 6, (y << 6) + (2 << 6));
-						}
-						count++;
-					}
-				}
+				box2d_t bounds;
+				trackPiece->GetBounds(&bounds);
+				if (!bounds.Intersects(&frustumbox))
+					continue;
+				//if (trackPiece->mPosition.x >= xstart && trackPiece->mPosition.x < xend &&
+				//	trackPiece->mPosition.z >= zstart && trackPiece->mPosition.z < zend)
+				//{
+				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
+				trackPiece->Render();
+				//}
+			}*/
+			if (mGhostPiece != NULL)
+			{
+				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
+				mGhostPiece->Render();
 			}
-			/*for (int y = zstart2 & ~3; y < (zend2 | 3) && y < 127; y += 4)
+			/*TrackPieceEx* trackPiece = NULL;
+			while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 			{
-				for (int x = xstart2 & ~3; x < (xend2 | 3) && x < 127; x += 4)
-				{
-					//fx32 diff_x = x * FX32_ONE + 2 * FX32_ONE - camPos->x - 32 * FX32_ONE;
-					//fx32 diff_y = (mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y;
-					//fx32 diff_z = y * FX32_ONE + 2 * FX32_ONE - camPos->z - 32 * FX32_ONE;
-					//fx32 dist = FX_Mul(diff_x, diff_x) + FX_Mul(diff_y, diff_y) + FX_Mul(diff_z, diff_z);
-					VecFx32 diff = {
-						x * FX32_ONE + 2 * FX32_ONE - camPos->x - 32 * FX32_ONE,
-						(mVtx[y * 128 + x] - Y_OFFSET) * Y_SCALE - camPos->y,
-						y * FX32_ONE + 2 * FX32_ONE - camPos->z - 32 * FX32_ONE
-					};
-
-					fx32 top = VEC_DotProduct(camDir, &diff);
-
-					//fx32 dist = FX_Mul(top, top);//FX_Mul(diff.x, diff.x) + FX_Mul(diff.y, diff.y) + FX_Mul(diff.z, diff.z);
-					if (top >= (30 * FX32_ONE))//(10 * 10 * FX32_ONE))
-					{
-						//for (int y2 = 0; y2 < 5; y2++)
-						//{
-						//	for (int x2 = 0; x2 < 5; x2++)
-						//	{
-						//		mLodLevels[(y + y2) * 128 + (x + x2)] |= 4;
-						//	}
-						//}
-						tex = mTerrainManager->GetTerrainTexture(mTextures[(y + 2) * 128 + x + 2]);
-						G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
-							GX_TEXGEN_TEXCOORD,    // use texcoord
-							(GXTexSizeS)tex->nitroWidth,        // 16 pixels
-							(GXTexSizeT)tex->nitroHeight,        // 16 pixels
-							GX_TEXREPEAT_ST,     // no repeat
-							GX_TEXFLIP_NONE,       // no flip
-							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-							NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-						);
-						G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
-						/*uint32_t texOffset = mTerrainTextureManager16->GetTextureAddress(
-							mTextures[y * 128 + x],
-							mTextures[y * 128 + x + 4],
-							mTextures[(y + 4) * 128 + x],
-							mTextures[(y + 4) * 128 + x + 4]);
-						G3_TexImageParam(GX_TEXFMT_DIRECT,       // use alpha texture
-							GX_TEXGEN_NONE,    // use texcoord
-							GX_TEXSIZE_S16,        // 16 pixels
-							GX_TEXSIZE_T16,        // 16 pixels
-							GX_TEXREPEAT_ST,     // no repeat
-							GX_TEXFLIP_NONE,       // no flip
-							GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-							texOffset //NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-						);/
-
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
-						{
-							reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, 0);
-							reg_G3X_GXFIFO = mNormals[y * 128 + x];
-							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-						}
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD);
-						{						
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM(0, (8 << tex->nitroHeight) * FX32_ONE * 4);
-							reg_G3X_GXFIFO = mNormals[(y + 4) * 128 + x];
-							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM(x << 6, mVtx[(y + 4) * 128 + x] << 6, (y << 6) + (4 << 6));
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 4, 0);
-						}
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_TEXCOORD, G3OP_NORMAL);
-						{
-							reg_G3X_GXFIFO = mNormals[y * 128 + (x + 4)];
-							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (4 << 6), mVtx[y * 128 + (x + 4)] << 6, y << 6);
-							reg_G3X_GXFIFO = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE * 4, (8 << tex->nitroHeight) * FX32_ONE * 4);
-							reg_G3X_GXFIFO = mNormals[(y + 4) * 128 + (x + 4)];
-						}
-						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_END, G3OP_NOP, G3OP_NOP);
-						{		
-							reg_G3X_GXFIFO = GX_PACK_VTX10_PARAM((x << 6) + (4 << 6), mVtx[(y + 4) * 128 + (x + 4)] << 6, (y << 6) + (4 << 6));
-						}
-					}
-				}
-			}*/
-			/*G3_TexImageParam(GX_TEXFMT_NONE,       // use alpha texture
-				GX_TEXGEN_NONE,    // use texcoord
-				(GXTexSizeS)0,        // 16 pixels
-				(GXTexSizeT)0,        // 16 pixels
-				GX_TEXREPEAT_NONE,     // no repeat
-				GX_TEXFLIP_NONE,       // no flip
-				GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-				0     // the offset of the texture image
-			);*/
-			/*for (int y = zstart; y < zend && y < 127; y++)
+				box2d_t bounds;
+				trackPiece->GetBounds(&bounds);
+				if (!bounds.Intersects(&frustumbox))
+					continue;
+				trackPiece->RenderMarkers();
+			}
+			if (mGhostPiece != NULL)
 			{
-				int last = -1;
-				for (int x = xstart; x < xend && x < 127; x++)
-				{
-					bool contains2 = false;
-					bool contains1 = false;
-					bool contains0 = false;
-					for (int y2 = 0; y2 < 2; y2++)
-					{
-						for (int x2 = 0; x2 < 2; x2++)
-						{
-							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 2)
-								contains2 = true;
-							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 1)
-								contains1 = true;
-							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 0)
-								contains0 = true;
-						}
-					}
-					if (!contains0 && contains1 && !contains2)
-					{
-						//regular 1x1 square
-						if (last >= 0 && last != 1)
-						{
-							//mark this shit
-							G3_Begin(GX_BEGIN_TRIANGLES);
-							G3_Color(GX_RGB(31, 0, 0));
-							G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-							G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
-							G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
-							G3_End();
-						}
-						last = 1;
-					}
-					else if (!contains0 && !contains1 && contains2)
-					{
-						//part of regular 2x2 square
-						if (last >= 0 && last != 2)
-						{
-							//mark this shit
-							G3_Begin(GX_BEGIN_TRIANGLES);
-							G3_Color(GX_RGB(31, 0, 0));
-							G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-							G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
-							G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
-							G3_End();
-						}
-						last = 2;
-					}
-					else if (contains0 && !contains1 && !contains2)
-					{
-						//gap
-						last = 0;
-					}
-				}
+				mGhostPiece->RenderMarkers();
 			}*/
-			/*for (int y = zstart & ~1; y < (zend | 1) && y < 127; y += 2)
+			/*SimpleSceneryObject* sceneryObject = NULL;
+			while ((sceneryObject = (SimpleSceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
 			{
-				for (int x = xstart & ~1; x < (xend | 1) && x < 127; x += 2)
-				{
-					bool contains1 = false;
-					bool contains2 = false;
-					for (int y2 = 0; y2 < 3; y2++)
-					{
-						for (int x2 = 0; x2 < 3; x2++)
-						{
-							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 1)
-								contains1 = true;
-							if (mLodLevels[(y + y2) * 128 + (x + x2)] == 2)
-								contains2 = true;
-						}
-					}
-					if (!contains1 || !contains2)
-						continue;
-
-					//check if this 2x2 block has gaps
-					NOCASH_Printf("%d%d%d\n%d%d%d\n%d%d%d\n",
-							mLodLevels[y * 128 + x], mLodLevels[y * 128 + x + 1], mLodLevels[y * 128 + x + 2],
-							mLodLevels[(y + 1) * 128 + x], mLodLevels[(y + 1) * 128 + x + 1], mLodLevels[(y + 1) * 128 + x + 2],
-							mLodLevels[(y + 2) * 128 + x], mLodLevels[(y + 2) * 128 + x + 1], mLodLevels[(y + 2) * 128 + x + 2]
-						);
-
-					//if (mLodLevels[y * 128 + x] == 2 && mLodLevels[y * 128 + x + 1] == 1)
-					//{
-					//	NOCASH_Printf("x stitch");
-					//}
-
-					/*if (mLodLevels[y * 128 + x] == 3)
-					{
-						if (mLodLevels[y * 128 + x + 1] == 3)
-						{
-							G3_Begin(GX_BEGIN_TRIANGLES);
-							G3_Color(GX_RGB(31, 0, 0));
-							G3_Vtx10((x & ~1) << 6, mVtx[(y & ~1) * 128 + (x & ~1)] << 6, (y & ~1) << 6);
-							G3_Vtx10(((x & ~1) + 1) << 6, mVtx[(y & ~1) * 128 + (x & ~1) + 1] << 6, (y & ~1) << 6);
-							G3_Vtx10(((x & ~1) + 2) << 6, mVtx[(y & ~1) * 128 + (x & ~1) + 2] << 6, (y & ~1) << 6);
-							G3_End();
-						}
-						else if (mLodLevels[(y + 1) * 128 + x] == 3)
-						{
-							G3_Begin(GX_BEGIN_TRIANGLES);
-							G3_Color(GX_RGB(31, 0, 0));
-							G3_Vtx10((x & ~1) << 6, mVtx[(y & ~1) * 128 + (x & ~1)] << 6, (y & ~1) << 6);
-							G3_Vtx10((x & ~1) << 6, mVtx[((y & ~1) + 1) * 128 + (x & ~1)] << 6, ((y & ~1) + 1) << 6);
-							G3_Vtx10((x & ~1) << 6, mVtx[((y & ~1) + 2) * 128 + (x & ~1)] << 6, ((y & ~1) + 2) << 6);
-							G3_End();
-						}
-					}/
-					/*if (mLodLevels[y * 128 + x] == 2 && mLodLevels[(y + 1) * 128 + x + 1] != 2)
-					{
-						for (int x2 = x + 1, y2 = y + 1; x2 < xend && x2 < 127 && y2 < zend && y2 < 127; x2++, y2++)
-						{
-							if (mLodLevels[y2 * 128 + x2] != 0)
-							{
-								//NOCASH_Printf("xy stitch %d(%d)-%d(%d)", x, mLodLevels[y * 128 + x], x2, mLodLevels[y * 128 + x2]);
-
-								/*G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
-								G3_Color(GX_RGB(31, 0, 0));
-								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-								G3_Vtx10(x << 6, mVtx[y2 * 128 + x] << 6, y2 << 6);
-								G3_Vtx10(x2 << 6, mVtx[y * 128 + x2] << 6, y << 6);
-								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
-								G3_End();/
-								G3_Begin(GX_BEGIN_TRIANGLES);
-								G3_Color(GX_RGB(31, 0, 0));
-								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
-								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
-								G3_End();
-
-								break;
-							}
-						}
-					}
-					if (mLodLevels[y * 128 + x] == 2 && mLodLevels[(y - 1) * 128 + x - 1] != 2)
-					{
-						for (int x2 = x - 1, y2 = y - 1; x2 >= xstart && y2 >= zstart; x2--, y2--)
-						{
-							if (mLodLevels[y2 * 128 + x2] != 0)
-							{
-								//NOCASH_Printf("xy stitch %d(%d)-%d(%d)", x, mLodLevels[y * 128 + x], x2, mLodLevels[y * 128 + x2]);
-
-								/*G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
-								G3_Color(GX_RGB(31, 0, 0));
-								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
-								G3_Vtx10(x2 << 6, mVtx[y * 128 + x2] << 6, y << 6);
-								G3_Vtx10(x << 6, mVtx[y2 * 128 + x] << 6, y2 << 6);
-								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-								G3_End();/
-								G3_Begin(GX_BEGIN_TRIANGLES);
-								G3_Color(GX_RGB(31, 0, 0));
-								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
-								G3_Vtx10(x2 << 6, mVtx[y2 * 128 + x2] << 6, y2 << 6);
-								G3_End();
-
-								break;
-							}
-						}
-					}/
-					/*if (mLodLevels[y * 128 + x] == 2 && mLodLevels[y * 128 + x - 1] != 2)
-					{
-						for (int x2 = x - 1; x2 >= xstart; x2--)
-						{
-							if (mLodLevels[y * 128 + x2] != 0)
-							{
-								NOCASH_Printf("x stitch %d(%d)-%d(%d)", x, mLodLevels[y * 128 + x], x2, mLodLevels[y * 128 + x2]);
-
-								G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
-								G3_Color(GX_RGB(31, 0, 0));	
-								G3_Vtx10(x2 << 6, mVtx[y * 128 + x2] << 6, y << 6);
-								G3_Vtx10(x2 << 6, mVtx[(y + 1) * 128 + x2] << 6, (y + 1) << 6);
-								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-								G3_Vtx10(x << 6, mVtx[(y + 1) * 128 + x] << 6, (y + 1) << 6);
-								G3_End();
-
-								break;
-							}
-						}
-					}/
-					/*if (mLodLevels[y * 128 + x] == 2 && mLodLevels[(y + 1) * 128 + x] != 2)
-					{
-						for (int y2 = y + 1; y2 < zend && y2 < 127; y2++)
-						{
-							if (mLodLevels[y2 * 128 + x] != 0)
-							{
-								NOCASH_Printf("y stitch %d(%d)-%d(%d)", y, mLodLevels[y * 128 + x], y2, mLodLevels[y2 * 128 + x]);
-								G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
-								G3_Color(GX_RGB(31, 0, 0));
-								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-								G3_Vtx10(x << 6, mVtx[y2 * 128 + x] << 6, y2 << 6);
-								G3_Vtx10((x + 1) << 6, mVtx[y * 128 + x + 1] << 6, y << 6);
-								G3_Vtx10((x + 1) << 6, mVtx[y2 * 128 + x + 1] << 6, y2 << 6);
-								G3_End();
-								break;
-							}
-						}
-					}
-					if (mLodLevels[y * 128 + x] == 2 && mLodLevels[(y - 1) * 128 + x] != 2)
-					{
-						for (int y2 = y - 1; y2 >= zstart; y2--)
-						{
-							if (mLodLevels[y2 * 128 + x] != 0)
-							{
-								NOCASH_Printf("y stitch %d(%d)-%d(%d)", y, mLodLevels[y * 128 + x], y2, mLodLevels[y2 * 128 + x]);
-								G3_Begin(GX_BEGIN_TRIANGLE_STRIP);
-								G3_Color(GX_RGB(31, 0, 0));
-								G3_Vtx10(x << 6, mVtx[y2 * 128 + x] << 6, y2 << 6);
-								G3_Vtx10(x << 6, mVtx[y * 128 + x] << 6, y << 6);
-								G3_Vtx10((x + 1) << 6, mVtx[y2 * 128 + x + 1] << 6, y2 << 6);
-								G3_Vtx10((x + 1) << 6, mVtx[y * 128 + x + 1] << 6, y << 6);	
-								G3_End();
-								break;
-							}
-						}
-					}/
-				}
+				if (!sceneryObject->Intersects(&frustumbox))
+					continue;
+				sceneryObject->Render();
 			}*/
+			//if (lodLevel == 0)
+			{
+				G3_PushMtx();
+				{
+					G3_Translate(32 * FX32_ONE, (FX32_ONE / 32), 32 * FX32_ONE);
+					mObjectTree->Render(&frustumbox);
+				}
+				G3_PopMtx(1);
+			}
+			mWaterTest->Render();
+			mWaterTest->Render2();
 		}
 	}
 	G3_PopMtx(1);
-	OS_Printf("%d\n", count);
-	if (!picking)
-	{
-		TrackPieceEx* trackPiece = NULL;
-		while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
-		{
-			//if (trackPiece->mPosition.x >= xstart && trackPiece->mPosition.x < xend &&
-			//	trackPiece->mPosition.z >= zstart && trackPiece->mPosition.z < zend)
-			//{
-				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-				trackPiece->Render(this, mTerrainManager);
-			//}
-		}
-		if (mGhostPiece != NULL)
-		{
-			if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-			mGhostPiece->Render(this, mTerrainManager);
-		}
-		trackPiece = NULL;
-		while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
-		{
-			trackPiece->RenderMarkers(this, mTerrainManager);
-		}
-		if (mGhostPiece != NULL)
-		{
-			mGhostPiece->RenderMarkers(this, mTerrainManager);
-		}
-		SceneryObject* sceneryObject = NULL;
-		while ((sceneryObject = (SceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
-		{
-			if (sceneryObject->mPosition.x >= xstart && sceneryObject->mPosition.x < xend &&
-				sceneryObject->mPosition.z >= zstart && sceneryObject->mPosition.z < zend)
-			{
-				if (picking) G3_MaterialColorSpecEmi(0, 0, FALSE);
-				sceneryObject->Render(mTerrainManager);
-			}
-		}
-	}
+	//TODO: move this elsewhere, since this doesn't update with sub 3d rendering
 	mTerrainManager->mTrackMarkerRotation += FX32_CONST(2);
 	if (mTerrainManager->mTrackMarkerRotation >= 360 * FX32_ONE)
 		mTerrainManager->mTrackMarkerRotation -= 360 * FX32_ONE;
+}
+
+//extern "C" void render_tile(VecFx10* pNorm, uint8_t* pVtx, int x, int y);
+extern "C" void render_tile(hvtx_t* vtx, int x, int y);
+extern "C" void render_tile2x2(hvtx_t* vtx, int x, int y);
+
+//#define DEBUG_TILE_COUNT
+
+extern "C" void render_lod0(int xstart, int xend, int zstart, int zend, fx32 distbase, fx32 camdirx, fx32 camdirz, hvtx_t* pmap, fx32 ymul, TerrainTextureManager16* texturemanager);
+
+void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool picking, VecFx32* camPos, VecFx32* camDir, int lodLevel, u8* lodData)
+{
+	pHMap += 2 * MAP_BLOCK_WIDTH + 2;
+#ifdef DEBUG_TILE_COUNT
+	int count = 0;
+#endif
+	G3_PushMtx();
+	{
+		G3_Scale(FX32_ONE / 64 * FX32_ONE, Y_SCALE * FX32_ONE / 128, FX32_ONE / 64 * FX32_ONE);
+		G3_Translate(0, -Y_OFFSET * 128, 0);
+		if (picking)
+		{
+			int i = 0;
+			fx32 xadd = FX32_HALF - camPos->x - 32 * FX32_ONE;
+			fx32 zadd = FX32_HALF - camPos->z - 32 * FX32_ONE;
+			hvtx_t* pmap = pHMap + zstart * MAP_BLOCK_WIDTH + xstart;
+			for (int y = zstart; y < zend && y + 1 <= 127; y++)
+			{
+				hvtx_t* pmap2 = pmap;
+				for (int x = xstart; x < xend && x + 1 <= 127; x++)
+				{
+					fx32 top = camDir->x * (x * FX32_ONE + xadd) + camDir->y * ((pmap2[0].y - Y_OFFSET) * Y_SCALE - camPos->y) + camDir->z * (y * FX32_ONE + zadd);
+					if (top <= (20 * FX32_ONE * FX32_ONE))
+					{
+						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_COLOR, G3OP_VTX_10, G3OP_VTX_10);
+						{
+							reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
+							reg_G3X_GXFIFO = GX_PACK_COLOR_PARAM(PICKING_COLOR(PICKING_TYPE_MAP, i + 1));
+							reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+							reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+						}
+						reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_VTX_10, G3OP_END, G3OP_NOP);
+						{
+							reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (pmap2[1].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+							reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (pmap2[MAP_BLOCK_WIDTH + 1].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+						}
+#ifdef DEBUG_TILE_COUNT
+						count++;
+#endif
+					}
+					i++;
+					pmap2++;
+				}
+				pmap++;
+			}
+		}
+		else
+		{
+			if (lodLevel == 0)
+			{
+				//setup texture matrix for vertex transform mode
+				MtxFx44 texMtx =
+				{
+					FX32_ONE * FX32_ONE / 64 * 16 * 16, 0, 0, 0,
+					0, 0, 0, 0,
+					0, FX32_ONE * FX32_ONE / 64 * 16 * 16, 0, 0,
+					0, 0, 0, 0
+				};
+				G3_MtxMode(GX_MTXMODE_TEXTURE);
+				G3_LoadMtx44(&texMtx);
+				G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+
+				G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+
+				if (zend > 128)
+					zend = 128;
+				if (xend > 128)
+					xend = 128;
+				hvtx_t* pmap = pHMap + zstart * MAP_BLOCK_WIDTH + xstart;
+				fx32 ymul = camDir->y * Y_SCALE;
+				fx32 distbase = 
+					camDir->x * (xstart * FX32_ONE + FX32_HALF - camPos->x - 32 * FX32_ONE) +
+					camDir->z * (zstart * FX32_ONE + FX32_HALF - camPos->z - 32 * FX32_ONE) -
+					camDir->y * camPos->y - 
+					ymul * Y_OFFSET;
+				//render_lod0(xstart, xend, zstart, zend, distbase, camDir->x, camDir->z, pmap, ymul, mTerrainTextureManager16);
+				fx32 xadd2 = camDir->x * FX32_ONE;
+				fx32 zadd2 = camDir->z * FX32_ONE;
+				for (int y = zstart; y < zend; y++)
+				{
+					hvtx_t* pmap2 = pmap;
+					fx32 distbase2 = distbase;
+					for (int x = xstart; x < xend; x++)
+					{
+						fx32 top = distbase2 + ymul * pmap2[0].y;
+						if (top <= (10 * FX32_ONE * FX32_ONE))
+						{
+							//if (mGridEnabled)
+							//	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, ((x & 1) ^ (y & 1)) << 1, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+
+							uint32_t texOffset = mTerrainTextureManager16->GetTextureAddress(
+								pmap2[0].tex,
+								pmap2[1].tex,
+								pmap2[MAP_BLOCK_WIDTH].tex,
+								pmap2[MAP_BLOCK_WIDTH + 1].tex,
+								pmap2[0].texAddress << 3);
+							pmap2[0].texAddress = texOffset >> 3;
+							reg_G3_TEXIMAGE_PARAM = 0xDC900000 | (texOffset >> 3);
+
+							if (lodData[y * 128 + x] || lodData[y * 128 + (x + 1)] || lodData[(y + 1) * 128 + x] || lodData[(y + 1) * 128 + (x + 1)])
+							{
+								hvtx_t* pmap3 = pmap2;
+								if (x & 1)
+									pmap3--;
+								if (y & 1)
+									pmap3 -= MAP_BLOCK_WIDTH;
+								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
+								{
+									reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
+									reg_G3X_GXFIFO = ~(x << 8) ^ (y << 24);
+									reg_G3X_GXFIFO = pmap2[0].normal;
+
+									if (lodData[y * 128 + x])
+									{
+										uint8_t tl = pmap3[0].y;
+										uint8_t tr = pmap3[2].y;
+										uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
+										uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
+										uint16_t newy;
+										if ((x & 1) && !(y & 1))
+											newy = tl + tr;
+										else if (!(x & 1) && (y & 1))
+											newy = tl + bl;
+										else if ((x & 1) && (y & 1))
+											newy = (tl + tr + bl + br) >> 1;
+										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | (y << GX_VEC_VTX10_Z_SHIFT);
+									}
+									else
+										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+								}
+								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_NORMAL, G3OP_VTX_10);
+								{
+									reg_G3X_GXFIFO = pmap2[MAP_BLOCK_WIDTH].normal;
+									if (lodData[(y + 1) * 128 + x])
+									{
+										uint8_t tl = pmap3[0].y;
+										uint8_t tr = pmap3[2].y;
+										uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
+										uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
+										uint16_t newy;
+										if ((x & 1) && !((y + 1) & 1))
+											newy = bl + br;
+										else if (!(x & 1) && ((y + 1) & 1))
+											newy = tl + bl;
+										else if ((x & 1) && ((y + 1) & 1))
+											newy = (tl + tr + bl + br) >> 1;
+										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+									}
+									else
+										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+									reg_G3X_GXFIFO = pmap2[1].normal;
+									if (lodData[y * 128 + (x + 1)])
+									{
+										uint8_t tl = pmap3[0].y;
+										uint8_t tr = pmap3[2].y;
+										uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
+										uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
+										uint16_t newy;
+										if (((x + 1) & 1) && !(y & 1))
+											newy = tl + tr;
+										else if (!((x + 1) & 1) && (y & 1))
+											newy = tr + br;
+										else if (((x + 1) & 1) && (y & 1))
+											newy = (tl + tr + bl + br) >> 1;
+										reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | (y << GX_VEC_VTX10_Z_SHIFT);
+									}
+									else
+										reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (pmap2[1].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+								}
+								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_END, G3OP_NOP);
+								{	
+									reg_G3X_GXFIFO = pmap2[MAP_BLOCK_WIDTH + 1].normal;
+									if (lodData[(y + 1) * 128 + (x + 1)])
+									{
+										uint8_t tl = pmap3[0].y;
+										uint8_t tr = pmap3[2].y;
+										uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
+										uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
+										uint16_t newy;
+										if (((x + 1) & 1) && !((y + 1) & 1))
+											newy = bl + br;
+										else if (!((x + 1) & 1) && ((y + 1) & 1))
+											newy = tr + br;
+										else if (((x + 1) & 1) && ((y + 1) & 1))
+											newy = (tl + tr + bl + br) >> 1;
+										reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+									}
+									else
+										reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (pmap2[MAP_BLOCK_WIDTH + 1].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+								}
+							}
+							else
+							{
+								//TODO: Include the loop in this function:
+								render_tile(pmap2, x, y);
+							}
+#ifdef DEBUG_TILE_COUNT
+							count++;
+#endif
+						}
+						distbase2 += xadd2;
+						pmap2++;
+					}
+					distbase += zadd2;
+					pmap += MAP_BLOCK_WIDTH;
+				}
+			}
+			else if (lodLevel == 1)
+			{
+				MtxFx44 texMtx =
+				{
+					FX32_ONE * FX32_ONE / 64 * 8 * 16, 0, 0, 0,
+					0, 0, 0, 0,
+					0, FX32_ONE * FX32_ONE / 64 * 4 * 16, 0, 0,
+					0, 0, 0, 0
+				};
+				G3_MtxMode(GX_MTXMODE_TEXTURE);
+				G3_LoadMtx44(&texMtx);
+				G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+				//int count = 0;
+				G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+
+				GXRgb clr = mGameController->mLightColor;
+
+				zstart &= ~1;
+				xstart &= ~1;
+				zend |= 1;
+				xend |= 1;
+				if (zend > 127)
+					zend = 127;
+				if (xend > 127)
+					xend = 127;
+				hvtx_t* pmap = pHMap + zstart * MAP_BLOCK_WIDTH + xstart;
+				fx32 ymul = camDir->y * Y_SCALE;
+				fx32 distbase = 
+					camDir->x * (xstart * FX32_ONE + FX32_ONE - camPos->x - 32 * FX32_ONE) + 
+					camDir->z * (zstart * FX32_ONE + FX32_ONE - camPos->z - 32 * FX32_ONE) - 
+					camDir->y * camPos->y - 
+					ymul * Y_OFFSET;
+				fx32 xadd2 = camDir->x * 2 * FX32_ONE;
+				fx32 zadd2 = camDir->z * 2 * FX32_ONE;
+				for (int y = zstart; y < zend; y += 2)
+				{
+					hvtx_t* pmap2 = pmap;
+					fx32 distbase2 = distbase;
+					for (int x = xstart; x < xend; x += 2)
+					{
+						fx32 top = distbase2 + ymul * pmap2[0].y;
+
+						if (top >= (8 * FX32_ONE * FX32_ONE) && top <= (/*35*/25 * FX32_ONE * FX32_ONE))
+						{
+							lodData[y * 128 + (x + 1)] = 1;
+							lodData[(y + 1) * 128 + x] = 1;
+							lodData[(y + 1) * 128 + (x + 1)] = 1;
+							lodData[(y + 2) * 128 + (x + 1)] = 1;
+							lodData[(y + 1) * 128 + (x + 2)] = 1;
+
+							uint32_t texOffset = mTerrainTextureManager8->GetTextureAddress(
+								pmap2[0].tex,
+								pmap2[2].tex,
+								pmap2[2 * MAP_BLOCK_WIDTH].tex,
+								pmap2[2 * MAP_BLOCK_WIDTH + 2].tex,
+								pmap2[0].texAddress << 3);
+							pmap2[0].texAddress = texOffset >> 3;
+
+							reg_G3_TEXIMAGE_PARAM = 0xDC100000 | (texOffset >> 3);
+							render_tile2x2(pmap2, x, y);
+#ifdef DEBUG_TILE_COUNT
+							count++;
+#endif
+						}
+						else if (top > (/*35*/25 * FX32_ONE * FX32_ONE) && top <= (52 * FX32_ONE * FX32_ONE))
+						{
+							lodData[y * 128 + (x + 1)] = 1;
+							lodData[(y + 1) * 128 + x] = 1;
+							lodData[(y + 1) * 128 + (x + 1)] = 1;
+							lodData[(y + 2) * 128 + (x + 1)] = 1;
+							lodData[(y + 1) * 128 + (x + 2)] = 1;
+
+							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXIMAGE_PARAM, G3OP_BEGIN, G3OP_LIGHT_COLOR, G3OP_NORMAL);
+							{
+								reg_G3X_GXFIFO = 0;
+								reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mTextureDatas[pmap2[0].tex][0]);
+								reg_G3X_GXFIFO = pmap2[0].normal;
+							}
+							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_LIGHT_COLOR, G3OP_NORMAL, G3OP_VTX_10);
+							{
+								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mTextureDatas[pmap2[2 * MAP_BLOCK_WIDTH].tex][15 * 16]);
+								reg_G3X_GXFIFO = pmap2[2 * MAP_BLOCK_WIDTH].normal;
+								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
+							}
+							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_LIGHT_COLOR, G3OP_NORMAL, G3OP_VTX_10, G3OP_LIGHT_COLOR);
+							{
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mTextureDatas[pmap2[2].tex][15]);
+								reg_G3X_GXFIFO = pmap2[2].normal;
+								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mTextureDatas[pmap2[2 * MAP_BLOCK_WIDTH + 2].tex][15 * 16 + 15]);
+							}
+							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_END, G3OP_LIGHT_COLOR);
+							{
+								reg_G3X_GXFIFO = pmap2[2 * MAP_BLOCK_WIDTH + 2].normal;
+								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH + 2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, clr);
+							}
+#ifdef DEBUG_TILE_COUNT
+							count++;
+#endif
+						}
+						distbase2 += xadd2;
+						pmap2 += 2;
+					}
+					distbase += zadd2;
+					pmap += 2 * MAP_BLOCK_WIDTH;
+				}
+			}
+			G3_MtxMode(GX_MTXMODE_TEXTURE);
+			G3_Identity();
+			G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+		}
+	}
+	G3_PopMtx(1);
+#ifdef DEBUG_TILE_COUNT
+	OS_Printf("%d\n", count);
+#endif
 }

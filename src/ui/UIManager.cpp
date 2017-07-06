@@ -3,30 +3,29 @@
 #include <nnsys/fnd.h>
 #include "core.h"
 #include "menu\Menu.h"
-#include "UISlice.h"
+#include "components/UIComponent.h"
 #include "UIManager.h"
 
-UIManager::UIManager(Menu* context)
-	: mContext(context)
+UIManager::UIManager(UIManagerScreen screen)
+	: mScreen(screen), mOnPenDownFunc(NULL), mOnPenMoveFunc(NULL), mOnPenUpFunc(NULL)
 {
-	NNS_FND_INIT_LIST(&mSliceList, UISlice, mLink);
+	NNS_FND_INIT_LIST(&mUIComponentList, UIComponent, mLink);
 	MI_CpuClear8(&mLastTouchState, sizeof(mLastTouchState));
-	mOnPenDownFunc = NULL;
-	mOnPenMoveFunc = NULL;
-	mOnPenUpFunc = NULL;
+	NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mOamManager, 0, 128, (mScreen == UI_MANAGER_SCREEN_MAIN ? NNS_G2D_OAMTYPE_MAIN : NNS_G2D_OAMTYPE_SUB));
 }
 
-void UIManager::AddSlice(UISlice* slice)
+void UIManager::AddUIComponent(UIComponent* uiComponent)
 {
-	NNS_FndAppendListObject(&mSliceList, slice);
+	NNS_FndAppendListObject(&mUIComponentList, uiComponent);
 	//should we call an init function here?
 }
 
 void UIManager::ProcessInput()
 {
-	TPData raw_point;
+	TPData raw_point;// = gTPData;
+	Core_GetTouchInput(&raw_point);
 	TPData disp_point;
-	while (TP_RequestRawSampling(&raw_point) != 0);
+	//while (TP_RequestRawSampling(&raw_point) != 0);
 	TP_GetCalibratedPoint(&disp_point, &raw_point);
 	if (raw_point.validity && !mLastTouchState.touch && disp_point.touch)
 		return;//this will yield invalid results!
@@ -39,33 +38,45 @@ void UIManager::ProcessInput()
 	}
 	if (!mLastTouchState.touch && disp_point.touch)//PenDown
 	{
-		UISlice* slice = NULL;
-		while ((slice = (UISlice*)NNS_FndGetNextListObject(&mSliceList, slice)) != NULL)
+		UIComponent* uiComponent = NULL;
+		while ((uiComponent = (UIComponent*)NNS_FndGetNextListObject(&mUIComponentList, uiComponent)) != NULL)
 		{
-			if (slice->OnPenDown(mContext, x, y)) break;
+			if (uiComponent->IsInside(x, y))
+			{
+				uiComponent->OnPenDown(x, y);
+				break;
+			}
 		}
-		if (slice == NULL && mOnPenDownFunc != NULL) //no slice has done anything, let's pass the event through
-			mOnPenDownFunc(mContext, x, y);
+		if (uiComponent == NULL && mOnPenDownFunc != NULL) //no slice has done anything, let's pass the event through
+			mOnPenDownFunc(mCallbackArg, x, y);
 	}
 	else if (mLastTouchState.touch && disp_point.touch && (mLastTouchState.x != x || mLastTouchState.y != y))//PenMove
 	{
-		UISlice* slice = NULL;
-		while ((slice = (UISlice*)NNS_FndGetNextListObject(&mSliceList, slice)) != NULL)
+		UIComponent* uiComponent = NULL;
+		while ((uiComponent = (UIComponent*)NNS_FndGetNextListObject(&mUIComponentList, uiComponent)) != NULL)
 		{
-			if (slice->OnPenMove(mContext, x, y)) break;
+			if (uiComponent->IsInside(x, y))
+			{
+				uiComponent->OnPenMove(x, y);
+				break;
+			}
 		}
-		if (slice == NULL && mOnPenMoveFunc != NULL) //no slice has done anything, let's pass the event through
-			mOnPenMoveFunc(mContext, x, y);
+		if (uiComponent == NULL && mOnPenMoveFunc != NULL) //no slice has done anything, let's pass the event through
+			mOnPenMoveFunc(mCallbackArg, x, y);
 	}
 	else if (mLastTouchState.touch && !disp_point.touch)//PenUp
 	{
-		UISlice* slice = NULL;
-		while ((slice = (UISlice*)NNS_FndGetNextListObject(&mSliceList, slice)) != NULL)
+		UIComponent* uiComponent = NULL;
+		while ((uiComponent = (UIComponent*)NNS_FndGetNextListObject(&mUIComponentList, uiComponent)) != NULL)
 		{
-			if (slice->OnPenUp(mContext, x, y)) break;
+			if (uiComponent->IsInside(x, y))
+			{
+				uiComponent->OnPenUp(x, y);
+				break;
+			}
 		}
-		if (slice == NULL && mOnPenUpFunc != NULL) //no slice has done anything, let's pass the event through
-			mOnPenUpFunc(mContext, x, y);
+		if (uiComponent == NULL && mOnPenUpFunc != NULL) //no slice has done anything, let's pass the event through
+			mOnPenUpFunc(mCallbackArg, x, y);
 	}
 	if (!raw_point.validity)
 		mLastTouchState = disp_point;
@@ -75,9 +86,17 @@ void UIManager::ProcessInput()
 
 void UIManager::Render()
 {
-	UISlice* slice = NULL;
-	while ((slice = (UISlice*)NNS_FndGetNextListObject(&mSliceList, slice)) != NULL)
+	int numOam = 0;
+	UIComponent* uiComponent = NULL;
+	while ((uiComponent = (UIComponent*)NNS_FndGetNextListObject(&mUIComponentList, uiComponent)) != NULL)
 	{
-		slice->Render(mContext);//, &mOamManager);
+		uiComponent->Render(mOamBuffer, numOam);
 	}
+	NNS_G2dEntryOamManagerOam(&mOamManager, mOamBuffer, numOam);
+}
+
+void UIManager::ProcessVBlank()
+{
+	NNS_G2dApplyOamManagerToHW(&mOamManager);
+	NNS_G2dResetOamManagerBuffer(&mOamManager);
 }

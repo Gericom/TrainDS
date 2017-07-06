@@ -24,12 +24,12 @@ public:
 		pSfx->Start();
 	}
 
-	void StopSfx(Sfx* pSfx)
+	void StopSfx(Sfx* pSfx, int fade = 0)
 	{
-		pSfx->Stop();
+		pSfx->Stop(fade);
 	}
 
-	void Update();
+	void Update(LookAtCamera* camera);
 
 };
 

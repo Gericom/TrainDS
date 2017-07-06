@@ -5,392 +5,247 @@
 #include "core.h"
 #include "util.h"
 #include "Menu.h"
+#include "terrain/managers/TerrainTextureManager8.h"
+#include "terrain/managers/TerrainTextureManager16.h"
+#include "terrain/track/FlexTrack.h"
+#include "engine/TitleSequence.h"
+#include "engine/TitleSequencePlayer.h"
+#include "Game.h"
+#include "MultibootMenu.h"
 #include "TitleMenu.h"
 
-#define DOUBLE_3D_THREAD_PRIO   (OS_THREAD_LAUNCHER_PRIORITY - 6)
-static OSThread mDouble3DThread;
+#define SWAP_BUFFERS_SORTMODE	GX_SORTMODE_MANUAL //AUTO
+#define SWAP_BUFFERS_BUFFERMODE	GX_BUFFERMODE_Z
 
 void TitleMenu::Initialize(int arg)
 {
-	if(arg == TITLEMENU_ARG_DONT_PLAY_INTRO)
-	{
-		mState = TITLEMENU_STATE_MENU_IN;
-	}
-	else mState = TITLEMENU_STATE_INTRO;
+	//load overlay
+	LOAD_OVERLAY_ITCM(rendering_itcm);
 
-	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
-	MI_CpuClearFast((void*)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
-	GX_DisableBankForLCDC();
-
-	MI_CpuFillFast((void*)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
-	MI_CpuClearFast((void*)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
-
-	MI_CpuFillFast((void*)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
-	MI_CpuClearFast((void*)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
-
-	OS_SetIrqFunction(OS_IE_V_BLANK, TitleMenu::VBlankIntr);
-
-	OS_CreateThread(&mDouble3DThread, Double3DThread, this, mDouble3DThreadStack + DOUBLE_3D_THREAD_STACK_SIZE / sizeof(u32), DOUBLE_3D_THREAD_STACK_SIZE, DOUBLE_3D_THREAD_PRIO);
-    OS_WakeupThreadDirect(&mDouble3DThread);
-
-	G3X_Init();
-	G3X_InitMtxStack();
-	GX_SetBankForTex(GX_VRAM_TEX_01_AB);
-	GX_SetBankForTexPltt(GX_VRAM_TEXPLTT_0123_E);
-   
-   	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_3D);
-	GX_SetVisiblePlane(GX_PLANEMASK_BG0);
-   	GXS_SetGraphicsMode(GX_BGMODE_0);
-
-	G3X_SetShading(GX_SHADING_TOON); 
-	G3X_AntiAlias(TRUE);
-	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
-	
-	G3X_AlphaTest(FALSE, 0);                   // AlphaTest OFF
-	G3X_AlphaBlend(TRUE);                      // AlphaTest ON
-
-	G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3),31, 0x7fff, 63, FALSE);
-	G3_ViewPort(0, 0, 255, 191);
-
-	Util_SetupSubOAMForDouble3D();
+	GX_SetBankForLCDC(GX_VRAM_LCDC_D);
 
 	GX_SetBankForOBJ(GX_VRAM_OBJ_16_F);
 
+	GX_SetBankForSubBG(GX_VRAM_SUB_BG_32_H);
+	GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_16_I);
+
+	G3X_Init();
+	G3X_InitMtxStack();
+	GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
+	GX_SetBankForTexPltt(GX_VRAM_TEXPLTT_0123_E);
+
+	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_3, GX_BG0_AS_3D);
+	GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
+	GXS_SetGraphicsMode(GX_BGMODE_3);
+	GXS_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
+	G2_SetBG0Priority(3);
+	G2_SetBG3Priority(3);
+
+	G3X_SetShading(GX_SHADING_HIGHLIGHT);
+	G3X_AntiAlias(true);
+	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
+
+	G3X_AlphaTest(false, 0);                   // AlphaTest OFF
+	G3X_AlphaBlend(true);                      // AlphaTest ON
+	G3X_EdgeMarking(true);
+
+	//G3X_SetEdgeColorTable(&sEdgeMarkingColorTable[0]);
+
+	G3X_SetClearColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 31, 0x7fff, 0, false);
+	G3_ViewPort(0, 0, 255, 191);
+
 	GX_SetDispSelect(GX_DISP_SELECT_MAIN_SUB);
+
+	/*G2_SetWnd0InsidePlane(GX_WND_PLANEMASK_BG0 | GX_WND_PLANEMASK_BG1 | GX_WND_PLANEMASK_BG2 | GX_WND_PLANEMASK_BG3 | GX_WND_PLANEMASK_OBJ, TRUE);
+	G2_SetWnd1InsidePlane(GX_WND_PLANEMASK_BG0 | GX_WND_PLANEMASK_BG1 | GX_WND_PLANEMASK_BG2 | GX_WND_PLANEMASK_BG3 | GX_WND_PLANEMASK_OBJ, TRUE);
+	G2_SetWndOutsidePlane(GX_WND_PLANEMASK_BG0 | GX_WND_PLANEMASK_BG1 | GX_WND_PLANEMASK_BG2 | GX_WND_PLANEMASK_BG3 | GX_WND_PLANEMASK_OBJ, FALSE);
+	G2_SetWnd0Position(0, 191 - 20, 255, 192);
+	G2_SetWnd1Position(1, 191 - 20, 0, 192);
+	G2_SetBlendBrightnessExt(GX_BLEND_PLANEMASK_BG0 | GX_BLEND_PLANEMASK_BG1 | GX_BLEND_PLANEMASK_BG2 | GX_BLEND_PLANEMASK_BG3 | GX_BLEND_PLANEMASK_BD, GX_BLEND_PLANEMASK_BG3 | GX_BLEND_PLANEMASK_BD, 0, 0, -6);
+	GX_SetVisibleWnd(GX_WNDMASK_W0 | GX_WNDMASK_W1);*/
+	G2_SetBlendAlpha(GX_BLEND_PLANEMASK_BG0, GX_BLEND_PLANEMASK_BG3 | GX_BLEND_PLANEMASK_BD, 16, 0);
+
 
 	NNS_GfdResetLnkTexVramState();
 	NNS_GfdResetLnkPlttVramState();
 
-	NNS_G2dInitOamManagerModule();
-	NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_MAIN);
+	//NNS_G2dInitOamManagerModule();
+	//NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_SUB);
 
-	mFontData = Util_LoadFileToBuffer("/data/fonts/droid_sans_mono_10pt.NFTR", NULL, FALSE);
+	GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);
+
+	mFontData = Util_LoadLHFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR.lh", NULL, false);
 	MI_CpuClear8(&mFont, sizeof(mFont));
 	NNS_G2dFontInitAuto(&mFont, mFontData);
 
-	mCellDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCER", NULL, FALSE);
-	NNS_G2dGetUnpackedCellBank(mCellDataSub, &mCellDataSubBank);
-
-	NNSG2dCharacterData* mCharDataSubUnpacked;
-	void* mCharDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCGR", NULL, TRUE);
-	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
-	NNS_G2dInitImageProxy(&mImageProxy);
-	NNS_G2dLoadImage2DMapping(mCharDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImageProxy);
-	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
-
-	NNSG2dPaletteData* mPalDataSubUnpacked;
-	void* mPalDataSub = Util_LoadFileToBuffer("/data/menu/title/title_obj.NCLR", NULL, TRUE);
-    NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
-	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
-	NNS_G2dLoadPalette(mPalDataSubUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxy);
-	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
-
-	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, ((uint8_t*)G2_GetOBJCharPtr()) + 2048, 12, 2, NNS_G2D_CHARA_COLORMODE_16);
+	NNS_G2dCharCanvasInitForOBJ1D(&mCanvas, (uint8_t*)G2_GetOBJCharPtr(), 32, 2, NNS_G2D_CHARA_COLORMODE_16);
 	NNS_G2dTextCanvasInit(&mTextCanvas, &mCanvas, &mFont, 0, 1);
 	NNS_G2dCharCanvasClear(&mCanvas, 0);
 	NNS_G2dTextCanvasDrawTextRect(
-		&mTextCanvas, 0, 0, 96, 16, 4, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Missions");
+		&mTextCanvas, 0, 0, 256, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE,
+		(NNSG2dChar*)L"© 2016-2017 Expand Productions");
 
-	mCanvas.charBase = ((uint8_t*)G2_GetOBJCharPtr()) + 2048 * 2;
-	NNS_G2dTextCanvasDrawTextRect(
-		&mTextCanvas, 0, 0, 96, 16, 4, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Sandbox");
-
-	mCanvas.charBase = ((uint8_t*)G2_GetOBJCharPtr()) + 2048 * 3;
-	NNS_G2dTextCanvasDrawTextRect(
-		&mTextCanvas, 0, 0, 64, 16, 4, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Depot");
-
-	mCanvas.charBase = ((uint8_t*)G2_GetOBJCharPtr()) + 2048 * 4;
-	NNS_G2dTextCanvasDrawTextRect(
-		&mTextCanvas, 0, 0, 64, 16, 4, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Options");
-
-
-	MI_CpuClear8(&mTmpSubOamBuffer[0], sizeof(mTmpSubOamBuffer));
-	mSelButton = 0;
-	mStateCounter = 0;
-	mKeyTimeout = 0;
-
-	//Load the 3d models
-	mBGModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/menu/title/title.nsbmd", NULL, FALSE);
-	NNS_G3dResDefaultSetup(mBGModel);
-	NNSG3dResFileHeader* mBGTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/menu/title/title.nsbtx", NULL, TRUE);
-	NNS_G3dResDefaultSetup(mBGTextures);
-	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mBGModel), 0);
-	NNS_G3dMdlSetMdlLightEnableFlagAll(model, 0);
-	NNS_G3dMdlSetMdlEmiAll(model, 0x7FFF);
-	NNSG3dResTex* tex = NNS_G3dGetTex(mBGTextures);
-	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mBGModel), tex);
-	NNS_G3dRenderObjInit(&mBGRenderObj, model);
-	NNS_FndFreeToExpHeap(gHeapHandle, mBGTextures);
-}
-
-void TitleMenu::HandleKeys()
-{
-	if(!mKeyTimeout)
+	for (int i = 0; i < 16; i++)
 	{
-		Core_ReadInput();
-		switch(mState)
-		{
-		case TITLEMENU_STATE_MENU_LOOP:
-			if(gKeys & PAD_KEY_DOWN)
-			{
-				if(mSelButton == 0 || mSelButton == 1) mSelButton++;
-				else if(mSelButton == 2) mSelButton = 0;
-				else if(mSelButton == 3) mSelButton = 0;
-				else break;
-				mKeyTimeout = 10;
-			}
-			else if(gKeys & PAD_KEY_UP)
-			{
-				if(mSelButton == 1 || mSelButton == 2) mSelButton--;
-				else if(mSelButton == 0) mSelButton = 2;
-				else if(mSelButton == 3) mSelButton = 1;
-				else break;
-				mKeyTimeout = 10;
-			}
-			else if(gKeys & PAD_KEY_LEFT || gKeys & PAD_KEY_RIGHT)
-			{
-				if(mSelButton == 2) mSelButton = 3;
-				else if(mSelButton == 3) mSelButton = 2;
-				else break;
-				mKeyTimeout = 10;
-			}
-			break;
-		}
+		int rnew = 4 + ((28 - 4) * i) / 15;
+		int gnew = 4 + ((28 - 4) * i) / 15;
+		int bnew = 4 + ((28 - 4) * i) / 15;
+		((uint16_t*)HW_OBJ_PLTT)[i] = GX_RGB(rnew, gnew, bnew);
 	}
-	else mKeyTimeout--;
+
+	NNS_G2dArrangeOBJ1D((GXOamAttr*)HW_OAM, 32, 2, 0, 168 + 6, GX_OAM_COLORMODE_16, 0, NNS_G2D_OBJVRAMMODE_32K);
+
+	NNSG2dScreenData* mScreenDataSubUnpacked;
+	void* mScreenDataSub = Util_LoadLHFileToBuffer("/data/game/BG.NSCR.lh", NULL, TRUE);
+	NNS_G2dGetUnpackedScreenData(mScreenDataSub, &mScreenDataSubUnpacked);
+	void* mCharDataSub = Util_LoadLHFileToBuffer("/data/game/IngameBG.NCGR.lh", NULL, TRUE);
+	NNSG2dCharacterData* mCharDataSubUnpacked;
+	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
+	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCLR", NULL, TRUE);
+	NNSG2dPaletteData* mPalDataSubUnpacked;
+	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
+	NNS_G2dBGSetup(NNS_G2D_BGSELECT_SUB0, mScreenDataSubUnpacked, mCharDataSubUnpacked, mPalDataSubUnpacked, GX_BG_SCRBASE_0x0800, GX_BG_CHARBASE_0x00000);
+	NNS_FndFreeToExpHeap(gHeapHandle, mScreenDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
+	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
+
+	Util_LoadLHTextureFromCard("/data/menu/title/titlelogolarge.ntft.lh", "/data/menu/title/titlelogolarge.ntfp", mLogoLargeTexture.texKey, mLogoLargeTexture.plttKey);
+
+	mGameController = new GameController(NULL);
+
+	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, /*118*/133 * FX32_ONE/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
+	mGameController->mWagon->mDriving = true;
+
+	mTSPlayer = new TitleSequencePlayer(mGameController, gTitleSequence);
+
+	mVRAMCopyVAlarm = new OS::VAlarm();
+	mVRAMCopyVAlarm->SetPeriodic(192 - 48, 5, TitleMenu::OnVRAMCopyVAlarm, this);
+
+	if (!MB_IsMultiBootChild())
+	{
+		NNS_SndStrmHandleInit(&mMusicHandle);
+		NNS_SndArcStrmStart(&mMusicHandle, STRM_TITLE, 0);
+	}
 }
 
-void TitleMenu::SetSwapBuffersflag()
+void TitleMenu::OnVRAMCopyVAlarm()
 {
-    OSIntrMode old = OS_DisableInterrupts();    // interrupts disabled
-    G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
-	mSwap = TRUE;
-    OS_RestoreInterrupts(old);
+	if (mRenderMode == GameController::RENDER_MODE_NEAR)
+		mGameController->mMap->mTerrainTextureManager16->UpdateVramC();
+	else
+		mGameController->mMap->mTerrainTextureManager8->UpdateVramC();
 }
 
 void TitleMenu::Render()
 {
-	HandleKeys();
-	const NNSG2dCellData *pButtonLarge, *pButtonSmall, *pButtonLargeSel, *pButtonSmallSel;
-	NNSG2dFVec2 trans;
-	u16 numOamDrawn = 0;
-	int i;
-	switch(mState)
-	{
-	case TITLEMENU_STATE_INTRO:
-		if(mStateCounter == 0)
-		{
-			NNS_SndStrmHandleInit(&mMusicHandle);
-			NNS_SndArcStrmStart(&mMusicHandle, STRM_INTRO, 0);
-		}
-		mStateCounter++;
-		if(mStateCounter == 20 * 60)
-		{
-			mState = TITLEMENU_STATE_MENU_IN;
-			mStateCounter = 0;
-		}
-		break;
-	case TITLEMENU_STATE_MENU_IN:
-		if(mStateCounter == 0)
-		{
-			NNS_SndStrmHandleInit(&mMusicHandle);
-			NNS_SndArcStrmStart(&mMusicHandle, STRM_TITLE, 0);
-		}
-		pButtonLarge = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 0);
-		pButtonLargeSel = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 2);
-		pButtonSmall = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 1);
-		pButtonSmallSel = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 3);
-		if(mStateCounter < 30)
-		{
-			trans.x = 80 * FX32_ONE;
-			trans.y = 192 * FX32_ONE + (76 - 192) * mStateCounter * FX32_ONE / 30;
-			numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 0 ? pButtonLargeSel : pButtonLarge), NULL, &trans, -1, FALSE);
-			trans.y = 216 * FX32_ONE + (100 - 216) * mStateCounter * FX32_ONE / 30;
-			numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 1 ? pButtonLargeSel : pButtonLarge), NULL, &trans, -1, FALSE);
-		}
-		else
-		{
-			trans.x = 80 * FX32_ONE;
-			trans.y = 76 * FX32_ONE;
-			numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 0 ? pButtonLargeSel : pButtonLarge), NULL, &trans, -1, FALSE);
-			trans.y = 100 * FX32_ONE;
-			numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 1 ? pButtonLargeSel : pButtonLarge), NULL, &trans, -1, FALSE);
-		}
-		if(mStateCounter >= 30)
-		{
-			trans.x = -64 * FX32_ONE + (8 + 64) * (mStateCounter - 30) * FX32_ONE / 30;
-			trans.y = 168 * FX32_ONE;
-			numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 2 ? pButtonSmallSel : pButtonSmall), NULL, &trans, -1, FALSE);
-			trans.x = 256 * FX32_ONE + (184 - 256) * (mStateCounter - 30) * FX32_ONE / 30;
-			numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 3 ? pButtonSmallSel : pButtonSmall), NULL, &trans, -1, FALSE);
-		}
-
-		for(i = 0; i < numOamDrawn; i++)
-		{
-			G2_SetOBJPriority(&((GXOamAttr*)&mTmpSubOamBuffer[0])[i], 3);
-		}
-		if(mStateCounter < 30)
-		{
-			numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 12, 2, 80, 192 + (76 - 192) * mStateCounter / 30, GX_OAM_COLORMODE_16, 64, NNS_G2D_OBJVRAMMODE_32K);
-			numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 12, 2, 80, 216 + (100 - 216) * mStateCounter / 30, GX_OAM_COLORMODE_16, 64 * 2, NNS_G2D_OBJVRAMMODE_32K);
-		}
-		else
-		{
-			numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 12, 2, 80, 76, GX_OAM_COLORMODE_16, 64, NNS_G2D_OBJVRAMMODE_32K);
-			numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 12, 2, 80, 100, GX_OAM_COLORMODE_16, 64 * 2, NNS_G2D_OBJVRAMMODE_32K);
-		}
-		if(mStateCounter >= 30)
-		{
-			numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 8, 2, -64 + (8 + 64) * (mStateCounter - 30) / 30, 168, GX_OAM_COLORMODE_16, 64 * 3, NNS_G2D_OBJVRAMMODE_32K);
-			numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 9, 2, 256 + (184 - 256) * (mStateCounter - 30) / 30, 168, GX_OAM_COLORMODE_16, 64 * 4, NNS_G2D_OBJVRAMMODE_32K);
-		}
-
-		NNS_G2dEntryOamManagerOam(&mSubObjOamManager, &mTmpSubOamBuffer[0], numOamDrawn);
-
-		mStateCounter++;
-		if(mStateCounter >= 60)
-		{
-			mState = TITLEMENU_STATE_MENU_LOOP;
-			mStateCounter = 0;
-		}
-		break;
-	case TITLEMENU_STATE_MENU_LOOP:
-		pButtonLarge = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 0);
-		pButtonLargeSel = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 2);
-		pButtonSmall = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 1);
-		pButtonSmallSel = NNS_G2dGetCellDataByIdx(mCellDataSubBank, 3);
-		trans.x = 80 * FX32_ONE;
-		trans.y = 76 * FX32_ONE;
-		numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 0 ? pButtonLargeSel : pButtonLarge), NULL, &trans, -1, FALSE);
-		trans.y = 100 * FX32_ONE;
-		numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 1 ? pButtonLargeSel : pButtonLarge), NULL, &trans, -1, FALSE);
-		trans.x = 8 * FX32_ONE;
-		trans.y = 168 * FX32_ONE;
-		numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 2 ? pButtonSmallSel : pButtonSmall), NULL, &trans, -1, FALSE);
-		trans.x = 184 * FX32_ONE;
-		numOamDrawn += NNS_G2dMakeCellToOams(&mTmpSubOamBuffer[numOamDrawn], 128 - numOamDrawn, (mSelButton == 3 ? pButtonSmallSel : pButtonSmall), NULL, &trans, -1, FALSE);
-
-		for(i = 0; i < numOamDrawn; i++)
-		{
-			G2_SetOBJPriority(&((GXOamAttr*)&mTmpSubOamBuffer[0])[i], 3);
-		}
-		numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 12, 2, 80, 76, GX_OAM_COLORMODE_16, 64, NNS_G2D_OBJVRAMMODE_32K);
-		numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 12, 2, 80, 100, GX_OAM_COLORMODE_16, 64 * 2, NNS_G2D_OBJVRAMMODE_32K);
-		numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 8, 2, 8, 168, GX_OAM_COLORMODE_16, 64 * 3, NNS_G2D_OBJVRAMMODE_32K);
-		numOamDrawn += NNS_G2dArrangeOBJ1D((GXOamAttr*)&mTmpSubOamBuffer[numOamDrawn], 8, 2, 184, 168, GX_OAM_COLORMODE_16, 64 * 4, NNS_G2D_OBJVRAMMODE_32K);
-		
-		NNS_G2dEntryOamManagerOam(&mSubObjOamManager, &mTmpSubOamBuffer[0], numOamDrawn);
-		break;
-	case TITLEMENU_STATE_MENU_OUT:
-		break;
-	}
+	Core_ReadInput();
+	if (gKeys & PAD_BUTTON_START)
+		Game::GotoMenu();
+	else if (gKeys & PAD_BUTTON_B)
+		MultibootMenu::GotoMenu();
 	G3X_Reset();
-	//NNS_G3dGlbPerspective(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096);
-	//NNS_G3dGlbFrustum(2365, -2365, -3153, 3153, 1 * 4096, 512 * 4096);
-	//if(flip_flag)
-	//	NNS_G3dGlbFrustum(((-2365 * 2) * 614) >> 12, ((-2365 * 2) * 4710) >> 12, -3153, 3153, 1 * 4096, 512 * 4096);
-	//else NNS_G3dGlbFrustum(((2365 * 2) * 4710) >> 12, ((2365 * 2) * 614) >> 12, -3153, 3153, 1 * 4096, 512 * 4096);
-	if(!mFlipFlag)
-		NNS_G3dGlbFrustum(/*2365*/4730, /*-2365*/0, -3153, 3153, 1 * 4096, 512 * 4096);
-	else NNS_G3dGlbFrustum(/*-2365*/-788 * 2, /*-2365 * 3*/-4730 - 788 * 2, -3153, 3153, 1 * 4096, 512 * 4096);
-	//NNS_G3dGlbLightVector(GX_LIGHTID_0,  -FX16_SQRT1_3, -FX16_SQRT1_3, FX16_SQRT1_3);
-	//NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31,31,31));
-	VecFx32 pos;
-	pos.x = -35992;//-8.787
-	pos.y = 19239;//4.697
-	pos.z = 54395;//13.280
-	VecFx32 up;
-	up.x = 0;
-	up.y = 4096;
-	up.z = 0;
-	VecFx32 dst;
-	dst.x = 34648;//8.459
-	dst.y = -40219;//-9.819
-	dst.z = -24461;//-5.972
-	NNS_G3dGlbLookAt(&pos, &up, &dst);
-	NNS_G3dGlbFlushP();
-	NNS_G3dDraw(&mBGRenderObj);
-	NNS_G3dGeFlushBuffer();
-	SetSwapBuffersflag();
+	mTSPlayer->Update();
+	mGameController->Update();
+	NNS_G3dGlbSetViewPort(0, 0, 255, 191);
+	mGameController->Render(mRenderMode);
+	if (mRenderMode == GameController::RENDER_MODE_NEAR)
+	{
+		//Do some 2d with the 3d engine when needed (AKA, fucking up matrices)
+		G3_MtxMode(GX_MTXMODE_PROJECTION);
+		{
+			G3_Identity();
+			G3_OrthoW(FX32_ONE * 0, FX32_ONE * 192, FX32_ONE * 0, FX32_ONE * 256, FX32_ONE * -1024, FX32_ONE * 1024, FX32_ONE * 1024, NULL);
+		}
+		G3_MtxMode(GX_MTXMODE_TEXTURE);
+		{
+			G3_Identity();
+		}
+		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+		G3_Identity();
+		G3_Color(GX_RGB(31, 31, 31));
+
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0x30, 31, 0);
+		G3_TexImageParam(GX_TEXFMT_A3I5, GX_TEXGEN_TEXCOORD, GX_TEXSIZE_S256, GX_TEXSIZE_T64, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, NNS_GfdGetTexKeyAddr(mLogoLargeTexture.texKey));
+		G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(mLogoLargeTexture.plttKey), GX_TEXFMT_A3I5);
+
+		switch (mState)
+		{
+		case TITLE_MENU_STATE_LOGO_IN:
+			Util_DrawSprite(27 * FX32_ONE, -64 * FX32_ONE + (8 * FX32_ONE - -64 * FX32_ONE) * mStateCounter / 29, 1024 * FX32_ONE, 202 * FX32_ONE, 64 * FX32_ONE);
+			if (mStateCounter == 29)
+			{
+				mStateCounter = 0;
+				mState = TITLE_MENU_STATE_LOGO_WAIT;
+			}
+			else
+				mStateCounter++;
+			break;
+		case TITLE_MENU_STATE_LOGO_WAIT:
+			Util_DrawSprite(27 * FX32_ONE, 8 * FX32_ONE, 1024 * FX32_ONE, 202 * FX32_ONE, 64 * FX32_ONE);
+			if (mStateCounter == 79)
+			{
+				mStateCounter = 0;
+				mState = TITLE_MENU_STATE_LOGO_SCALE;
+			}
+			else
+				mStateCounter++;
+			break;
+		case TITLE_MENU_STATE_LOGO_SCALE:
+			fx32 newX = 27 * FX32_ONE + (86 * FX32_ONE - 27 * FX32_ONE) * mStateCounter / 19;
+			fx32 newY = 8 * FX32_ONE + (-10 * FX32_ONE - 8 * FX32_ONE) * mStateCounter / 19;
+			fx32 newScale = (202 * FX32_ONE + (138 * FX32_ONE - 202 * FX32_ONE) * mStateCounter / 19) / 202;
+			Util_DrawSpriteScaled(newX, newY, 1024 * FX32_ONE, 202 * FX32_ONE, 64 * FX32_ONE, newScale);
+			if (mStateCounter == 19)
+			{
+				mStateCounter = 0;
+				mState = TITLE_MENU_STATE_LOOP;
+			}
+			else
+				mStateCounter++;
+			break;
+		case TITLE_MENU_STATE_LOOP:
+			Util_DrawSpriteScaled(86 * FX32_ONE, -10 * FX32_ONE, 1024 * FX32_ONE, 202 * FX32_ONE, 64 * FX32_ONE, 138 * FX32_ONE / 202);
+			break;
+		}
+
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0x30, 12, 0);
+		G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S256, GX_TEXSIZE_T64, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
+		G3_Color(GX_RGB(0, 0, 0));
+		Util_DrawSprite(0, (192 - 21) * FX32_ONE, 1024 * FX32_ONE, 256 * FX32_ONE, 21 * FX32_ONE);
+	}
+	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
 }
 
 void TitleMenu::VBlank()
 {
-	NNS_G2dApplyOamManagerToHW(&mSubObjOamManager);
-    NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
+	if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
+	{
+		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
+		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		mRenderMode = GameController::RENDER_MODE_NEAR;
+	}
+	else if (mRenderMode == GameController::RENDER_MODE_NEAR)
+	{
+		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B);
+		GX_SetBankForTex(GX_VRAM_TEX_012_ACD);
+		//GX_SetBankForBG(GX_VRAM_BG_128_D);
+		//set this to GX_DISPMODE_VRAM_D to prevent flickering, but it will introduce one frame of lag (don't know if that really matters though)
+		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG3*/ | GX_PLANEMASK_OBJ);
+		//G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
+		//G2_SetBG3Priority(3);
+		G2_SetBG0Priority(0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		mRenderMode = GameController::RENDER_MODE_FAR;
+	}
 }
 
 void TitleMenu::Finalize()
 {
-	//We don't have to free resources here, because that's done by using the group id
-	GX_VBlankIntr(FALSE);
-	OS_DestroyThread(&mDouble3DThread);
-}
-
-void TitleMenu::VBlankIntr()
-{
-	OS_SetIrqCheckFlag(OS_IE_V_BLANK);
-	OS_WakeupThreadDirect(&mDouble3DThread);
-}
-
-void TitleMenu::SetupFrame2N()
-{
-    GX_SetDispSelect(GX_DISP_SELECT_MAIN_SUB);
-
-    GX_ResetBankForSubOBJ();
-    GX_SetBankForSubBG(GX_VRAM_SUB_BG_128_C);
-    GX_SetBankForLCDC(GX_VRAM_LCDC_D);
-    GX_SetCapture(GX_CAPTURE_SIZE_256x192,
-                  GX_CAPTURE_MODE_A,
-                  GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
-
-    GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_3D);
-    GX_SetVisiblePlane(GX_PLANEMASK_BG0);
-    G2_SetBG0Priority(3);
-
-    GXS_SetGraphicsMode(GX_BGMODE_5);
-    GXS_SetVisiblePlane(GX_PLANEMASK_BG2);
-    G2S_SetBG2ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256,
-                           GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
-    G2S_SetBG2Priority(3);
-    G2S_BG2Mosaic(FALSE);
-}
-
-void TitleMenu::SetupFrame2N_1()
-{
-    GX_SetDispSelect(GX_DISP_SELECT_SUB_MAIN);
-
-    GX_ResetBankForSubBG();
-    GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_128_D);
-    GX_SetBankForLCDC(GX_VRAM_LCDC_C);
-    GX_SetCapture(GX_CAPTURE_SIZE_256x192,
-                  GX_CAPTURE_MODE_A,
-				  GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_C_0x00000, 16, 0);
-
-    GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_3D);
-    GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
-    G2_SetBG0Priority(3);
-
-    GXS_SetGraphicsMode(GX_BGMODE_5);
-    GXS_SetVisiblePlane(GX_PLANEMASK_OBJ);
-}
-
-//Thread for double 3d
-void TitleMenu::Double3DThread()
-{
-    while (1)
-    {
-		if (GX_GetVCount() <= 193)
-			OS_SpinWait(784);
-		if (!G3X_IsGeometryBusy() && mSwap)// If the rendering and swap operations are both finished, the upper and lower screens switch.
-		{
-			if (mFlipFlag)// flip switch (operation to switch the upper and lower screens)
-				SetupFrame2N_1();
-			else 
-				SetupFrame2N();
-			mSwap = FALSE;
-			mFlipFlag = !mFlipFlag;
-		}
-		OS_SleepThread(NULL);
-    }
+	if (!MB_IsMultiBootChild())
+		NNS_SndArcStrmStop(&mMusicHandle, 0);
+	delete mVRAMCopyVAlarm;
+	delete mGameController;
 }

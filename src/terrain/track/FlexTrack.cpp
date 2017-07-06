@@ -7,8 +7,6 @@
 #include "TrackPieceEx.h"
 #include "FlexTrack.h"
 
-#define TRACK_WIDTH		FX32_CONST(0.4)
-
 static void interpolateBezierXZ(VecFx32* a, VecFx32* b, VecFx32* c, VecFx32* d, fx32 t, VecFx32* dst)
 {
 	fx32 invt = FX32_ONE - t;
@@ -123,83 +121,9 @@ static void cubicInterpolateDir(VecFx32* a, VecFx32* b, VecFx32* c, VecFx32* d, 
 	dst->z = cubicInterpolate1DDir(a->z, b->z, c->z, d->z, t);
 }
 
-#define NR_POINTS	6
-
-void FlexTrack::Render(Map* map, TerrainManager* terrainManager)
+void FlexTrack::RenderMarkers()
 {
-	texture_t* tex = terrainManager->GetTrackTexture();
-	G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
-		GX_TEXGEN_TEXCOORD,    // use texcoord
-		(GXTexSizeS)tex->nitroWidth,        // 16 pixels
-		(GXTexSizeT)tex->nitroHeight,        // 16 pixels
-		GX_TEXREPEAT_ST,     // no repeat
-		GX_TEXFLIP_NONE,       // no flip
-		GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-		NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-	);
-	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
-	VecFx32 points[NR_POINTS];
-	VecFx32 normals[NR_POINTS];
-	for (int i = 0; i < NR_POINTS; i++)
-	{
-		VecFx32 a = mPoints[0];
-		if (mConnections[0] != NULL)
-			mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
-		VecFx32 b = mPoints[1];
-		if (mConnections[1] != NULL)
-			mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
-		/*if (i == 0 && mConnections[0] == NULL)
-		{
-			points[i] = mPoints[0];
-		}
-		else if (i == (NR_POINTS - 1) && mConnections[1] == NULL)
-		{
-			points[i] = mPoints[1];
-		}
-		else
-		{*/
-			cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (NR_POINTS - 1), &points[i]);
-		//}
-		points[i].y = map->GetYOnMap(points[i].x, points[i].z);
-		VecFx32 dir;
-		cubicInterpolateDir(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (NR_POINTS - 1), &dir);
-		dir.y = 0;
-		VEC_Normalize(&dir, &dir);
-		normals[i].x = -dir.z;
-		normals[i].y = 0;
-		normals[i].z = dir.x;
-	}
-	G3_PushMtx();
-	{
-		G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
-		G3_Begin(GX_BEGIN_QUAD_STRIP);
-		{
-			G3_Normal(0, GX_FX16_FX10_MAX, 0);
-			fx32 dist = 0;
-			for (int i = 0; i < NR_POINTS; i++)
-			{
-				VecFx32 normal = normals[i];
-				G3_PushMtx();
-				{
-					G3_Translate(points[i].x, points[i].y + (FX32_ONE / 32), points[i].z);
-					G3_TexCoord(0, FX_Div((8 << tex->nitroHeight) * dist, TRACK_WIDTH));
-					G3_Vtx(-FX_Mul(normal.x, TRACK_WIDTH) >> 1, 0, -FX_Mul(normal.z, TRACK_WIDTH) >> 1);
-					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, FX_Div((8 << tex->nitroHeight) * dist, TRACK_WIDTH));
-					G3_Vtx(FX_Mul(normal.x, TRACK_WIDTH) >> 1, 0, FX_Mul(normal.z, TRACK_WIDTH) >> 1);
-				}
-				G3_PopMtx(1);
-				if (i != (NR_POINTS - 1))
-					dist += VEC_Distance(&points[i], &points[i + 1]);
-			}
-		}
-		G3_End();
-	}
-	G3_PopMtx(1);
-}
-
-void FlexTrack::RenderMarkers(Map* map, TerrainManager* terrainManager)
-{
-	texture_t* tex = terrainManager->GetTrackMarkerTexture();
+	texture_t* tex = mMap->mTerrainManager->GetTrackMarkerTexture();
 	G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
 		GX_TEXGEN_TEXCOORD,    // use texcoord
 		(GXTexSizeS)tex->nitroWidth,        // 16 pixels
@@ -213,10 +137,10 @@ void FlexTrack::RenderMarkers(Map* map, TerrainManager* terrainManager)
 	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 60, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 	G3_PushMtx();
 	{
-		G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
+		//G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
 		G3_MtxMode(GX_MTXMODE_TEXTURE);
 		G3_Translate((8 << tex->nitroWidth) * FX32_HALF, (8 << tex->nitroHeight) * FX32_HALF, 0);
-		G3_RotZ(FX_SinIdx(FX_DEG_TO_IDX(terrainManager->mTrackMarkerRotation)), FX_CosIdx(FX_DEG_TO_IDX(terrainManager->mTrackMarkerRotation)));
+		G3_RotZ(FX_SinIdx(FX_DEG_TO_IDX(mMap->mTerrainManager->mTrackMarkerRotation)), FX_CosIdx(FX_DEG_TO_IDX(mMap->mTerrainManager->mTrackMarkerRotation)));
 		G3_Translate(-(8 << tex->nitroWidth) * FX32_HALF, -(8 << tex->nitroHeight) * FX32_HALF, 0);
 		{
 			MtxFx44 mtx;
@@ -234,20 +158,16 @@ void FlexTrack::RenderMarkers(Map* map, TerrainManager* terrainManager)
 			{
 				G3_PushMtx();
 				{
-					fx32 y = map->GetYOnMap(mPoints[i].x, mPoints[i].z);
-					G3_Translate(mPoints[i].x, y + FX32_ONE / 32 + FX32_ONE / 64, mPoints[i].z);
-					//G3_TexCoord(0, 0);
-					//G3_Vtx(-normal.x >> 1, 0, -normal.z >> 1);
-					//G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * dist);
-					//G3_Vtx(normal.x >> 1, 0, normal.z >> 1);
-					G3_TexCoord(0, 0);
-					G3_Vtx(-TRACK_WIDTH >> 1, 0, -TRACK_WIDTH >> 1);
-					G3_TexCoord(0, (8 << tex->nitroHeight) * FX32_ONE);
-					G3_Vtx(-TRACK_WIDTH >> 1, 0, TRACK_WIDTH >> 1);
-					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
-					G3_Vtx(TRACK_WIDTH >> 1, 0, TRACK_WIDTH >> 1);
-					G3_TexCoord((8 << tex->nitroWidth) * FX32_ONE, 0);
-					G3_Vtx(TRACK_WIDTH >> 1, 0, -TRACK_WIDTH >> 1);
+					//fx32 y = mMap->GetYOnMap(mPoints[i].x, mPoints[i].z);
+					G3_Translate(mPoints[i].x, mCurvePoints[i * (FLEXTRACK_NR_POINTS - 1)].y + FX32_ONE / 32 + FX32_ONE / 64, mPoints[i].z);
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, 0);
+					G3_Vtx(-FLEXTRACK_TRACK_WIDTH >> 1, 0, -FLEXTRACK_TRACK_WIDTH >> 1);
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, (8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(-FLEXTRACK_TRACK_WIDTH >> 1, 0, FLEXTRACK_TRACK_WIDTH >> 1);
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE, (8 << tex->nitroHeight) * FX32_ONE);
+					G3_Vtx(FLEXTRACK_TRACK_WIDTH >> 1, 0, FLEXTRACK_TRACK_WIDTH >> 1);
+					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM((8 << tex->nitroWidth) * FX32_ONE, 0);
+					G3_Vtx(FLEXTRACK_TRACK_WIDTH >> 1, 0, -FLEXTRACK_TRACK_WIDTH >> 1);
 				}
 				G3_PopMtx(1);
 			}
@@ -262,45 +182,47 @@ void FlexTrack::RenderMarkers(Map* map, TerrainManager* terrainManager)
 	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 }
 
-fx32 FlexTrack::GetTrackLength(Map* map, int inPoint)
+fx32 FlexTrack::GetTrackLength(int inPoint)
 {
-	//todo
-	//VecFx32 diff;
-	//VEC_Subtract(&mPoints[0], &mPoints[1], &diff);
-	//return VEC_Mag(&diff);
-	VecFx32 prev;
-	fx32 len = 0;
-	for (int i = 0; i < NR_POINTS; i++)
-	{
-		VecFx32 a = mPoints[0];
-		if (mConnections[0] != NULL)
-			mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
-		VecFx32 b = mPoints[1];
-		if (mConnections[1] != NULL)
-			mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
-		VecFx32 point;
-		cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (NR_POINTS - 1), &point);
-		point.y = map->GetYOnMap(point.x, point.z);
-		if (i != 0)
-			len += VEC_Distance(&point, &prev);
-		prev = point;
-	}
-	return len;
+	return mCurveLength;
 }
 
-void FlexTrack::CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir, Map* map)
+void FlexTrack::CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir)
 {
 	if (inPoint == 1)
 		progress = FX32_ONE - progress;
 
-	VecFx32 a = mPoints[0];
-	if (mConnections[0] != NULL)
-		mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
-	VecFx32 b = mPoints[1];
-	if (mConnections[1] != NULL)
-		mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
-	cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, progress, pPos);
-	cubicInterpolateDir(&a, &mPoints[0], &mPoints[1], &b, progress, pDir);
+	fx32 dist = FX_Mul(progress, mCurveLength);
+
+	VecFx32 *a, *b;
+	VecFx32 dirA, dirB;
+
+	fx32 diff;
+	fx32 len = 0;
+	for (int i = 1; i < FLEXTRACK_NR_POINTS; i++)
+	{
+		diff = VEC_Distance(&mCurvePoints[i], &mCurvePoints[i - 1]);
+		if (dist >= len && dist <= len + diff)
+		{
+			a = &mCurvePoints[i - 1];
+			b = &mCurvePoints[i];
+			dirA.x = -mCurveNormals[i - 1].z;
+			dirA.y = 0;
+			dirA.z = mCurveNormals[i - 1].x;
+			dirB.x = -mCurveNormals[i].z;
+			dirB.y = 0;
+			dirB.z = mCurveNormals[i].x;
+			break;
+		}
+		else
+			len += diff;
+	}
+
+	VEC_Lerp(a, b, FX_Div(dist - len, diff), pPos);
+	VEC_Lerp(&dirA, &dirB, FX_Div(dist - len, diff), pDir);
+	//VecFx32 diff2;
+	//VEC_Subtract(b, a, &diff2);
+	//VEC_Normalize(&diff2, pDir);
 
 	/*if (inPoint == 1)
 	{
@@ -308,7 +230,7 @@ void FlexTrack::CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx3
 		MTX_RotY33(&rot, FX32_SIN180, FX32_COS180);
 		MTX_MultVec33(pDir, &rot, pDir);
 	}*/
-	if (inPoint == 1)
+	if (inPoint == 0)
 	{
 		pDir->x = -pDir->x;
 		pDir->z = -pDir->z;
@@ -317,7 +239,7 @@ void FlexTrack::CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx3
 	//pDir->y = 0;
 	VEC_Normalize(pDir, pDir);
 
-	pPos->y = map->GetYOnMap(pPos->x, pPos->z);
+	//pPos->y = mMap->GetYOnMap(pPos->x, pPos->z);
 
 	pPos->x += 32 * FX32_ONE;
 	pPos->z += 32 * FX32_ONE;
@@ -325,4 +247,67 @@ void FlexTrack::CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx3
 	//pDir->x = 0;
 	//pDir->y = 0;
 	//pDir->z = FX32_ONE;
+}
+
+void FlexTrack::Invalidate()
+{
+	VecFx32 a = mPoints[0];
+	if (mConnections[0] != NULL)
+		mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
+	VecFx32 b = mPoints[1];
+	if (mConnections[1] != NULL)
+		mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
+
+	fx32 xmin = FX32_MAX;
+	fx32 xmax = FX32_MIN;
+	fx32 zmin = FX32_MAX;
+	fx32 zmax = FX32_MIN;
+
+	fx32 len = 0;
+	for (int i = 0; i < FLEXTRACK_NR_POINTS; i++)
+	{
+		cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (FLEXTRACK_NR_POINTS - 1), &mCurvePoints[i]);
+		mCurvePoints[i].y = mMap->GetYOnMap(mCurvePoints[i].x, mCurvePoints[i].z);
+
+		if (mCurvePoints[i].x < xmin)
+			xmin = mCurvePoints[i].x;
+		if (mCurvePoints[i].x > xmax)
+			xmax = mCurvePoints[i].x;
+		if (mCurvePoints[i].z < zmin)
+			zmin = mCurvePoints[i].z;
+		if (mCurvePoints[i].z > zmax)
+			zmax = mCurvePoints[i].z;
+
+		VecFx32 dir;
+		cubicInterpolateDir(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (FLEXTRACK_NR_POINTS - 1), &dir);
+		dir.y = 0;
+		VEC_Normalize(&dir, &dir);
+		mCurveNormals[i].x = -dir.z;
+		mCurveNormals[i].y = 0;
+		mCurveNormals[i].z = dir.x;
+		if (i != 0)
+			len += VEC_Distance(&mCurvePoints[i], &mCurvePoints[i - 1]);
+	}
+
+	mBounds.x1 = xmin;
+	mBounds.y1 = zmin;
+	mBounds.x2 = xmax;
+	mBounds.y2 = zmax;
+	//redo length calculation with estimated length
+	/*int nrparts = (len + FX32_HALF) >> FX32_SHIFT;
+	if (nrparts > FLEXTRACK_NR_POINTS)
+	{
+		VecFx32 prev;
+		len = 0;
+		for (int i = 0; i < nrparts; i++)
+		{
+			VecFx32 point;
+			cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (nrparts - 1), &point);
+			point.y = mMap->GetYOnMap(point.x, point.z);
+			if (i != 0)
+				len += VEC_Distance(&point, &prev);
+			prev = point;
+		}
+	}*/
+	mCurveLength = len;
 }

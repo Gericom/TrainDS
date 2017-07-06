@@ -1,18 +1,26 @@
 #ifndef __TERRAIN_MANAGER_H__
 #define __TERRAIN_MANAGER_H__
-#include "terrain.h"
+#include <nnsys/gfd.h>
 
+typedef struct
+{
+	NNSGfdTexKey texKey;
+	NNSGfdPlttKey plttKey;
+	int nitroWidth;
+	int nitroHeight;
+	int nitroFormat;
+} texture_t;
+
+//obselete and should be replaced by something else, most likely the TextureManager
 class TerrainManager
 {
 private:
-	texture_t* mTerrainTextures[26];
 	texture_t mTrackTexture;
 	texture_t mRCT2TreeTexture;
 	texture_t mTrackMarkerTexture;
 public:
 	fx32 mTrackMarkerRotation;
 	TerrainManager();
-	texture_t* GetTerrainTexture(int terrainId);
 	texture_t* GetTrackTexture() { return &mTrackTexture; }
 	texture_t* GetRCT2TreeTexture() { return &mRCT2TreeTexture; }
 	texture_t* GetTrackMarkerTexture() { return &mTrackMarkerTexture; }

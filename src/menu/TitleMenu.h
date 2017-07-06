@@ -1,68 +1,60 @@
-#ifndef __TITLE_MENU_H__
-#define __TITLE_MENU_H__
-#include <nnsys/g2d.h>
+#ifndef __TITLEMENU_H__
+#define __TITLEMENU_H__
+
 #include "SimpleMenu.h"
-
-#define TITLEMENU_ARG_PLAY_INTRO		0
-#define TITLEMENU_ARG_DONT_PLAY_INTRO	1
-
-#define TITLEMENU_STATE_INTRO			0
-#define TITLEMENU_STATE_MENU_IN			8
-#define TITLEMENU_STATE_MENU_LOOP		9
-#define TITLEMENU_STATE_MENU_OUT		10
-
-#define DOUBLE_3D_THREAD_STACK_SIZE     1024
+#include "core/os/VAlarm.h"
+#include "terrain/GameController.h"
+#include "terrain/TerrainManager.h"
+class TitleSequencePlayer;
 
 class TitleMenu : public SimpleMenu
 {
 private:
-	int mState;
-	NNSG2dFont mFont;
-	void* mFontData;
-	NNSG2dCellDataBank* mCellDataSubBank;
-	void* mCellDataSub;
-	NNSG2dImageProxy mImageProxy;
-	NNSG2dImagePaletteProxy mImagePaletteProxy;
-	NNSG2dOamManagerInstance mSubObjOamManager;
-	GXOamAttr mTmpSubOamBuffer[128];
-	int mSelButton;
-	int mStateCounter;
-	NNSG2dCharCanvas mCanvas;
-	NNSG2dTextCanvas mTextCanvas;
-	int mKeyTimeout;
+	enum TitleMenuState
+	{
+		TITLE_MENU_STATE_LOGO_IN,
+		TITLE_MENU_STATE_LOGO_WAIT,
+		TITLE_MENU_STATE_LOGO_SCALE,
+		TITLE_MENU_STATE_LOOP
+	};
+
+	GameController* mGameController;
+	GameController::RenderMode mRenderMode;
+
 	NNSSndStrmHandle mMusicHandle;
 
-	NNSG3dResFileHeader* mBGModel;
-	NNSG3dRenderObj mBGRenderObj;
+	NNSG2dFont mFont;
+	void* mFontData;
+	NNSG2dCharCanvas mCanvas;
+	NNSG2dTextCanvas mTextCanvas;
 
-	u32 mDouble3DThreadStack[DOUBLE_3D_THREAD_STACK_SIZE / sizeof(u32)];
+	texture_t mLogoLargeTexture;
 
-	BOOL mFlipFlag;
-	BOOL mSwap;
+	TitleMenuState mState;
+	int mStateCounter;
 
-	void SetSwapBuffersflag();
+	TitleSequencePlayer* mTSPlayer;
 
-	void Double3DThread();
+	OS::VAlarm* mVRAMCopyVAlarm;
+	void OnVRAMCopyVAlarm();
 public:
-	TitleMenu() : SimpleMenu(17, 17) { }
+	TitleMenu() : SimpleMenu(17, 17), mRenderMode(GameController::RENDER_MODE_FAR), mState(TITLE_MENU_STATE_LOGO_IN), mStateCounter(0)
+	{ }
 
 	void Initialize(int arg);
+
+	static void OnVRAMCopyVAlarm(void* arg)
+	{
+		((TitleMenu*)arg)->OnVRAMCopyVAlarm();
+	}
+
 	void Render();
 	void VBlank();
 	void Finalize();
 
-	static void VBlankIntr();
-	static void SetupFrame2N();
-	static void SetupFrame2N_1();
-
-	static void Double3DThread(void* arg)
-	{
-		((TitleMenu*)arg)->Double3DThread();
-	}
-
 	static void GotoMenu()
 	{
-		gNextMenuArg = TITLEMENU_ARG_DONT_PLAY_INTRO;
+		gNextMenuArg = 0;// TITLEMENU_ARG_DONT_PLAY_INTRO;
 		gNextMenuCreateFunc = CreateMenu;
 	}
 

@@ -2,6 +2,12 @@
 #include <nnsys/g3d.h>
 #include <nnsys/gfd.h>
 #include "core.h"
+extern "C" 
+{
+	#include "mb/wh.h"
+	#include "mb/mbp.h"
+	#include "mb/wfs.h"
+}
 #include "util.h"
 #include "terrain/TerrainManager.h"
 #include "menu/TitleMenu.h"
@@ -182,6 +188,31 @@ static void VBlankIntr()
 	OS_SetIrqCheckFlag(OS_IE_V_BLANK); // checking V-Blank interrupt
 }
 
+static void WaitWHState(int state)
+{
+	while (WH_GetSystemState() != state)
+		OS_WaitVBlankIntr();
+}
+
+static void* AllocatorForWFS(void *arg, u32 size, void *ptr)
+{
+	if (!ptr)
+	{
+		OSIntrMode cur = OS_DisableInterrupts();
+		int curHeapGroup = NNS_FndGetGroupIDForExpHeap(gHeapHandle);
+		NNS_FndSetGroupIDForExpHeap(gHeapHandle, WFS_HEAP_GROUP_ID);
+		void* result = NNS_FndAllocFromExpHeapEx(gHeapHandle, size, 16);
+		NNS_FndSetGroupIDForExpHeap(gHeapHandle, curHeapGroup);
+		OS_RestoreInterrupts(cur);
+		return result;
+	}
+	else
+	{
+		NNS_FndFreeToExpHeap(gHeapHandle, ptr);
+		return NULL;
+	}
+}
+
 #include <nitro/code16.h>
 static void Init()
 {
@@ -208,7 +239,7 @@ static void Init()
 
 	FS_Init(DEFAULT_DMA_NUMBER);
 
-	GX_VBlankIntr(TRUE);         // to generate V-Blank interrupt request
+	GX_VBlankIntr(true);         // to generate V-Blank interrupt request
 
 	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
 	MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
@@ -224,6 +255,63 @@ static void Init()
 	//card_lock_id = (u16)OS_GetLockID();
 
 	SND_Init();
+
+	if (MB_IsMultiBootChild())
+	{
+		WH_Initialize();
+		WaitWHState(WH_SYSSTATE_IDLE);
+		for (;;)
+		{
+			/* begins WFS initialization, parent search and connection processes */
+			WaitWHState(WH_SYSSTATE_IDLE);
+			WFS_InitChild(PORT_WFS, NULL, AllocatorForWFS, NULL);
+			WH_SetGgid(WH_GGID);
+			WH_ChildConnectAuto(WH_CONNECTMODE_DS_CHILD, (const u8 *)MB_GetMultiBootParentBssDesc()->bssid, 0);
+			while ((WH_GetSystemState() == WH_SYSSTATE_BUSY) || (WH_GetSystemState() == WH_SYSSTATE_SCANNING))
+				OS_WaitVBlankIntr();
+			/* retries when connection fails */
+			if (WH_GetSystemState() == WH_SYSSTATE_CONNECT_FAIL)
+			{
+				WH_Reset();
+				WaitWHState(WH_SYSSTATE_IDLE);
+			}
+			/* end here for unexpected errors */
+			else if (WH_GetSystemState() == WH_SYSSTATE_ERROR)
+			{
+				for (;;)
+				{
+					static int over_max_entry_count = 0;
+
+					OS_WaitVBlankIntr();
+
+					if (WH_GetLastError() == WM_ERRCODE_OVER_MAX_ENTRY)
+					{
+						// Retries the connection, considering situations in which a connection is made to a new download child during the timing for a reconnection to the parent child.
+						// The real OVER_MAX_ENTRY if it seems the retry will fail.
+						if (over_max_entry_count < 10)
+						{
+							WH_Reset();
+
+							over_max_entry_count++;
+
+							break;
+						}
+						else
+						{
+							//PrintString(5, 13, 0xf, "OVER_MAX_ENTRY");
+						}
+					}
+					//PrintString(5, 10, 0x1, "======= ERROR! =======");
+				}
+			}
+			break;
+		}
+		WaitWHState(WH_SYSSTATE_DATASHARING);
+		WFS_Start();
+		while (WFS_GetStatus() != WFS_STATE_READY)
+			OS_WaitVBlankIntr();
+	}
+
 	Core_Init();
 	NNS_G3dInit();
 	//MIC_Init();
@@ -232,8 +320,8 @@ static void Init()
 
 void OnIntroVideoFinish()
 {
-	//TitleMenu::GotoMenu();
-	Game::GotoMenu();
+	TitleMenu::GotoMenu();
+	//Game::GotoMenu();
 }
 
 void NitroMain ()
@@ -250,8 +338,11 @@ void NitroMain ()
 	NNS_FndSetGroupIDForExpHeap(gHeapHandle, MENU_PRIVATE_HEAP_GROUP_ID);//This is to be able to simply free all resources used by the menu after it is closed
 	//Game loop
 	//Should handle switching menu's and deallocating the shit they didn't (and don't have to) clean up
-	Game::GotoMenu();
-	//VideoPlayer::GotoMenu("/data/intro.vx2", true, OnIntroVideoFinish);
+	//Game::GotoMenu();
+	if (!MB_IsMultiBootChild())
+		VideoPlayer::GotoMenu("/data/intro.vx2", true, OnIntroVideoFinish);
+	else
+		TitleMenu::GotoMenu();
 	while (gNextMenuCreateFunc)
 	{
 		NNS_FndSetGroupIDForExpHeap(gHeapHandle, 0);
@@ -262,7 +353,7 @@ void NitroMain ()
 		gRunningMenu->Run(gNextMenuArg);
 		//restore vblank function (to fix it if it was changed by the menu)
 		OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIntr);
-		GX_VBlankIntr(TRUE);
+		GX_VBlankIntr(true);
 		Util_FreeAllToExpHeapByGroupId(gHeapHandle, MENU_PRIVATE_HEAP_GROUP_ID);//Release everything allocated by the menu
 		delete gRunningMenu;
 		gRunningMenu = NULL;
@@ -293,6 +384,16 @@ void NitroMain ()
 		G2_SetBG3Affine(&mtx, 0, 0, 0, 0);
 		G2S_SetBG2Affine(&mtx, 0, 0, 0, 0);
 		G2S_SetBG3Affine(&mtx, 0, 0, 0, 0);
+
+		GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
+		MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
+		(void)GX_DisableBankForLCDC();
+
+		MI_CpuFillFast((void *)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
+		MI_CpuClearFast((void *)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
+
+		MI_CpuFillFast((void *)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
+		MI_CpuClearFast((void *)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
 	}
 	while (1)
 	{
