@@ -26,5 +26,10 @@ TerrainManager::TerrainManager()
 	mSunTexture.nitroHeight = GX_TEXSIZE_T32;
 	mSunTexture.nitroFormat = GX_TEXFMT_A5I3;
 
+	Util_LoadTextureFromCard("/data/map/mk_lensfx02_ds.ntft", "/data/map/sun.ntfp", mFlareTexture.texKey, mFlareTexture.plttKey);
+	mFlareTexture.nitroWidth = GX_TEXSIZE_S32;
+	mFlareTexture.nitroHeight = GX_TEXSIZE_T32;
+	mFlareTexture.nitroFormat = GX_TEXFMT_A5I3;
+
 	mTrackMarkerRotation = 0;
 }

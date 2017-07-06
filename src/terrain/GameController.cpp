@@ -300,9 +300,20 @@ void GameController::Render(RenderMode mode)
 			//G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 61, 30, 0);
 			//mHemisphere->Render();
 			G3_PopMtx(1);
+			//sun
 			G3_Translate(mSunPosition.x, mSunPosition.y, mSunPosition.z);
+			
 			Util_SetupBillboardMatrix();
 			G3_Translate(0, -4 * FX32_ONE, 2 * FX32_ONE);
+
+			if (VEC_DotProduct(&mSunPosition, &camDir) < 0)
+			{
+				mSunX = -1;
+				mSunY = -1;
+			}
+			else
+				NNS_G3dLocalOriginToScrPos(&mSunX, &mSunY);
+
 			G3_Scale(6 * FX32_ONE, 6 * FX32_ONE, 6 * FX32_ONE);
 			
 			int r = (mLightColor & 0x1F) * 2;
@@ -314,6 +325,8 @@ void GameController::Render(RenderMode mode)
 			int b = ((mLightColor >> 10) & 0x1F) * 2;
 			if (b > 31)
 				b = 31;
+
+			mSunColorMatch = GX_RGB(r, g, b);
 
 			G3_Color(GX_RGB(r, g, b));
 
@@ -346,5 +359,84 @@ void GameController::Render(RenderMode mode)
 		}
 	}
 	G3_PopMtx(1);
+	if (mode == RENDER_MODE_NEAR && mDisplayFlare && mSunX >= 0 && mSunX < 256 && mSunY >= 0 && mSunY < 192)
+	{
+		//Do some 2d with the 3d engine when needed (AKA, fucking up matrices)
+		G3_MtxMode(GX_MTXMODE_PROJECTION);
+		{
+			G3_Identity();
+			G3_OrthoW(FX32_ONE * 0, FX32_ONE * 192, FX32_ONE * 0, FX32_ONE * 256, FX32_ONE * 0, FX32_ONE * 1024, 40960 * 4, NULL);
+		}
+		G3_MtxMode(GX_MTXMODE_TEXTURE);
+		{
+			G3_Identity();
+		}
+		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+		G3_Identity();
+		G3_Color(GX_RGB(31, 31, 31));
+
+		//G3_TexImageParam(GX_TEXFMT_DIRECT, GX_TEXGEN_TEXCOORD, GX_TEXSIZE_S256, GX_TEXSIZE_T256, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0x40000);
+		//G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 10, 30, 0);
+		//Util_DrawSprite(0 * FX32_ONE, 0 * FX32_ONE, -1024 * FX32_ONE, 256 * FX32_ONE, 192 * FX32_ONE);
+		//G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 8, 30, 0);
+		//Util_DrawSprite(0 * FX32_ONE, 0 * FX32_ONE, -1024 * FX32_ONE, 256 * FX32_ONE, 192 * FX32_ONE);		
+
+		//lense flare
+		G3_MtxMode(GX_MTXMODE_TEXTURE);
+		G3_Scale(2 * FX32_ONE, 2 * FX32_ONE, FX32_ONE);
+		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+
+		VecFx32 centerline = 
+		{
+			(128 - mSunX) * FX32_ONE,
+			(96 - mSunY) * FX32_ONE,
+			0
+		};
+		fx32 length = VEC_Mag(&centerline);
+		VEC_Normalize(&centerline, &centerline);
+
+		texture_t* tex = mMap->mTerrainManager->GetFlareTexture();
+		G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
+			GX_TEXGEN_TEXCOORD,    // use texcoord
+			(GXTexSizeS)tex->nitroWidth,        // 16 pixels
+			(GXTexSizeT)tex->nitroHeight,        // 16 pixels
+			GX_TEXREPEAT_ST,     // no repeat
+			GX_TEXFLIP_ST,       // no flip
+			GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+			NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+		);
+		G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
+
+		G3_Color(GX_RGB(mSunColorMatch & 0x1F, ((mSunColorMatch >> 5) & 0x1F) * 24 / 32, ((mSunColorMatch >> 10) & 0x1F) >> 1));
+
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 58, 16, 0);
+		Util_DrawSpriteScaled(FX_Mul(centerline.x, -length / 2) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, -length / 2) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.5 * 2));
+
+		G3_Color(GX_RGB((mSunColorMatch & 0x1F) >> 1, ((mSunColorMatch >> 5) & 0x1F) * 24 / 32, (mSunColorMatch >> 10) & 0x1F));
+
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 56, 16, 0);
+		Util_DrawSpriteScaled(FX_Mul(centerline.x, -length / 4) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, -length / 4) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.25 * 2));
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 55, 16, 0);
+		Util_DrawSpriteScaled(FX_Mul(centerline.x, -FX_Div(length, FX32_CONST(5.5))) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, -FX_Div(length, FX32_CONST(5.5))) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.25 * 2));
+		
+		G3_Color(GX_RGB((mSunColorMatch & 0x1F) >> 1, (mSunColorMatch >> 5) & 0x1F, ((mSunColorMatch >> 10) & 0x1F) >> 1));
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 60, 16, 0);
+		Util_DrawSpriteScaled(FX_Mul(centerline.x, length / 8) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, length / 8) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(1.5));
+		
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 54, 16, 0);
+		Util_DrawSpriteScaled(FX_Mul(centerline.x, length / 3) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, length / 3) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.25 * 2));
+		
+		G3_Color(GX_RGB(mSunColorMatch & 0x1F, ((mSunColorMatch >> 5) & 0x1F) * 24 / 32, ((mSunColorMatch >> 10) & 0x1F) >> 1));
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 57, 16, 0);
+		Util_DrawSpriteScaled(FX_Mul(centerline.x, length / 2) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, length / 2) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.5 * 2));
+
+		G3_Color(GX_RGB((mSunColorMatch & 0x1F) >> 1, (mSunColorMatch >> 5) & 0x1F, ((mSunColorMatch >> 10) & 0x1F) >> 1));
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 59, 16, 0);
+		Util_DrawSpriteScaled(FX_Mul(centerline.x, length) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, length) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(2.0));
+
+		G3_MtxMode(GX_MTXMODE_TEXTURE);
+		G3_Identity();
+		G3_MtxMode(GX_MTXMODE_POSITION_VECTOR);
+	}
 	mMap->UpdateResourceCounter();
 }

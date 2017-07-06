@@ -48,11 +48,12 @@ static GXRgb interpolateColor(fx16 y)
 }
 
 Hemisphere::Hemisphere()
+	: mColorBuf(0)
 {
 	const fx32 R = FX_Inv((HEMISPHERE_NR_RINGS - 1) * FX32_ONE);
 	const fx32 S = FX_Inv((HEMISPHERE_NR_SECTORS - 1) * FX32_ONE);
 	VecFx16* v = &mVtx[0];
-	GXRgb* c = &mColors[0];
+	GXRgb* c = mColors[0];
 	for (int r = 0; r < HEMISPHERE_NR_RINGS; r++)
 	{
 		for (int s = 0; s < HEMISPHERE_NR_SECTORS; s++)
@@ -71,24 +72,25 @@ Hemisphere::Hemisphere()
 
 void Hemisphere::Render()
 {
+	GXRgb* c = mColors[mColorBuf];
 	G3_Begin(GX_BEGIN_QUADS);
 	for (int r = 0; r < HEMISPHERE_NR_RINGS - 1; r++)
 	{
 		for (int s = 0; s < HEMISPHERE_NR_SECTORS; s++)
 		{
-			G3_Color(mColors[r * HEMISPHERE_NR_SECTORS + s]);
+			G3_Color(c[r * HEMISPHERE_NR_SECTORS + s]);
 			reg_G3_VTX_16 = GX_FX16PAIR(mVtx[r * HEMISPHERE_NR_SECTORS + s].x, mVtx[r * HEMISPHERE_NR_SECTORS + s].y);
 			reg_G3_VTX_16 = mVtx[r * HEMISPHERE_NR_SECTORS + s].z;
 			//G3_Vtx(mVtx[r * HEMISPHERE_NR_SECTORS + s].x, mVtx[r * HEMISPHERE_NR_SECTORS + s].y, mVtx[r * HEMISPHERE_NR_SECTORS + s].z);
-			G3_Color(mColors[r * HEMISPHERE_NR_SECTORS + (s + 1)]);
+			G3_Color(c[r * HEMISPHERE_NR_SECTORS + (s + 1)]);
 			reg_G3_VTX_16 = GX_FX16PAIR(mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].y);
 			reg_G3_VTX_16 = mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].z;
 			//G3_Vtx(mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].y, mVtx[r * HEMISPHERE_NR_SECTORS + (s + 1)].z);
-			G3_Color(mColors[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)]);
+			G3_Color(c[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)]);
 			reg_G3_VTX_16 = GX_FX16PAIR(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].y);
 			reg_G3_VTX_16 = mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].z;
 			//G3_Vtx(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].y, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + (s + 1)].z);
-			G3_Color(mColors[(r + 1) * HEMISPHERE_NR_SECTORS + s]);
+			G3_Color(c[(r + 1) * HEMISPHERE_NR_SECTORS + s]);
 			reg_G3_VTX_16 = GX_FX16PAIR(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].y);
 			reg_G3_VTX_16 = mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].z;
 			//G3_Vtx(mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].x, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].y, mVtx[(r + 1) * HEMISPHERE_NR_SECTORS + s].z);

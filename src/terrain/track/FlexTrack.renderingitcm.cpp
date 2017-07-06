@@ -23,6 +23,8 @@ void FlexTrack::Render()
 	fx32 texHeight = (8 << tex->nitroHeight) * FLEXTRACK_INV_TRACK_WIDTH;
 	G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
 	G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
+	G3_MaterialColorDiffAmb(GX_RGB(31, 31, 31), GX_RGB(10, 10, 10), false);
+	G3_MaterialColorSpecEmi(GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), false);
 	G3_PushMtx();
 	{
 		//G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);

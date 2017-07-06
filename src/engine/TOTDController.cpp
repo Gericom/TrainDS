@@ -6,61 +6,6 @@
 #include "terrain/GameController.h"
 #include "TOTDController.h"
 
-/*void TOTDController::CalcLightIn(fx32 s, fx32 cosAng, VecFx32* dst)
-{
-	//r
-	{
-		fx32 eexp = -FX_Mul(mBm.x + mBr.x, s);
-
-		fx32 e2 = FX_F32_TO_FX32(exp(FX_FX32_TO_F32(eexp)));
-
-		fx32 brang = FX_Mul(FX_Mul(mBr.x, FX32_ONE + FX_Mul(cosAng, cosAng)), 244);
-
-		fx32 gbottom = FX32_ONE + FX_Mul(mG, mG) - FX_Mul(2 * mG, cosAng);
-		gbottom = FX_Mul(FX_Mul(gbottom, FX_Sqrt(gbottom)), 51472);
-
-		fx32 gtop = FX_Mul(FX32_ONE - mG, FX32_ONE - mG);
-		fx32 bmang = FX_Div(FX_Mul(mBm.x, gtop), gbottom);
-
-		fx32 resultcoef = FX_Div(FX_Mul(brang + bmang, FX32_ONE - e2), mBr.x + mBm.x);
-		dst->x = /*e2 + /FX_Mul(mEsun.x, resultcoef);
-	}
-	//g
-	{
-		fx32 eexp = -FX_Mul(mBm.y + mBr.y, s);
-
-		fx32 e2 = FX_F32_TO_FX32(exp(FX_FX32_TO_F32(eexp)));
-
-		fx32 brang = FX_Mul(FX_Mul(mBr.y, FX32_ONE + FX_Mul(cosAng, cosAng)), 244);
-
-		fx32 gbottom = FX32_ONE + FX_Mul(mG, mG) - FX_Mul(2 * mG, cosAng);
-		gbottom = FX_Mul(FX_Mul(gbottom, FX_Sqrt(gbottom)), 51472);
-
-		fx32 gtop = FX_Mul(FX32_ONE - mG, FX32_ONE - mG);
-		fx32 bmang = FX_Div(FX_Mul(mBm.y, gtop), gbottom);
-
-		fx32 resultcoef = FX_Div(FX_Mul(brang + bmang, FX32_ONE - e2), mBr.y + mBm.y);
-		dst->y =/*e2 + /FX_Mul(mEsun.y, resultcoef);
-	}
-	//b
-	{
-		fx32 eexp = -FX_Mul(mBm.z + mBr.z, s);
-
-		fx32 e2 = FX_F32_TO_FX32(exp(FX_FX32_TO_F32(eexp)));
-
-		fx32 brang = FX_Mul(FX_Mul(mBr.z, FX32_ONE + FX_Mul(cosAng, cosAng)), 244);
-
-		fx32 gbottom = FX32_ONE + FX_Mul(mG, mG) - FX_Mul(2 * mG, cosAng);
-		gbottom = FX_Mul(FX_Mul(gbottom, FX_Sqrt(gbottom)), 51472);
-
-		fx32 gtop = FX_Mul(FX32_ONE - mG, FX32_ONE - mG);
-		fx32 bmang = FX_Div(FX_Mul(mBm.z, gtop), gbottom);
-
-		fx32 resultcoef = FX_Div(FX_Mul(brang + bmang, FX32_ONE - e2), mBr.z + mBm.z);
-		dst->z = /*e2 + /FX_Mul(mEsun.z, resultcoef);
-	}
-}*/
-
 void TOTDController::BetaR(float Theta, vec3* dst) 
 {
 	float t2 = 3.f + 0.5f * Theta * Theta;
@@ -71,7 +16,7 @@ void TOTDController::BetaR(float Theta, vec3* dst)
 
 void TOTDController::BetaM(float Theta, vec3* dst)
 {
-	float g = FX_FX32_TO_F32(DirectionalityFactor);
+	float g = FX_FX32_TO_F32(mDirectionalityFactor);
 	float bottom = 1.f + g * g - 2.f * g * Theta;
 	bottom *= sqrtf(bottom);
 	float factor = (1.f - g) * (1.f - g);
@@ -117,7 +62,7 @@ void TOTDController::calcRay()
 	const float N = 2.545e25f;		//Molecules per unit volume
 	const float pn = 0.035f;		//Depolarization factor
 
-	float fRayleighFactor = m_fRayFactor * (powf(3.141592653589793f, 2.0f) * powf(n * n - 1.0f, 2.0f) * (6 + 3 * pn)) / (N * (6 - 7 * pn));
+	float fRayleighFactor = mRayFactor * (powf(3.141592653589793f, 2.0f) * powf(n * n - 1.0f, 2.0f) * (6 + 3 * pn)) / (N * (6 - 7 * pn));
 
 	BetaRayTheta.x = fRayleighFactor / (2.0f * powf(650.0e-9f, 4.0f));
 	BetaRayTheta.y = fRayleighFactor / (2.0f * powf(570.0e-9f, 4.0f));
@@ -135,9 +80,9 @@ void TOTDController::CalculateMieCoeff()
 	K[1] = 0.682f;
 	K[2] = 0.670f;
 
-	float c = (0.6544f * m_fTurbidity - 0.6510f) * 1e-16f;	//Concentration factor
+	float c = (0.6544f * mTurbidity - 0.6510f) * 1e-16f;	//Concentration factor
 
-	float fMieFactor = m_fMieFactor * 0.434f * c * 4.0f * 3.141592653589793f * 3.141592653589793f;
+	float fMieFactor = mMieFactor * 0.434f * c * 4.0f * 3.141592653589793f * 3.141592653589793f;
 
 	BetaMieTheta.x = fMieFactor / (2.0f * powf(650e-9f, 2.0f));
 	BetaMieTheta.y = fMieFactor / (2.0f * powf(570e-9f, 2.0f));
@@ -150,21 +95,21 @@ void TOTDController::CalculateMieCoeff()
 
 void TOTDController::ComputeAttenuation(float m_fTheta)
 {
-	float fBeta = 0.04608365822050f * m_fTurbidity - 0.04586025928522f;
+	float fBeta = 0.04608365822050f * mTurbidity - 0.04586025928522f;
 	float fTauR, fTauA;
 	float fTau[3];
 	//float tmp = 93.885f - (m_fTheta / Mathf.PI * 180.0f);
 
 	float m;
 
-	/*if(!(TIME > 5 && TIME < 18))
+	/*if(!(mCurTime > 5 && mCurTime < 18))
 	{
 	m = (float)(1.0f / (Mathf.Cos (m_fTheta) + 0.15f * tmp));
 	}
 	else
 	{*/
 	// Relative Optical Mass
-	if (TIME > 5.82 && TIME < 18.1)
+	if (mCurTime > 5.82 && mCurTime < 18.1)
 	{
 		//cloudTint = 1;
 		m = (float)(1.0f / (cosf(m_fTheta) + 0.15f * powf(93.885f - m_fTheta / 3.141592653589793f * 180.0f, -1.253f)));
@@ -198,12 +143,12 @@ void TOTDController::ComputeAttenuation(float m_fTheta)
 		fTau[i] = fTauR * fTauA;
 	}
 
-	VEC_Set(&g_vSunColor, FX_F32_TO_FX32(fTau[0]), FX_F32_TO_FX32(fTau[1]), FX_F32_TO_FX32(fTau[2]));
-	int r = (g_vSunColor.x * 31) >> 12;
+	VEC_Set(&mSunColor, FX_F32_TO_FX32(fTau[0]), FX_F32_TO_FX32(fTau[1]), FX_F32_TO_FX32(fTau[2]));
+	int r = (mSunColor.x * 31) >> 12;
 	r = MATH_CLAMP(r, 0, 31);
-	int g = (g_vSunColor.y * 31) >> 12;
+	int g = (mSunColor.y * 31) >> 12;
 	g = MATH_CLAMP(g, 0, 31);
-	int b = (g_vSunColor.z * 31) >> 12;
+	int b = (mSunColor.z * 31) >> 12;
 	b = MATH_CLAMP(b, 0, 31);
 	mGameController->mFogColor = GX_RGB(r, g, b);
 	mGameController->mLightColor = GX_RGB(r, g, b);
@@ -228,14 +173,14 @@ static void SphericalToCartesian(float x, float y, float z, VecFx32* dst)
 void TOTDController::initSunThetaPhi()
 {
 	float solarDeclination, opp, adj, solarTime, solarAzimuth, solarAltitude;
-	solarTime = TIME + (0.170f* sinf(4.f*3.141592653589793f*(JULIANDATE - 80.f) / 373.f) - 0.129f*sinf(2.f*3.141592653589793f*(JULIANDATE - 8.f) / 355.f)) + (STD_MERIDIAN - LONGITUDE_RADIANS) / 15.0f;
-	solarDeclination = (0.4093f*sinf(2.f*3.141592653589793f*(JULIANDATE - 81.f) / 368.f));
-	solarAltitude = asinf(sinf(LATITUDE_RADIANS) * sinf(solarDeclination) -
-		cosf(LATITUDE_RADIANS) * cosf(solarDeclination) * cosf(3.141592653589793f*solarTime / 12.f));
+	solarTime = mCurTime + (0.170f* sinf(4.f*3.141592653589793f*(mCurJulianDate - 80.f) / 373.f) - 0.129f*sinf(2.f*3.141592653589793f*(mCurJulianDate - 8.f) / 355.f)) + (mStdMeridian - mLongitudeRad) / 15.0f;
+	solarDeclination = (0.4093f*sinf(2.f*3.141592653589793f*(mCurJulianDate - 81.f) / 368.f));
+	solarAltitude = asinf(sinf(mLatitudeRad) * sinf(solarDeclination) -
+		cosf(mLatitudeRad) * cosf(solarDeclination) * cosf(3.141592653589793f*solarTime / 12.f));
 
 	opp = -cosf(solarDeclination) * sinf(3.141592653589793f*solarTime / 12.f);
-	adj = -(cosf(LATITUDE_RADIANS) * sinf(solarDeclination) +
-		sinf(LATITUDE_RADIANS) * cosf(solarDeclination) *  cosf(3.141592653589793f*solarTime / 12.f));
+	adj = -(cosf(mLatitudeRad) * sinf(solarDeclination) +
+		sinf(mLatitudeRad) * cosf(solarDeclination) *  cosf(3.141592653589793f*solarTime / 12.f));
 	solarAzimuth = atan2f(opp, adj);
 
 	float phiS = -solarAzimuth;
@@ -254,9 +199,9 @@ void TOTDController::initSunThetaPhi()
 	VecFx32 ldir;
 	VEC_Subtract(&sunDirection2, &sunDirection, &ldir);
 	VEC_Normalize(&ldir, &ldir);
-	LightDir.x = ldir.x;
-	LightDir.y = ldir.y;
-	LightDir.z = ldir.z;
+	mLightDir.x = ldir.x;
+	mLightDir.y = ldir.y;
+	mLightDir.z = ldir.z;
 
 	if (ldir.x > GX_FX32_FX10_MAX)
 		ldir.x = GX_FX32_FX10_MAX;
@@ -278,47 +223,44 @@ void TOTDController::initSunThetaPhi()
 
 void TOTDController::Update()
 {
+	OSIntrMode old = OS_DisableInterrupts();
+	mNewTime += 0.01f;
+	if (mNewTime >= 24.f)
+	{
+		mNewTime -= 24.f;
+		mNewJulianDate++;
+	}
+	OS_RestoreInterrupts(old);
+}
+
+void TOTDController::InternalUpdate()
+{
+	OSIntrMode old = OS_DisableInterrupts();
+	mCurJulianDate = mNewJulianDate;
+	mCurTime = mNewTime;
+	OS_RestoreInterrupts(old);
 	initSunThetaPhi();
 	calcAtmosphere();
 	VecFx16* v = &mGameController->mHemisphere->mVtx[0];
-	GXRgb* c = &mGameController->mHemisphere->mColors[0];
-	VecFx16 forward = { 0, 0, -FX16_ONE };
-	VEC_Fx16Normalize(&forward, &forward);
-	VecFx16 sun = { 0, FX16_ONE, -FX16_ONE };
-	VEC_Fx16Normalize(&sun, &sun);
-	fx32 distmul = FX32_ONE - VEC_Fx16DotProduct(&forward, &sun);
+	GXRgb* c = mGameController->mHemisphere->mColors[!mGameController->mHemisphere->mColorBuf];
 	for (int r = 0; r < HEMISPHERE_NR_RINGS; r++)
 	{
 		for (int s = 0; s < HEMISPHERE_NR_SECTORS; s++)
 		{
-			fx32 cosang = VEC_Fx16DotProduct(v, &sun);
-			if (cosang < 0)
-				cosang = 0;
-			fx32 cosang2 = -VEC_Fx16DotProduct(v, &forward);
-			if (cosang2 < 0)
-				cosang2 = 0;
 			VecFx32 color;
-
-			//float3 vPosWorld = mul(UNITY_MATRIX_MV, Input.vertex);
-
-			//float3 ray = vPosWorld - g_vEyePt;
-			//float3 ray = ObjSpaceViewDir(Input.vertex);
 			fx32 far = 50 * FX32_ONE;
-			//ray = normalize(ray);
-			fx32 Theta = -VEC_Fx16DotProduct(v, &LightDir);
-			//float Theta = dot(ray, LightDir);
+			fx32 Theta = -VEC_Fx16DotProduct(v, &mLightDir);
 			float rayy = FX_FX16_TO_F32(v->y);
 			if (rayy < 0)
 				rayy = 0;
-			float SR = (1.05f - pow(rayy, 0.3f)) * 2000;//(1.05f - powf(FX_FX16_TO_F32(v->y), 0.3f)) * 2000;
+			float SR = (1.05f - pow(rayy, 0.3f)) * 2000;
 			float SM = FX_FX32_TO_F32(far) * 0.05f;
 			Lin(FX_FX32_TO_F32(Theta), SR, SM, &color);
 
-			color.x = FX_Mul(FX_Mul(color.x, g_vSunColor.x), SunColorIntensity);
-			color.y = FX_Mul(FX_Mul(color.y, g_vSunColor.y), SunColorIntensity);
-			color.z = FX_Mul(FX_Mul(color.z, g_vSunColor.z), SunColorIntensity);
+			color.x = FX_Mul(FX_Mul(color.x, mSunColor.x), mSunColorIntensity);
+			color.y = FX_Mul(FX_Mul(color.y, mSunColor.y), mSunColorIntensity);
+			color.z = FX_Mul(FX_Mul(color.z, mSunColor.z), mSunColorIntensity);
 
-			//CalcLightIn(25 * FX32_ONE, cosang, &color);
 			int r = (color.x * 31) >> 12;
 			r = MATH_CLAMP(r, 0, 31);
 			int g = (color.y * 31) >> 12;
@@ -329,7 +271,13 @@ void TOTDController::Update()
 			v++;
 		}
 	}
-	TIME += 0.05f;
-	if (TIME >= 24.f)
-		TIME -= 24.f;
+	mGameController->mHemisphere->mColorBuf = !mGameController->mHemisphere->mColorBuf;
+}
+
+void TOTDController::TOTDThreadMain()
+{
+	while (1)
+	{
+		InternalUpdate();
+	}
 }

@@ -2,6 +2,9 @@
 
 class GameController;
 
+#define TOTD_THREAD_STACK_SIZE	1024
+#define TOTD_THREAD_PRIORITY   (OS_THREAD_LAUNCHER_PRIORITY + 15)
+
 //based on https://github.com/Pixelstudio/Skydome
 class TOTDController
 {
@@ -11,38 +14,36 @@ private:
 		float x, y, z;
 	};
 
-	//VecFx32 mBr; //rayleigh
-	//VecFx32 mBm; //mie
-	//fx32 mG; //something with particle size for mie
+	float mCurJulianDate;
+	float mLongitude;
+	float mLatitude;
+	float mMeridian;
+	float mCurTime;
 
-	//VecFx32 mEsun;
+	float mNewJulianDate;
+	float mNewTime;
 
-	float JULIANDATE;
-	float LONGITUDE;
-	float LATITUDE;
-	float MERIDIAN;
-	float TIME;
+	float mLatitudeRad;
+	float mLongitudeRad;
+	float mStdMeridian;
 
-	float LATITUDE_RADIANS;
-	float LONGITUDE_RADIANS;
-	float STD_MERIDIAN;
-
-	//VecFx32 g_vEyePt;
 	vec3 vBetaRayleigh;
 	vec3 BetaRayTheta;
 	vec3 vBetaMie;
 	vec3 BetaMieTheta;
-	VecFx16 LightDir;
-	VecFx32 g_vSunColor;
-	fx32 DirectionalityFactor;
-	fx32 SunColorIntensity;
-	fx32 tint;
+	VecFx16 mLightDir;
+	VecFx32 mSunColor;
+	fx32 mDirectionalityFactor;
+	fx32 mSunColorIntensity;
 
-	float m_fRayFactor;
-	float m_fTurbidity;
-	float m_fMieFactor;
+	float mRayFactor;
+	float mTurbidity;
+	float mMieFactor;
 
 	GameController* mGameController;
+
+	OSThread mTOTDThread;
+	u32 mTOTDThreadStack[TOTD_THREAD_STACK_SIZE / sizeof(u32)];
 
 	void BetaR(float Theta, vec3* dst);
 	void BetaM(float Theta, vec3* dst);
@@ -54,60 +55,62 @@ private:
 	void initSunThetaPhi();
 	void ComputeAttenuation(float m_fTheta);
 
-	void CalcLightIn(fx32 s, fx32 cosAng, VecFx32* dst);
+	void InternalUpdate();
+	void TOTDThreadMain();
 
 public:
 	TOTDController(GameController* gameController)
 		: /*mG(FX32_CONST(0.8)),*/ mGameController(gameController)
 	{
-		JULIANDATE = 117185; //150;
-		LONGITUDE = 52.0f;
-		LATITUDE = 4.0f;
-		MERIDIAN = 0.0f;
-		TIME = 8.0f;
+		mCurJulianDate = 117185; //150;
+		mLongitude = 52.0f;
+		mLatitude = 4.0f;
+		mMeridian = 0.0f;
+		mCurTime = 8.0f;
 
-		tint = FX32_CONST(1.9f);
+		mNewJulianDate = mCurJulianDate;
+		mNewTime = mCurTime;
 
-		LATITUDE_RADIANS = 3.141592653589793f * LATITUDE / 180.f;
-		LONGITUDE_RADIANS = 3.141592653589793f * LONGITUDE / 180.f;
-		STD_MERIDIAN = MERIDIAN * 15.0f;
+		mLatitudeRad = 3.141592653589793f * mLatitude / 180.f;
+		mLongitudeRad = 3.141592653589793f * mLongitude / 180.f;
+		mStdMeridian = mMeridian * 15.0f;
 
-		m_fRayFactor = 1000;
-		m_fTurbidity = 2;
-		m_fMieFactor = 0.7f;
-		LightDir.x = FX16_CONST(-0.657);
-		LightDir.y = FX16_CONST(-0.024);
-		LightDir.z = FX16_CONST(0.7758);
-		/*vBetaRayleigh.x = FX32_CONST(0.0008);
-		vBetaRayleigh.y = FX32_CONST(0.0014);
-		vBetaRayleigh.z = FX32_CONST(0.0029);
-		BetaRayTheta.x = FX32_CONST(0.0001);
-		BetaRayTheta.y = FX32_CONST(0.0002);
-		BetaRayTheta.z = FX32_CONST(0.0005);
-		vBetaMie.x = FX32_CONST(0.0012);
-		vBetaMie.y = FX32_CONST(0.0016);
-		vBetaMie.z = FX32_CONST(0.0023);
-		BetaMieTheta.x = FX32_CONST(0.0009);
-		BetaMieTheta.y = FX32_CONST(0.0012);
-		BetaMieTheta.z = FX32_CONST(0.0017);*/
-		g_vSunColor.x = FX32_CONST(0.6878);
-		g_vSunColor.y = FX32_CONST(0.5951);
-		g_vSunColor.z = FX32_CONST(0.4217);
-		SunColorIntensity = FX32_CONST(0.7 * 3.f);
-		DirectionalityFactor = FX32_CONST(1.5);
+		mRayFactor = 1000;
+		mTurbidity = 2;
+		mMieFactor = 0.7f;
+		mLightDir.x = FX16_CONST(-0.657);
+		mLightDir.y = FX16_CONST(-0.024);
+		mLightDir.z = FX16_CONST(0.7758);
 
-		//mBr.x = 33;//24;//5602 / 100 / 2;
-		//mBr.y = 57;// 55;
-		//mBr.z = 119;//136;
+		mSunColor.x = FX32_CONST(0.6878);
+		mSunColor.y = FX32_CONST(0.5951);
+		mSunColor.z = FX32_CONST(0.4217);
+		mSunColorIntensity = FX32_CONST(0.7 * 3.f);
+		mDirectionalityFactor = FX32_CONST(1.5);
 
-		//mBm.x = 49;//16;// 5602 / 100 / 2;
-		//mBm.y = 66;// 16;//10928 / 100 / 2;
-		//mBm.z = 94;// 16;//24386 / 2;
+		InternalUpdate();
 
-		//mEsun.x = FX32_CONST(0.6878 * 75);
-		//mEsun.y = FX32_CONST(0.5951 * 75);
-		//mEsun.z = FX32_CONST(0.4217 * 75);
+		OS_CreateThread(&mTOTDThread, TOTDThreadMain, this, mTOTDThreadStack + TOTD_THREAD_STACK_SIZE / sizeof(u32), TOTD_THREAD_STACK_SIZE, TOTD_THREAD_PRIORITY);
+		OS_WakeupThreadDirect(&mTOTDThread);
+	}
+
+	~TOTDController()
+	{
+		OS_DestroyThread(&mTOTDThread);
 	}
 
 	void Update();
+
+	void SetDateTime(float julianDate, float time)
+	{
+		OSIntrMode old = OS_DisableInterrupts();
+		mNewJulianDate = julianDate;
+		mNewTime = time;
+		OS_RestoreInterrupts(old);
+	}
+
+	static void TOTDThreadMain(void* arg)
+	{
+		((TOTDController*)arg)->TOTDThreadMain();
+	}
 };

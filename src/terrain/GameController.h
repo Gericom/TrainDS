@@ -36,6 +36,7 @@ public:
 
 	~GameController()
 	{
+		delete mTOTDController;
 		delete mMap;
 		delete mSfxManager;
 		delete mWagon;
@@ -57,6 +58,9 @@ public:
 	GXRgb mLightColor;
 	VecFx16 mLightDirection;
 	VecFx32 mSunPosition;
+	int mSunX, mSunY;
+	bool mDisplayFlare;
+	GXRgb mSunColorMatch;
 
 	void Render(RenderMode mode);
 
