@@ -6,6 +6,7 @@
 #include "core.h"
 #include "util.h"
 #include "engine/objects/Water.h"
+#include "TerrainManager.h"
 #include "GameController.h"
 
 static const GXRgb sToonTable[32] =
@@ -300,7 +301,7 @@ void GameController::Render(RenderMode mode)
 			//mHemisphere->Render();
 			G3_PopMtx(1);
 			G3_Translate(mSunPosition.x, mSunPosition.y, mSunPosition.z);
-			Util_SetupBillboardYMatrix();
+			Util_SetupBillboardMatrix();
 			G3_Translate(0, -4 * FX32_ONE, 2 * FX32_ONE);
 			G3_Scale(6 * FX32_ONE, 6 * FX32_ONE, 6 * FX32_ONE);
 			
@@ -316,12 +317,28 @@ void GameController::Render(RenderMode mode)
 
 			G3_Color(GX_RGB(r, g, b));
 
+			texture_t* tex = mMap->mTerrainManager->GetSunTexture();
+			G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
+				GX_TEXGEN_TEXCOORD,    // use texcoord
+				(GXTexSizeS)tex->nitroWidth,        // 16 pixels
+				(GXTexSizeT)tex->nitroHeight,        // 16 pixels
+				GX_TEXREPEAT_NONE,     // no repeat
+				GX_TEXFLIP_NONE,       // no flip
+				GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+				NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+			);
+			G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
+
 			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, 0);
 			G3_Begin(GX_BEGIN_QUADS);
 			{
+				G3_TexCoord(0, 0);
 				G3_Vtx(-FX32_HALF, FX32_HALF, 0);
+				G3_TexCoord(0, 32 * FX32_ONE);
 				G3_Vtx(-FX32_HALF, -FX32_HALF, 0);
+				G3_TexCoord(32 * FX32_ONE, 32 * FX32_ONE);
 				G3_Vtx(FX32_HALF, -FX32_HALF, 0);
+				G3_TexCoord(32 * FX32_ONE, 0);
 				G3_Vtx(FX32_HALF, FX32_HALF, 0);
 			}
 			G3_End();

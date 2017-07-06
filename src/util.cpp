@@ -361,6 +361,60 @@ void Util_SetupSubOAMForDouble3D()
 }
 #include <nitro/codereset.h>
 
+void Util_SetupBillboardMatrix()
+{
+	static u32 bbcmd1[] =
+	{
+		((G3OP_MTX_POP << 0) |
+		(G3OP_MTX_MODE << 8) |
+			(G3OP_MTX_LOAD_4x3 << 16) |
+			(G3OP_MTX_SCALE << 24)),
+		1,
+		GX_MTXMODE_POSITION_VECTOR,
+		FX32_ONE, 0, 0,
+		0, FX32_ONE, 0,
+		0, 0, FX32_ONE,
+		0, 0, 0,   // This is subject to change  (Trans)
+		0, 0, 0    // This is subject to change  (Scale)
+	};
+
+	VecFx32* trans = (VecFx32*)&bbcmd1[12];
+	VecFx32* scale = (VecFx32*)&bbcmd1[15];
+	MtxFx44 m;
+
+	// command  transmission :
+	// change to PROJ mode
+	// save the projection matrix
+	// set the unit matrix
+	reg_G3X_GXFIFO = ((G3OP_MTX_MODE << 0) |
+		(G3OP_MTX_PUSH << 8) |
+		(G3OP_MTX_IDENTITY << 16));
+	reg_G3X_GXFIFO = (u32)GX_MTXMODE_PROJECTION;
+	reg_G3X_GXFIFO = 0; // 2004/08/26 geometry fifo glitch
+
+						// Wait further for the geometry engine to stop
+						// get the current matrix
+	while (G3X_GetClipMtx(&m))
+		;
+
+	// billboard matrix calculation
+	trans->x = m._30;
+	trans->y = m._31;
+	trans->z = m._32;
+
+	scale->x = VEC_Mag((VecFx32*)&m._00);
+	scale->y = VEC_Mag((VecFx32*)&m._10);
+	scale->z = VEC_Mag((VecFx32*)&m._20);
+
+	// projection matrix POP
+	// return to POS_VEC
+	// store in the current matrix
+	// multiply the calculated scale
+	MI_CpuSend32(&bbcmd1[0],
+		&reg_G3X_GXFIFO,
+		18 * sizeof(u32));
+}
+
 void Util_SetupBillboardYMatrix()
 {
 	MtxFx44 m;

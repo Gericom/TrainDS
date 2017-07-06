@@ -23,6 +23,8 @@ void Util_DrawSpriteScaled(fx32 x, fx32 y, fx32 z, fx32 width, fx32 height, fx32
 void VEC_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result);
 
 void Util_SetupSubOAMForDouble3D();
+
+void Util_SetupBillboardMatrix();
 void Util_SetupBillboardYMatrix();
 
 #endif

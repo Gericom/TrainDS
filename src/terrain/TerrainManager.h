@@ -18,12 +18,14 @@ private:
 	texture_t mTrackTexture;
 	texture_t mRCT2TreeTexture;
 	texture_t mTrackMarkerTexture;
+	texture_t mSunTexture;
 public:
 	fx32 mTrackMarkerRotation;
 	TerrainManager();
 	texture_t* GetTrackTexture() { return &mTrackTexture; }
 	texture_t* GetRCT2TreeTexture() { return &mRCT2TreeTexture; }
 	texture_t* GetTrackMarkerTexture() { return &mTrackMarkerTexture; }
+	texture_t* GetSunTexture() { return &mSunTexture; }
 };
 
 #endif
