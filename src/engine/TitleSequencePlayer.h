@@ -32,12 +32,17 @@ private:
 	bool mFinished;
 	int mWaitCounter;
 	int mUpdateDstToTrainId;
+	void UpdateSingleFrame();
 public:
 	TitleSequencePlayer(GameController* gameController, u32* sequence)
 		: mGameController(gameController), mSequence(sequence), mCurSequencePos(sequence), mFinished(false), mWaitCounter(0), mUpdateDstToTrainId(-1)
 	{ }
 
-	void Update();
+	void Update(int nrFrames)
+	{
+		for (int i = 0; i < nrFrames; i++)
+			UpdateSingleFrame();
+	}
 };
 
 #endif

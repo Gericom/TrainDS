@@ -126,6 +126,8 @@ void TitleMenu::Initialize(int arg)
 		NNS_SndStrmHandleInit(&mMusicHandle);
 		NNS_SndArcStrmStart(&mMusicHandle, STRM_TITLE, 0);
 	}
+
+	OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIrqHandler);
 }
 
 void TitleMenu::OnVRAMCopyVAlarm()
@@ -144,8 +146,13 @@ void TitleMenu::Render()
 	else if (gKeys & PAD_BUTTON_B)
 		MultibootMenu::GotoMenu();
 	G3X_Reset();
-	mTSPlayer->Update();
-	mGameController->Update();
+	if (mRenderMode == GameController::RENDER_MODE_FAR)
+	{
+		OS_Printf("%d fps\n", 60 / mPassedFrameCounter);
+		mTSPlayer->Update(mPassedFrameCounter);
+		mGameController->Update(mPassedFrameCounter);
+		mPassedFrameCounter = 0;
+	}
 	NNS_G3dGlbSetViewPort(0, 0, 255, 191);
 	mGameController->Render(mRenderMode);
 	if (mRenderMode == GameController::RENDER_MODE_NEAR)
@@ -213,19 +220,28 @@ void TitleMenu::Render()
 		G3_Color(GX_RGB(0, 0, 0));
 		Util_DrawSprite(0, (192 - 21) * FX32_ONE, 1024 * FX32_ONE, 256 * FX32_ONE, 21 * FX32_ONE);
 	}
-	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
+	SetSwapBuffersFlag();
 }
 
-void TitleMenu::VBlank()
+void TitleMenu::SetSwapBuffersFlag()
 {
+	OSIntrMode old = OS_DisableInterrupts();
+	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
+	mSwap = true;
+	OS_RestoreInterrupts(old);
+}
+
+//on every vblank
+void TitleMenu::VBlankIrq()
+{
+	OS_SetIrqCheckFlag(OS_IE_V_BLANK);
+	mPassedFrameCounter++;
 	if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
 		mGameController->mDisplayFlare = true;//(((GXRgb*)HW_LCDC_VRAM_B)[mGameController->mSunY * 256 + mGameController->mSunX] & 0x7FFF) == mGameController->mSunColorMatch;
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0);
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
-		mRenderMode = GameController::RENDER_MODE_NEAR;
 	}
 	else if (mRenderMode == GameController::RENDER_MODE_NEAR)
 	{
@@ -233,11 +249,27 @@ void TitleMenu::VBlank()
 		GX_SetBankForTex(GX_VRAM_TEX_012_ACD);
 		//GX_SetBankForBG(GX_VRAM_BG_128_D);
 		//set this to GX_DISPMODE_VRAM_D to prevent flickering, but it will introduce one frame of lag (don't know if that really matters though)
-		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
+		if (!G3X_IsGeometryBusy() && mSwap)
+			GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
+		else
+			GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_5, GX_BG0_AS_3D);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG3*/ | GX_PLANEMASK_OBJ);
 		//G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
 		//G2_SetBG3Priority(3);
 		G2_SetBG0Priority(0);
+	}
+	mSwap = false;
+}
+
+void TitleMenu::VBlank()
+{
+	if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
+	{
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		mRenderMode = GameController::RENDER_MODE_NEAR;
+	}
+	else if (mRenderMode == GameController::RENDER_MODE_NEAR)
+	{
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
 		mRenderMode = GameController::RENDER_MODE_FAR;
 	}

@@ -14,6 +14,12 @@ class GameController
 private:
 	void RenderFlare();
 
+	void UpdateSingleFrame()
+	{
+		mWagon->Update();
+		mSfxManager->Update(mCamera);
+	}
+
 public:
 	enum RenderMode
 	{
@@ -68,10 +74,10 @@ public:
 
 	void Render(RenderMode mode);
 
-	void Update()
+	void Update(int nrFrames)
 	{
-		mWagon->Update();
-		mSfxManager->Update(mCamera);
+		for (int i = 0; i < nrFrames; i++)
+			UpdateSingleFrame();
 	}
 
 	void GetMapPosFromPickingResult(picking_result_t result, int &mapX, int &mapY)

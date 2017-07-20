@@ -238,6 +238,8 @@ void Game::Initialize(int arg)
 
 	mVRAMCopyVAlarm = new OS::VAlarm();
 	mVRAMCopyVAlarm->SetPeriodic(192 - 48, 5, Game::OnVRAMCopyVAlarm, this);
+
+	OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIrqHandler);
 }
 
 void Game::OnVRAMCopyVAlarm()
@@ -317,6 +319,7 @@ int Game::MakeTextCell(GXOamAttr* pOAM, int x, int y, int w, int h, int palette,
 
 void Game::Render()
 {
+	G3X_Reset();
 	if (mSub3DInvalidated && mLastFrameType == FRAME_TYPE_MAIN_NEAR)
 	{
 		mSub3DInvalidated = false;
@@ -331,96 +334,100 @@ void Game::Render()
 
 	HandlePickingLate();
 
-	if (keyData & PAD_BUTTON_B)
+	if (mCurFrameType == FRAME_TYPE_MAIN_FAR)
 	{
-		mGameController->mWagon->mDriving = true;
-	}
-	else
-		mGameController->mWagon->mDriving = false;
-	if (!mKeyTimer)
-	{
-		if (keyData & PAD_BUTTON_L && keyData & PAD_BUTTON_R)
+		if (keyData & PAD_BUTTON_B)
 		{
-			GX_SetDispSelect((GX_GetDispSelect() == GX_DISP_SELECT_MAIN_SUB ? GX_DISP_SELECT_SUB_MAIN : GX_DISP_SELECT_MAIN_SUB));
-			mKeyTimer = 20;
+			mGameController->mWagon->mDriving = true;
 		}
-		if (keyData & PAD_BUTTON_X)
+		else
+			mGameController->mWagon->mDriving = false;
+		if (!mKeyTimer)
 		{
-			mGameController->mMap->SetGridEnabled(!mGameController->mMap->GetGridEnabled());
-			mKeyTimer = 10;
-		}
-		if (keyData & PAD_BUTTON_SELECT)
-		{
-			if (mGameController->mMap->GetFirstTrackPiece() != NULL)
+			if (keyData & PAD_BUTTON_L && keyData & PAD_BUTTON_R)
 			{
-				mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, 60 * FX32_ONE);
-				mTrainMode = true;
+				GX_SetDispSelect((GX_GetDispSelect() == GX_DISP_SELECT_MAIN_SUB ? GX_DISP_SELECT_SUB_MAIN : GX_DISP_SELECT_MAIN_SUB));
+				mKeyTimer = 10;
 			}
-			mKeyTimer = 10;
+			if (keyData & PAD_BUTTON_X)
+			{
+				mGameController->mMap->SetGridEnabled(!mGameController->mMap->GetGridEnabled());
+				mKeyTimer = 5;
+			}
+			if (keyData & PAD_BUTTON_SELECT)
+			{
+				if (mGameController->mMap->GetFirstTrackPiece() != NULL)
+				{
+					mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 0, 60 * FX32_ONE);
+					mTrainMode = true;
+				}
+				mKeyTimer = 5;
+			}
 		}
-	}
-	else
-		mKeyTimer--;
+		else
+			mKeyTimer--;
 
-	VecFx32 camRot;
-	mCamera->GetRotation(&camRot);
-	if (mTrainMode)
-	{
-		mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
-		mCamera->mDestination.x -= 32 * FX32_ONE;
-		mCamera->mDestination.z -= 32 * FX32_ONE;
-		mCamera->mCamDistance = FX32_CONST(1.25f);
-		mCamera->mDestination.y += FX32_CONST(0.2f);
-	}
+		VecFx32 camRot;
+		mCamera->GetRotation(&camRot);
 
-
-	if (!mDebugKeyTimer)
-	{
-		if (keyData & PAD_BUTTON_DEBUG)
+		if (!mDebugKeyTimer)
 		{
-			OS_Printf("Camdata: dst(%d, %d, %d), rot(%d, %d, %d)\n", mGameController->mCamera->mDestination.x, mGameController->mCamera->mDestination.y, mGameController->mCamera->mDestination.z, camRot.x, camRot.y, camRot.z);
-			mDebugKeyTimer = 60;
+			if (keyData & PAD_BUTTON_DEBUG)
+			{
+				OS_Printf("Camdata: dst(%d, %d, %d), rot(%d, %d, %d)\n", mGameController->mCamera->mDestination.x, mGameController->mCamera->mDestination.y, mGameController->mCamera->mDestination.z, camRot.x, camRot.y, camRot.z);
+				mDebugKeyTimer = 30;
+			}
+		}
+		else
+			mDebugKeyTimer--;
+
+		if ((keyData & PAD_BUTTON_A) || mTrainMode)
+		{
+			if (keyData & PAD_KEY_LEFT)
+				camRot.x += (FX32_ONE * mPassedFrameCounter) >> 1;
+			else if (keyData & PAD_KEY_RIGHT)
+				camRot.x -= (FX32_ONE * mPassedFrameCounter) >> 1;
+			if (keyData & PAD_KEY_UP)
+				camRot.y += (FX32_ONE * mPassedFrameCounter) >> 2;
+			else if (keyData & PAD_KEY_DOWN)
+				camRot.y -= (FX32_ONE * mPassedFrameCounter) >> 2;
+			if (keyData & PAD_BUTTON_L && !(keyData & PAD_BUTTON_R))
+				mCamera->MoveY(-(FX32_ONE * mPassedFrameCounter) >> 5);
+			else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))
+				mCamera->MoveY((FX32_ONE * mPassedFrameCounter) >> 5);
+		}
+		else
+		{
+			if (keyData & PAD_KEY_LEFT)
+				mCamera->MoveX(-(FX32_ONE * mPassedFrameCounter) / 25);// 24);
+			else if (keyData & PAD_KEY_RIGHT)
+				mCamera->MoveX((FX32_ONE * mPassedFrameCounter) / 25);// 24);
+			if (keyData & PAD_KEY_UP)
+				mCamera->MoveZ((FX32_ONE * mPassedFrameCounter) / 25);// 24);
+			else if (keyData & PAD_KEY_DOWN)
+				mCamera->MoveZ(-(FX32_ONE * mPassedFrameCounter) / 25);// 24);
+			if (keyData & PAD_BUTTON_L && !(keyData & PAD_BUTTON_R))
+				camRot.x -= (FX32_ONE * mPassedFrameCounter) >> 1;
+			else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))
+				camRot.x += (FX32_ONE * mPassedFrameCounter) >> 1;
+		}
+		mCamera->SetRotation(&camRot);
+
+		if (keyData & PAD_BUTTON_START)
+			Game::GotoMenu();	
+
+		OS_Printf("%d fps\n", 60 / mPassedFrameCounter);
+		mGameController->Update(mPassedFrameCounter);
+		mPassedFrameCounter = 0;
+		if (mTrainMode)
+		{
+			mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
+			mCamera->mDestination.x -= 32 * FX32_ONE;
+			mCamera->mDestination.z -= 32 * FX32_ONE;
+			mCamera->mCamDistance = FX32_CONST(1.25f);
+			mCamera->mDestination.y += FX32_CONST(0.2f);
 		}
 	}
-	else
-		mDebugKeyTimer--;
-
-	if ((keyData & PAD_BUTTON_A) || mTrainMode)
-	{
-		if (keyData & PAD_KEY_LEFT)
-			camRot.x += FX32_ONE >> 1;
-		else if (keyData & PAD_KEY_RIGHT)
-			camRot.x -= FX32_ONE >> 1;
-		if (keyData & PAD_KEY_UP)
-			camRot.y += FX32_ONE >> 2;
-		else if (keyData & PAD_KEY_DOWN)
-			camRot.y -= FX32_ONE >> 2;
-		if (keyData & PAD_BUTTON_L && !(keyData & PAD_BUTTON_R))
-			mCamera->MoveY(-FX32_ONE >> 5);
-		else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))
-			mCamera->MoveY(FX32_ONE >> 5);
-	}
-	else
-	{
-		if (keyData & PAD_KEY_LEFT)
-			mCamera->MoveX(-FX32_ONE / 25);// 24);
-		else if (keyData & PAD_KEY_RIGHT)
-			mCamera->MoveX(FX32_ONE / 25);// 24);
-		if (keyData & PAD_KEY_UP)
-			mCamera->MoveZ(FX32_ONE / 25);// 24);
-		else if (keyData & PAD_KEY_DOWN)
-			mCamera->MoveZ(-FX32_ONE / 25);// 24);
-		if (keyData & PAD_BUTTON_L && !(keyData & PAD_BUTTON_R))
-			camRot.x -= FX32_ONE >> 1;
-		else if (keyData & PAD_BUTTON_R && !(keyData & PAD_BUTTON_L))
-			camRot.x += FX32_ONE >> 1;
-	}
-	mCamera->SetRotation(&camRot);
-
-	if (keyData & PAD_BUTTON_START)
-		Game::GotoMenu();
-	G3X_Reset();
-	mGameController->Update();
 	if (mCurFrameType != FRAME_TYPE_SUB)
 	{
 		NNS_G3dGlbSetViewPort(0, 0, 255, 191);
@@ -481,7 +488,7 @@ void Game::Render()
 	//NNS_G2dCharCanvasClear(&mCanvas, 0);
 	//NNS_G2dTextCanvasDrawTextRect(
 	//	&mTextCanvas, 0, 0, 64, 32, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)result2);// (NNSG2dChar*)L"Tri's Test");
-	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
+	SetSwapBuffersFlag();
 	//sub screen oam
 	NNSG2dFVec2 trans;
 	int numOamDrawn = 0;
@@ -522,21 +529,25 @@ void Game::OnSub3DCopyVAlarm()
 	MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_D, (void*)(HW_DB_BG_VRAM + 0x2000), 128 * 96 * 2, NULL, NULL);
 }
 
-void Game::VBlank()
+void Game::SetSwapBuffersFlag()
 {
+	OSIntrMode old = OS_DisableInterrupts();
+	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
+	mSwap = true;
+	OS_RestoreInterrupts(old);
+}
+
+//on every vblank
+void Game::VBlankIrq()
+{
+	OS_SetIrqCheckFlag(OS_IE_V_BLANK);
+	mPassedFrameCounter++;
 	//handle it as early as possible to prevent problems with the shared vram d
 	HandlePickingVBlank();
-	mLastFrameType = mCurFrameType;
-	mUIManager->ProcessVBlank();
-	NNS_G2dApplyOamManagerToHW(&mSubObjOamManager);
-	NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
 	if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)//mPickingState == PICKING_STATE_RENDERING)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
-		//Capture the picking data
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
-		mCurFrameType = FRAME_TYPE_MAIN_FAR;
 	}
 	else if (mCurFrameType == FRAME_TYPE_MAIN_FAR)//mRenderState == 0)
 	{
@@ -544,26 +555,54 @@ void Game::VBlank()
 		mGameController->mDisplayFlare = true;//(((GXRgb*)HW_LCDC_VRAM_B)[mGameController->mSunY * 256 + mGameController->mSunX] & 0x7FFF) == mGameController->mSunColorMatch;
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0);
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
-		mCurFrameType = FRAME_TYPE_MAIN_NEAR;
 	}
 	else if (mCurFrameType == FRAME_TYPE_MAIN_NEAR)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B);
 		GX_SetBankForTex(GX_VRAM_TEX_012_ACD);
 		//GX_SetBankForBG(GX_VRAM_BG_128_B);
-		GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
+		if (!G3X_IsGeometryBusy() && mSwap)
+			GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
+		else
+			GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_5, GX_BG0_AS_3D);
 		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG3*/ | GX_PLANEMASK_OBJ);
 		//G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
 		//G2_SetBG3Priority(3);
 		G2_SetBG0Priority(0);
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
-		mCurFrameType = FRAME_TYPE_MAIN_FAR;
 	}
 	else if (mCurFrameType == FRAME_TYPE_SUB)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
+	}
+	mSwap = false;
+}
+
+//after wait for vblank and VBlankIrq
+void Game::VBlank()
+{
+	mLastFrameType = mCurFrameType;
+	mUIManager->ProcessVBlank();
+	NNS_G2dApplyOamManagerToHW(&mSubObjOamManager);
+	NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
+	if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)//mPickingState == PICKING_STATE_RENDERING)
+	{
+		//Capture the picking data
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		mCurFrameType = FRAME_TYPE_MAIN_FAR;
+	}
+	else if (mCurFrameType == FRAME_TYPE_MAIN_FAR)//mRenderState == 0)
+	{
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		mCurFrameType = FRAME_TYPE_MAIN_NEAR;
+	}
+	else if (mCurFrameType == FRAME_TYPE_MAIN_NEAR)
+	{
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
+		mCurFrameType = FRAME_TYPE_MAIN_FAR;
+	}
+	else if (mCurFrameType == FRAME_TYPE_SUB)
+	{
 		GX_SetCapture(GX_CAPTURE_SIZE_128x128, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 		mCurFrameType = FRAME_TYPE_MAIN_FAR;
 		//todo: remove the need for reallocation

@@ -21,6 +21,8 @@ private:
 	GameController* mGameController;
 	GameController::RenderMode mRenderMode;
 
+	int mPassedFrameCounter;
+
 	NNSSndStrmHandle mMusicHandle;
 
 	NNSG2dFont mFont;
@@ -37,8 +39,14 @@ private:
 
 	OS::VAlarm* mVRAMCopyVAlarm;
 	void OnVRAMCopyVAlarm();
+
+	void VBlankIrq();
+
+	bool mSwap;
+	void SetSwapBuffersFlag();
 public:
-	TitleMenu() : SimpleMenu(17, 17), mRenderMode(GameController::RENDER_MODE_FAR), mState(TITLE_MENU_STATE_LOGO_IN), mStateCounter(0)
+	TitleMenu() : SimpleMenu(17, 17), mRenderMode(GameController::RENDER_MODE_FAR), mState(TITLE_MENU_STATE_LOGO_IN), mStateCounter(0),
+		mPassedFrameCounter(1), mSwap(false)
 	{ }
 
 	void Initialize(int arg);
@@ -51,6 +59,11 @@ public:
 	void Render();
 	void VBlank();
 	void Finalize();
+
+	static void VBlankIrqHandler()
+	{
+		((TitleMenu*)gRunningMenu)->VBlankIrq();
+	}
 
 	static void GotoMenu()
 	{

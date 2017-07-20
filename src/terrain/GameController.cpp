@@ -167,6 +167,8 @@ void GameController::RenderFlare()
 
 void GameController::Render(RenderMode mode)
 {
+	if (!mCamera)
+		return;
 	if (mode == RENDER_MODE_PICKING)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT & ~REG_G3X_DISP3DCNT_TME_MASK;

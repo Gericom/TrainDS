@@ -40,6 +40,8 @@ private:
 
 	FreeRoamCamera* mCamera;
 
+	int mPassedFrameCounter;
+
 	int mPickingPointX;
 	int mPickingPointY;
 	int mSelectedTrain;
@@ -124,13 +126,18 @@ private:
 
 	void OnVRAMCopyVAlarm();
 	void OnSub3DCopyVAlarm();
+
+	void VBlankIrq();
+
+	bool mSwap;
+	void SetSwapBuffersFlag();
 public:
 	GameController* mGameController;
 
 public:
 	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mKeyTimer(0), mDebugKeyTimer(0), mTrainMode(false), 
 		mPickingState(PICKING_STATE_READY), mPickingRequested(false), mCurFrameType(FRAME_TYPE_MAIN_FAR), mLastFrameType(FRAME_TYPE_MAIN_FAR),
-		mSub3DCopyVAlarm(NULL), mSub3DInvalidated(false)
+		mSub3DCopyVAlarm(NULL), mSub3DInvalidated(false), mPassedFrameCounter(1)
 	{ }
 
 	void Initialize(int arg);
@@ -165,6 +172,11 @@ public:
 	void Render();
 	void VBlank();
 	void Finalize();
+
+	static void VBlankIrqHandler()
+	{
+		((Game*)gRunningMenu)->VBlankIrq();
+	}
 
 	static void GotoMenu()
 	{

@@ -4,7 +4,7 @@
 #include "terrain/GameController.h"
 #include "TitleSequencePlayer.h"
 
-void TitleSequencePlayer::Update()
+void TitleSequencePlayer::UpdateSingleFrame()
 {	
 	if (mUpdateDstToTrainId >= 0)
 	{
