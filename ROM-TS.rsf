@@ -27,7 +27,7 @@ Property
 	#
 	# TITLE NAME: Your product name within 12bytes
 	#
-	#TitleName		"YourAppName"
+	TitleName		"TRAINDS"
 
 	#
 	# MAKER CODE: Your company ID# in 2 ascii words
@@ -43,7 +43,7 @@ Property
 	#
 	# ROM SPEED TYPE: [MROM/1TROM/UNDEFINED]
 	#
-	RomSpeedType	$(MAKEROM_ROMSPEED)
+	RomSpeedType	MROM #$(MAKEROM_ROMSPEED)
 
 	#
 	# ROM SIZE: in bit [64M/128M/256M/512M/1G/2G]
@@ -59,7 +59,7 @@ Property
 	#
 	# ROM HEADER TEMPLATE: Provided to every product by NINTENDO
 	#
-	#RomHeaderTemplate	./etc/rom_header.template.sbin
+	RomHeaderTemplate	rom_header.template.sbin
 
 	BannerFile		banner.bnr
 

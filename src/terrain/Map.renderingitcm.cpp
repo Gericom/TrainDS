@@ -25,20 +25,20 @@ void Map::RecalculateNormals(hvtx_t* pHMap, int xstart, int xend, int zstart, in
 	{
 		for (int x = xstart; x < xend && x < 129; x++)
 		{
-			fx32 hl = (pHMap[y * MAP_BLOCK_WIDTH + x - 1].y - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x - 1, z);
-			fx32 hr = (pHMap[y * MAP_BLOCK_WIDTH + x + 1].y - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x + 1, z);
-			fx32 hd = (pHMap[(y + 1) * MAP_BLOCK_WIDTH + x].y - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x, z + 1); /* Terrain expands towards -Z /
-			fx32 hu = (pHMap[(y - 1) * MAP_BLOCK_WIDTH + x].y - Y_OFFSET) * Y_SCALE; //TERRAIN(t, x, z - 1);
-			VecFx32 norm = { hl - hr, 2 * FX32_ONE, hu - hd };
+			int hl = pHMap[y * MAP_BLOCK_WIDTH + x - 1].y; //TERRAIN(t, x - 1, z);
+			int hr = pHMap[y * MAP_BLOCK_WIDTH + x + 1].y; //TERRAIN(t, x + 1, z);
+			int hd = pHMap[(y + 1) * MAP_BLOCK_WIDTH + x].y; //TERRAIN(t, x, z + 1); /* Terrain expands towards -Z /
+			int hu = pHMap[(y - 1) * MAP_BLOCK_WIDTH + x].y; //TERRAIN(t, x, z - 1);
+			VecFx32 norm = { hl - hr, 2 * FX32_ONE / Y_SCALE, hu - hd };
 
 			VEC_Normalize(&norm, &norm);
 
-			if (norm.x > GX_FX32_FX10_MAX) norm.x = GX_FX32_FX10_MAX;
-			else if (norm.x < GX_FX32_FX10_MIN) norm.x = GX_FX32_FX10_MIN;
-			if (norm.y > GX_FX32_FX10_MAX) norm.y = GX_FX32_FX10_MAX;
-			else if (norm.y < GX_FX32_FX10_MIN) norm.y = GX_FX32_FX10_MIN;
-			if (norm.z > GX_FX32_FX10_MAX) norm.z = GX_FX32_FX10_MAX;
-			else if (norm.z < GX_FX32_FX10_MIN) norm.z = GX_FX32_FX10_MIN;
+			if (norm.x > GX_FX32_FX10_MAX) 
+				norm.x = GX_FX32_FX10_MAX;
+			if (norm.y > GX_FX32_FX10_MAX) 
+				norm.y = GX_FX32_FX10_MAX;
+			if (norm.z > GX_FX32_FX10_MAX) 
+				norm.z = GX_FX32_FX10_MAX;
 
 			pHMap[y * MAP_BLOCK_WIDTH + x].normal = GX_VECFX10(norm.x, norm.y, norm.z);
 		}

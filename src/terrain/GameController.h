@@ -11,6 +11,9 @@ class LookAtCamera;
 
 class GameController
 {
+private:
+	void RenderFlare();
+
 public:
 	enum RenderMode
 	{
@@ -61,6 +64,7 @@ public:
 	int mSunX, mSunY;
 	bool mDisplayFlare;
 	GXRgb mSunColorMatch;
+	int mFlareAlpha;
 
 	void Render(RenderMode mode);
 

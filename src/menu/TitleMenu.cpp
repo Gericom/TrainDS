@@ -37,7 +37,7 @@ void TitleMenu::Initialize(int arg)
 	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_3, GX_BG0_AS_3D);
 	GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
 	GXS_SetGraphicsMode(GX_BGMODE_3);
-	GXS_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
+	GXS_SetVisiblePlane(GX_PLANEMASK_BG0);// | GX_PLANEMASK_BG3 | GX_PLANEMASK_OBJ);
 	G2_SetBG0Priority(3);
 	G2_SetBG3Priority(3);
 
@@ -96,15 +96,15 @@ void TitleMenu::Initialize(int arg)
 	NNS_G2dArrangeOBJ1D((GXOamAttr*)HW_OAM, 32, 2, 0, 168 + 6, GX_OAM_COLORMODE_16, 0, NNS_G2D_OBJVRAMMODE_32K);
 
 	NNSG2dScreenData* mScreenDataSubUnpacked;
-	void* mScreenDataSub = Util_LoadLHFileToBuffer("/data/game/BG.NSCR.lh", NULL, TRUE);
+	void* mScreenDataSub = Util_LoadFileToBuffer("/data/game/bottombg.NSCR", NULL, TRUE);
 	NNS_G2dGetUnpackedScreenData(mScreenDataSub, &mScreenDataSubUnpacked);
-	void* mCharDataSub = Util_LoadLHFileToBuffer("/data/game/IngameBG.NCGR.lh", NULL, TRUE);
+	void* mCharDataSub = Util_LoadFileToBuffer("/data/game/bottombg.NCGR", NULL, TRUE);
 	NNSG2dCharacterData* mCharDataSubUnpacked;
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &mCharDataSubUnpacked);
-	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCLR", NULL, TRUE);
+	void* mPalDataSub = Util_LoadFileToBuffer("/data/game/bottombg.NCLR", NULL, TRUE);
 	NNSG2dPaletteData* mPalDataSubUnpacked;
 	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &mPalDataSubUnpacked);
-	NNS_G2dBGSetup(NNS_G2D_BGSELECT_SUB0, mScreenDataSubUnpacked, mCharDataSubUnpacked, mPalDataSubUnpacked, GX_BG_SCRBASE_0x0800, GX_BG_CHARBASE_0x00000);
+	NNS_G2dBGSetup(NNS_G2D_BGSELECT_SUB0, mScreenDataSubUnpacked, mCharDataSubUnpacked, mPalDataSubUnpacked, GX_BG_SCRBASE_0x6000, GX_BG_CHARBASE_0x00000);
 	NNS_FndFreeToExpHeap(gHeapHandle, mScreenDataSub);
 	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
 	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
