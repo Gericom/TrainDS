@@ -36,14 +36,14 @@ Map::Map(GameController* gameController)
 	mWaterTest = new Water(&wpos, 50 * FX32_ONE, 50 * FX32_ONE, 4 * FX32_ONE);
 
 	mObjectData = new ObjectData("/data/map/objects.objd");
-	mObjectTree = new QuadTree(-32 * FX32_ONE, -32 * FX32_ONE, mTerrainData->GetWidth() * FX32_ONE, mTerrainData->GetHeight() * FX32_ONE, 6);
+	mObjectTree = new QuadTree(0, 0, mTerrainData->GetWidth() * FX32_ONE, mTerrainData->GetHeight() * FX32_ONE, 6);
 	for (int i = 0; i < mObjectData->mFileData->header.nr_sceneries; i++)
 	{
 		ObjectData::object_data_scenery_entry_t* s = &mObjectData->mSceneryEntries[i];
 		bool billboard =
 			STD_StrNCmp("tree_g", mObjectData->mFileData->object_ref_entries[s->object_type].string_offset, 6) &&
 			!STD_StrNCmp("tree", mObjectData->mFileData->object_ref_entries[s->object_type].string_offset, 4);
-		SimpleSceneryObject* ob = new SimpleSceneryObject(this, s->object_type, s->x - 32 * FX32_ONE, s->z - 32 * FX32_ONE, s->roty, billboard);
+		SimpleSceneryObject* ob = new SimpleSceneryObject(this, s->object_type, s->x, s->z, s->roty, billboard);
 		ob->Invalidate();
 		mObjectTree->Insert(ob);
 		//AddSceneryObject(new SimpleSceneryObject(this, s->object_type, s->x - 32 * FX32_ONE, s->z - 32 * FX32_ONE));
@@ -100,7 +100,7 @@ Map::Map(GameController* gameController)
 	fx32* curPtr = (fx32*)(trackdata + 4);
 	for (int i = 0; i < count; i++)
 	{
-		VecFx32 a = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
+		VecFx32 a = { *curPtr++, 0, *curPtr++ };
 		//VecFx32 b = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
 		//FlexTrack* track = new FlexTrack(this, &a, &b);
 		//AddTrackPiece(track);
@@ -302,27 +302,27 @@ bool Map::ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecF
 	//get the plane of the map square
 	VecFx32 a =
 	{
-		mapX * FX32_ONE - 32 * FX32_ONE,
+		mapX * FX32_ONE,
 		(pHMap[mapY * MAP_BLOCK_WIDTH + mapX].y - Y_OFFSET) * Y_SCALE,
-		mapY * FX32_ONE - 32 * FX32_ONE
+		mapY * FX32_ONE
 	};
 	VecFx32 b =
 	{
-		mapX * FX32_ONE - 32 * FX32_ONE,
+		mapX * FX32_ONE,
 		(pHMap[(mapY + 1) * MAP_BLOCK_WIDTH + mapX].y - Y_OFFSET) * Y_SCALE,
-		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
+		(mapY + 1) * FX32_ONE
 	};
 	VecFx32 c =
 	{
-		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
+		(mapX + 1) * FX32_ONE,
 		(pHMap[mapY * MAP_BLOCK_WIDTH + mapX + 1].y - Y_OFFSET) * Y_SCALE,
-		mapY * FX32_ONE - 32 * FX32_ONE
+		mapY * FX32_ONE
 	};
 	VecFx32 d =
 	{
-		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
+		(mapX + 1) * FX32_ONE,
 		(pHMap[(mapY + 1) * MAP_BLOCK_WIDTH + mapX + 1].y - Y_OFFSET) * Y_SCALE,
-		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
+		(mapY + 1) * FX32_ONE
 	};
 
 	VecFx32 ab;
@@ -377,8 +377,8 @@ bool Map::ScreenPosToWorldPos(int screenX, int screenY, int mapX, int mapY, VecF
 
 fx32 Map::GetYOnMap(fx32 x, fx32 z)
 {
-	int mapX = (x + 32 * FX32_ONE) >> FX32_SHIFT;
-	int mapY = (z + 32 * FX32_ONE) >> FX32_SHIFT;
+	int mapX = x >> FX32_SHIFT;
+	int mapY = z >> FX32_SHIFT;
 
 	int xPart = mapX / 128;
 	int yPart = mapY / 128;
@@ -404,27 +404,27 @@ fx32 Map::GetYOnMap(fx32 x, fx32 z)
 	//get the plane of the map square
 	VecFx32 a =
 	{
-		mapX * FX32_ONE - 32 * FX32_ONE,
+		mapX * FX32_ONE,
 		(pHMap[mapY * MAP_BLOCK_WIDTH + mapX].y - Y_OFFSET) * Y_SCALE,
-		mapY * FX32_ONE - 32 * FX32_ONE
+		mapY * FX32_ONE
 	};
 	VecFx32 b =
 	{
-		mapX * FX32_ONE - 32 * FX32_ONE,
+		mapX * FX32_ONE,
 		(pHMap[(mapY + 1) * MAP_BLOCK_WIDTH + mapX].y - Y_OFFSET) * Y_SCALE,
-		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
+		(mapY + 1) * FX32_ONE
 	};
 	VecFx32 c =
 	{
-		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
+		(mapX + 1) * FX32_ONE,
 		(pHMap[mapY * MAP_BLOCK_WIDTH + mapX + 1].y - Y_OFFSET) * Y_SCALE,
-		mapY * FX32_ONE - 32 * FX32_ONE
+		mapY * FX32_ONE
 	};
 	VecFx32 d =
 	{
-		(mapX + 1) * FX32_ONE - 32 * FX32_ONE,
+		(mapX + 1) * FX32_ONE,
 		(pHMap[(mapY + 1) * MAP_BLOCK_WIDTH + mapX + 1].y - Y_OFFSET) * Y_SCALE,
-		(mapY + 1) * FX32_ONE - 32 * FX32_ONE
+		(mapY + 1) * FX32_ONE
 	};
 	VecFx32 ab, ac, abXac;
 	if (PointInTriangle(&near, &a, &b, &c))

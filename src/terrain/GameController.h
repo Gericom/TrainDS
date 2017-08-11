@@ -71,6 +71,7 @@ public:
 	bool mDisplayFlare;
 	GXRgb mSunColorMatch;
 	int mFlareAlpha;
+	GXRgb mAverageSkyColor;
 
 	void Render(RenderMode mode);
 

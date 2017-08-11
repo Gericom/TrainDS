@@ -16,7 +16,6 @@ void Water::Render()
 	G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S8, GX_TEXSIZE_T8, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
 	G3_PushMtx();
 	{
-		G3_Translate(32 * FX32_ONE, 0, 32 * FX32_ONE);
 		G3_Translate(mPosition.x, mPosition.y + mDepth/* / 2*/, mPosition.z);
 		G3_Scale(mWidth, /*mDepth / 2*/FX32_ONE, mHeight);
 		//G3_PolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_SHADOW, GX_CULL_NONE, 0, 24, /*GX_POLYGON_ATTR_MISC_FOG | */GX_POLYGON_ATTR_MISC_FAR_CLIPPING);

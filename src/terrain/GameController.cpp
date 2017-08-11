@@ -195,7 +195,7 @@ void GameController::Render(RenderMode mode)
 		//G3X_SetFog(/*true*/false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
 		//G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
 		//if (mode == RENDER_MODE_FAR)
-			G3X_SetFogColor(mFogColor, 31);
+			G3X_SetFogColor(/*mFogColor*/mAverageSkyColor, 31);
 		//else
 		//	G3X_SetFogColor(GX_RGB(148 >> 3, 181 >> 3, 206 >> 3), 0);
 		u32 fog_table[8];
@@ -282,11 +282,11 @@ void GameController::Render(RenderMode mode)
 	VecFx32 bbmin, bbmax;
 	calculateVisibleGrid(&bbmin, &bbmax);
 
-	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-	int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+	int xstart = (bbmin.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE;
+	int zstart = (bbmin.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE;
 
-	int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+	int xend = (bbmax.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE;
+	int zend = (bbmax.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE;
 
 	int xstart2 = xstart;
 	int xend2 = xend;
@@ -300,11 +300,11 @@ void GameController::Render(RenderMode mode)
 			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 14 * 4096, 17 * FX32_ONE, 40960 * 4);
 			VecFx32 bbmin2, bbmax2;
 			calculateVisibleGrid(&bbmin2, &bbmax2);
-			xstart2 = (bbmin2.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
-			zstart2 = (bbmin2.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE + 32;
+			xstart2 = (bbmin2.x - 2 * FX32_ONE - FX32_HALF) / FX32_ONE;
+			zstart2 = (bbmin2.z - 2 * FX32_ONE - FX32_HALF) / FX32_ONE;
 
-			xend2 = (bbmax2.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
-			zend2 = (bbmax2.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE + 32;
+			xend2 = (bbmax2.x + 2 * FX32_ONE + FX32_HALF) / FX32_ONE;
+			zend2 = (bbmax2.z + 2 * FX32_ONE + FX32_HALF) / FX32_ONE;
 		}
 		NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4 * 4096, 50 * FX32_ONE, 40960 * 4);
 	}
@@ -324,7 +324,6 @@ void GameController::Render(RenderMode mode)
 		mMap->Render(xstart, xend, zstart, zend, xstart2, xend2, zstart2, zend2, mode == RENDER_MODE_PICKING, &mCamera->mPosition, &camDir, (mode == RENDER_MODE_FAR ? 1 : 0));
 		G3_PushMtx();
 		{
-			G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 			mWagon->Render();
 		}
 		G3_PopMtx(1);

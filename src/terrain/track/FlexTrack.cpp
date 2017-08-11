@@ -243,8 +243,8 @@ void FlexTrack::CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx3
 
 	//pPos->y = mMap->GetYOnMap(pPos->x, pPos->z);
 
-	pPos->x += 32 * FX32_ONE;
-	pPos->z += 32 * FX32_ONE;
+	//pPos->x += 32 * FX32_ONE;
+	//pPos->z += 32 * FX32_ONE;
 
 	//pDir->x = 0;
 	//pDir->y = 0;

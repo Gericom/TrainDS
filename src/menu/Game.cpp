@@ -143,9 +143,9 @@ void Game::Initialize(int arg)
 
 	mGameController = new GameController(mCamera);
 
-	VecFx32 a = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 24) * FX32_ONE - 32 * FX32_ONE };
+	VecFx32 a = { 64 * FX32_ONE, 0, (2 + 24) * FX32_ONE };
 	TrackVertex* a2 = new TrackVertex(&a);
-	VecFx32 b = { 64 * FX32_ONE - 32 * FX32_ONE, 0, (2 + 20 + 24) * FX32_ONE - 32 * FX32_ONE };
+	VecFx32 b = { 64 * FX32_ONE, 0, (2 + 20 + 24) * FX32_ONE };
 	TrackVertex* b2 = new TrackVertex(&b);
 	FlexTrack* tmp = new FlexTrack(mGameController->mMap, a2, b2);
 
@@ -224,8 +224,6 @@ void Game::Initialize(int arg)
 	mPickingCallback = NULL;
 
 	mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
-	mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
-	mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
 	//mCamera->mDestination.x = 373680;
 	//mCamera->mDestination.y = 0;
 	//mCamera->mDestination.z = 1153947;
@@ -424,8 +422,6 @@ void Game::Render()
 		if (mTrainMode)
 		{
 			mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
-			mCamera->mDestination.x -= 32 * FX32_ONE;
-			mCamera->mDestination.z -= 32 * FX32_ONE;
 			mCamera->mCamDistance = FX32_CONST(1.25f);
 			mCamera->mDestination.y += FX32_CONST(0.2f);
 		}

@@ -25,9 +25,7 @@ void VehicleCamera::Apply()
 
 	VecFx32 vehiclePos;
 	mVehicle->GetPosition(&vehiclePos);
-	vehiclePos.x -= 32 * FX32_ONE;
 	vehiclePos.y += FX32_CONST(0.2f);
-	vehiclePos.z -= 32 * FX32_ONE;
 	mDestination = vehiclePos;
 
 	

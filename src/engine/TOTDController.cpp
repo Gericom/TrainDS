@@ -243,6 +243,7 @@ void TOTDController::InternalUpdate()
 	calcAtmosphere();
 	VecFx16* v = &mGameController->mHemisphere->mVtx[0];
 	GXRgb* c = mGameController->mHemisphere->mColors[!mGameController->mHemisphere->mColorBuf];
+	int meanr = 0, meang = 0, meanb = 0;
 	for (int r = 0; r < HEMISPHERE_NR_RINGS; r++)
 	{
 		for (int s = 0; s < HEMISPHERE_NR_SECTORS; s++)
@@ -267,10 +268,18 @@ void TOTDController::InternalUpdate()
 			g = MATH_CLAMP(g, 0, 31);
 			int b = (color.z * 31) >> 12;
 			b = MATH_CLAMP(b, 0, 31);
+			meanr += r;
+			meang += g;
+			meanb += b;
 			*c++ = GX_RGB(r, g, b);
 			v++;
 		}
 	}
+	int count = HEMISPHERE_NR_RINGS * HEMISPHERE_NR_SECTORS;
+	meanr /= count;
+	meang /= count;
+	meanb /= count;
+	mGameController->mAverageSkyColor = GX_RGB(meanr, meang, meanb);
 	mGameController->mHemisphere->mColorBuf = !mGameController->mHemisphere->mColorBuf;
 }
 

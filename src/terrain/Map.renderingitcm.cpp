@@ -59,7 +59,6 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 	}
 	G3_PushMtx();
 	{
-		G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 		for (int y = zstart >> 7; y < (zend + 127) >> 7; y++)
 		{
 			for (int x = xstart >> 7; x < (xend + 127) >> 7; x++)
@@ -101,7 +100,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 		}
 		if (!picking)
 		{
-			box2d_t frustumbox = { xstart2 * FX32_ONE - 32 * FX32_ONE, zstart2 * FX32_ONE - 32 * FX32_ONE, xend2 * FX32_ONE - 32 * FX32_ONE, zend2 * FX32_ONE - 32 * FX32_ONE };
+			box2d_t frustumbox = { xstart2 * FX32_ONE, zstart2 * FX32_ONE, xend2 * FX32_ONE, zend2 * FX32_ONE };
 			/*TrackPieceEx* trackPiece = NULL;
 			while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 			{
@@ -145,7 +144,7 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 			{
 				G3_PushMtx();
 				{
-					G3_Translate(32 * FX32_ONE, (FX32_ONE / 32), 32 * FX32_ONE);
+					G3_Translate(0, (FX32_ONE / 32), 0);
 					mObjectTree->Render(&frustumbox);
 				}
 				G3_PopMtx(1);
@@ -182,8 +181,8 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 		if (picking)
 		{
 			int i = 0;
-			fx32 xadd = FX32_HALF - camPos->x - 32 * FX32_ONE;
-			fx32 zadd = FX32_HALF - camPos->z - 32 * FX32_ONE;
+			fx32 xadd = FX32_HALF - camPos->x;
+			fx32 zadd = FX32_HALF - camPos->z;
 			hvtx_t* pmap = pHMap + zstart * MAP_BLOCK_WIDTH + xstart;
 			for (int y = zstart; y < zend && y + 1 <= 127; y++)
 			{
@@ -240,8 +239,8 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 				hvtx_t* pmap = pHMap + zstart * MAP_BLOCK_WIDTH + xstart;
 				fx32 ymul = camDir->y * Y_SCALE;
 				fx32 distbase = 
-					camDir->x * (xstart * FX32_ONE + FX32_HALF - camPos->x - 32 * FX32_ONE) +
-					camDir->z * (zstart * FX32_ONE + FX32_HALF - camPos->z - 32 * FX32_ONE) -
+					camDir->x * (xstart * FX32_ONE + FX32_HALF - camPos->x) +
+					camDir->z * (zstart * FX32_ONE + FX32_HALF - camPos->z) -
 					camDir->y * camPos->y - 
 					ymul * Y_OFFSET;
 				//render_lod0(xstart, xend, zstart, zend, distbase, camDir->x, camDir->z, pmap, ymul, mTerrainTextureManager16);
@@ -404,8 +403,8 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 				hvtx_t* pmap = pHMap + zstart * MAP_BLOCK_WIDTH + xstart;
 				fx32 ymul = camDir->y * Y_SCALE;
 				fx32 distbase = 
-					camDir->x * (xstart * FX32_ONE + FX32_ONE - camPos->x - 32 * FX32_ONE) + 
-					camDir->z * (zstart * FX32_ONE + FX32_ONE - camPos->z - 32 * FX32_ONE) - 
+					camDir->x * (xstart * FX32_ONE + FX32_ONE - camPos->x) + 
+					camDir->z * (zstart * FX32_ONE + FX32_ONE - camPos->z) - 
 					camDir->y * camPos->y - 
 					ymul * Y_OFFSET;
 				fx32 xadd2 = camDir->x * 2 * FX32_ONE;
