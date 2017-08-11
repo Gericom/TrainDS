@@ -64,7 +64,8 @@ void PathWorker::Proceed(fx32 distance, VecFx32* point, VecFx32* direction)
 
 			TrackPieceEx* newPiece;
 			int newInPoint;
-			mCurPiece->GetConnnectedTrack(mCurPiece->GetOutPointId(mCurInPoint), newPiece, newInPoint);
+			mCurPiece->GetVertex(mCurPiece->GetOutPointId(mCurInPoint))->GetNextTrack(mCurPiece, newPiece, newInPoint);
+			//mCurPiece->GetConnnectedTrack(mCurPiece->GetOutPointId(mCurInPoint), newPiece, newInPoint);
 			if (newPiece != NULL)
 			{
 				mCurPiece = newPiece;

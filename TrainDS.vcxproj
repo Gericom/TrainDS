@@ -103,6 +103,7 @@
     <ClCompile Include="src\terrain\TerrainManager.cpp" />
     <ClCompile Include="src\terrain\track\FlexTrack.cpp" />
     <ClCompile Include="src\terrain\track\FlexTrack.renderingitcm.cpp" />
+    <ClCompile Include="src\terrain\track\TrackVertex.cpp" />
     <ClCompile Include="src\tools\AddTrackTool.cpp" />
     <ClCompile Include="src\tools\DragTool.cpp" />
     <ClCompile Include="src\tools\PointerTool.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="src\terrain\TerrainManager.h" />
     <ClInclude Include="src\terrain\track\FlexTrack.h" />
     <ClInclude Include="src\terrain\track\TrackPieceEx.h" />
+    <ClInclude Include="src\terrain\track\TrackVertex.h" />
     <ClInclude Include="src\tools\AddTrackTool.h" />
     <ClInclude Include="src\tools\DragTool.h" />
     <ClInclude Include="src\tools\PointerTool.h" />

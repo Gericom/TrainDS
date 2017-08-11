@@ -38,6 +38,7 @@ typedef uint16_t picking_result_t;
 class Water;
 class SimpleSceneryObject;
 class GameController;
+class TrackVertex;
 
 class Map
 {
@@ -75,6 +76,7 @@ public:
 private:
 	uint32_t mResourceCounter;
 	NNSFndList mTrackList;
+	std::vector<TrackVertex*> mTrackVertices;
 	TrackPieceEx* mGhostPiece;
 	NNSFndList mSceneryList;
 	bool mGridEnabled;

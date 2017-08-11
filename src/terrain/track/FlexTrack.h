@@ -11,35 +11,26 @@
 class FlexTrack : public TrackPieceEx
 {
 private:
-	VecFx32 mPoints[2];
+	TrackVertex* mVertices[2];
+	//VecFx32 mPoints[2];
 	VecFx32 mCurvePoints[FLEXTRACK_NR_POINTS];
 	VecFx32 mCurveNormals[FLEXTRACK_NR_POINTS];
 	fx32 mCurveLength;
 	box2d_t mBounds;
 public:
-	TrackPieceEx* mConnections[2];
-	int mConnectionInPoints[2];
-public:
-	FlexTrack(Map* map, VecFx32* a, VecFx32* b)
+	FlexTrack(Map* map, TrackVertex* a, TrackVertex* b)
 		: TrackPieceEx(map)
 	{ 
-		mPoints[0] = *a;
-		mPoints[1] = *b;
-		mConnections[0] = NULL;
-		mConnections[1] = NULL;
-		mConnectionInPoints[0] = -1;
-		mConnectionInPoints[1] = -1;
+		mVertices[0] = a;
+		a->Connect(this, 0);
+		mVertices[1] = b;
+		b->Connect(this, 1);
 		Invalidate();
 	}
 
 	int GetNrConnectionPoints()
 	{
 		return 2;
-	}
-
-	void GetConnectionPoint(int id, VecFx32* dst)
-	{
-		*dst = mPoints[id];
 	}
 
 	int GetOutPointId(int inPoint)
@@ -50,13 +41,29 @@ public:
 			return 0;
 	}
 
-	void GetConnnectedTrack(int id, TrackPieceEx* &track, int &inPoint)
+	TrackVertex* GetVertex(int id)
 	{
-		track = mConnections[id];
-		inPoint = mConnectionInPoints[id];
+		return mVertices[id];
 	}
 
-	void Connect(int id, TrackPieceEx* track, int inPoint, bool updatePos)
+	void ConnectVertex(int id, TrackVertex* vtx)
+	{
+		if (mVertices[id])
+			mVertices[id]->Disconnect(this);
+		mVertices[id] = vtx;
+		vtx->Connect(this, id);
+	}
+
+	void DisconnectVertex(int id)
+	{
+		if (mVertices[id])
+		{
+			mVertices[id]->Disconnect(this);
+			mVertices[id] = NULL;
+		}
+	}
+
+	/*void Connect(int id, TrackPieceEx* track, int inPoint, bool updatePos)
 	{
 		if (updatePos)
 		{
@@ -85,7 +92,7 @@ public:
 		mConnectionInPoints[id] = -1;
 		old->Disconnect(old2);
 		Invalidate();
-	}
+	}*/
 
 	void Render();
 	void RenderMarkers();
@@ -93,13 +100,13 @@ public:
 	void CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx32* pDir);
 	void Invalidate();
 
-	void SetPoint(int id, VecFx32* pos)
+	/*void SetPoint(int id, VecFx32* pos)
 	{
 		mPoints[id] = *pos;
 		Invalidate();
 		if (mConnections[id])
 			mConnections[id]->Invalidate();
-	}
+	}*/
 
 	void GetBounds(box2d_t* box)
 	{
@@ -108,7 +115,7 @@ public:
 
 	void GetPosition(VecFx32* dst) 
 	{
-		*dst = mPoints[0];
+		mVertices[0]->GetPosition(dst);
 	}
 };
 

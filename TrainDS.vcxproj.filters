@@ -169,6 +169,9 @@
     <ClCompile Include="src\engine\TOTDController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\terrain\track\TrackVertex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\util.h">
@@ -358,6 +361,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\engine\TOTDController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\terrain\track\TrackVertex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

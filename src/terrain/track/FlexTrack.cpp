@@ -159,7 +159,9 @@ void FlexTrack::RenderMarkers()
 				G3_PushMtx();
 				{
 					//fx32 y = mMap->GetYOnMap(mPoints[i].x, mPoints[i].z);
-					G3_Translate(mPoints[i].x, mCurvePoints[i * (FLEXTRACK_NR_POINTS - 1)].y + FX32_ONE / 32 + FX32_ONE / 64, mPoints[i].z);
+					VecFx32 pos;
+					mVertices[i]->GetPosition(&pos);
+					G3_Translate(pos.x, mCurvePoints[i * (FLEXTRACK_NR_POINTS - 1)].y + FX32_ONE / 32 + FX32_ONE / 64, pos.z);
 					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, 0);
 					G3_Vtx(-FLEXTRACK_TRACK_WIDTH >> 1, 0, -FLEXTRACK_TRACK_WIDTH >> 1);
 					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, (8 << tex->nitroHeight) * FX32_ONE);
@@ -251,22 +253,26 @@ void FlexTrack::CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx3
 
 void FlexTrack::Invalidate()
 {
-	VecFx32 a = mPoints[0];
-	if (mConnections[0] != NULL)
-		mConnections[0]->GetConnectionPoint(mConnections[0]->GetOutPointId(mConnectionInPoints[0]), &a);
-	VecFx32 b = mPoints[1];
-	if (mConnections[1] != NULL)
-		mConnections[1]->GetConnectionPoint(mConnections[1]->GetOutPointId(mConnectionInPoints[1]), &b);
+	VecFx32 a;
+	mVertices[0]->GetNextPoint(this, &a);
+	VecFx32 b;
+	mVertices[1]->GetNextPoint(this, &b);
 
 	fx32 xmin = FX32_MAX;
 	fx32 xmax = FX32_MIN;
 	fx32 zmin = FX32_MAX;
 	fx32 zmax = FX32_MIN;
 
+
+	VecFx32 startPoint;
+	mVertices[0]->GetPosition(&startPoint);
+	VecFx32 endPoint;
+	mVertices[1]->GetPosition(&endPoint);
+
 	fx32 len = 0;
 	for (int i = 0; i < FLEXTRACK_NR_POINTS; i++)
 	{
-		cubicInterpolate(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (FLEXTRACK_NR_POINTS - 1), &mCurvePoints[i]);
+		cubicInterpolate(&a, &startPoint, &endPoint, &b, i * FX32_ONE / (FLEXTRACK_NR_POINTS - 1), &mCurvePoints[i]);
 		mCurvePoints[i].y = mMap->GetYOnMap(mCurvePoints[i].x, mCurvePoints[i].z);
 
 		if (mCurvePoints[i].x < xmin)
@@ -279,7 +285,7 @@ void FlexTrack::Invalidate()
 			zmax = mCurvePoints[i].z;
 
 		VecFx32 dir;
-		cubicInterpolateDir(&a, &mPoints[0], &mPoints[1], &b, i * FX32_ONE / (FLEXTRACK_NR_POINTS - 1), &dir);
+		cubicInterpolateDir(&a, &startPoint, &endPoint, &b, i * FX32_ONE / (FLEXTRACK_NR_POINTS - 1), &dir);
 		dir.y = 0;
 		VEC_Normalize(&dir, &dir);
 		mCurveNormals[i].x = -dir.z;

@@ -95,22 +95,71 @@ Map::Map(GameController* gameController)
 	//RecalculateNormals(0, 127, 0, 127);
 
 	//load tracks
-	u32 len;
-	fx32* trackdata = (fx32*)Util_LoadFileToBuffer("/data/map/trackdata.bin", &len, true);
-	fx32* curPtr = trackdata;
-	for (int i = 0; i < len / 16; i++)
+	u8* trackdata = (u8*)Util_LoadFileToBuffer("/data/map/trackdata.bin", NULL, true);
+	int count = *((u32*)trackdata);
+	fx32* curPtr = (fx32*)(trackdata + 4);
+	for (int i = 0; i < count; i++)
 	{
 		VecFx32 a = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
-		VecFx32 b = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
-		FlexTrack* track = new FlexTrack(this, &a, &b);
-		AddTrackPiece(track);
+		//VecFx32 b = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
+		//FlexTrack* track = new FlexTrack(this, &a, &b);
+		//AddTrackPiece(track);
+		mTrackVertices.push_back(new TrackVertex(&a));
 	}
+	count = *((u32*)curPtr);
+	int* curPtr2 = (int*)(((u8*)curPtr) + 4);
+	for (int i = 0; i < count; i++)
+	{
+		//VecFx32 a = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
+		//VecFx32 b = { *curPtr++ - 32 * FX32_ONE, 0, *curPtr++ - 32 * FX32_ONE };
+		//FlexTrack* track = new FlexTrack(this, &a, &b);
+		NNS_FndAppendListObject(&mTrackList, new FlexTrack(this, mTrackVertices[*curPtr2++], mTrackVertices[*curPtr2++]));
+		//mTrackVertices.push_back(new TrackVertex(&a));
+	}
+	/*int* curPtr2 = (int*)curPtr;
 	TrackPieceEx* trackPiece = NULL;
+	for (int i = 0; i < count; i++)
+	{
+		trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece);
+		int connect = *curPtr2++;
+		if (connect != -1)
+		{
+			VecFx32 point1;
+			trackPiece->GetVertex(0)->GetPosition(&point1);
+			TrackPieceEx* other = (TrackPieceEx*)NNS_FndGetNthListObject(&mTrackList, connect);
+			VecFx32 point2;
+			other->GetVertex(0)->GetPosition(&point2);
+			if(point1.x == point2.x && point1.z == point2.z)
+				trackPiece->ConnectVertex(0, other, 0);
+			else
+				trackPiece->ConnectVertex(0, other, 1, true);
+		}
+		connect = *curPtr2++;
+		if (connect != -1)
+		{
+			VecFx32 point1;
+			trackPiece->GetConnectionPoint(1, &point1);
+			TrackPieceEx* other = (TrackPieceEx*)NNS_FndGetNthListObject(&mTrackList, connect);
+			VecFx32 point2;
+			other->GetConnectionPoint(0, &point2);
+			if (point1.x == point2.x && point1.z == point2.z)
+				trackPiece->Connect(1, other, 0, true);
+			else
+				trackPiece->Connect(1, other, 1, true);
+		}
+	}*/
+	TrackPieceEx* trackPiece = NULL;
+	while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
+	{
+		trackPiece->Invalidate();
+		mObjectTree->Insert((WorldObject*)trackPiece);
+	}
+	/*TrackPieceEx* trackPiece = NULL;
 	while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 	{
 		TrySnapTrack(trackPiece, 0);
 		TrySnapTrack(trackPiece, 1);
-	}
+	}*/
 
 	/*SimpleSceneryObject* sceneryObject = NULL;
 	while ((sceneryObject = (SimpleSceneryObject*)NNS_FndGetNextListObject(&mSceneryList, sceneryObject)) != NULL)
@@ -421,7 +470,7 @@ void Map::TrySnapGhostTrack(int inPoint, TrackPieceEx* ignore)
 
 void Map::TrySnapTrack(TrackPieceEx* track, int inPoint, TrackPieceEx* ignore)
 {
-	if (track == NULL)
+	/*if (track == NULL)
 		return;
 	VecFx32 ghostEnd;
 	track->GetConnectionPoint(inPoint, &ghostEnd);
@@ -434,17 +483,18 @@ void Map::TrySnapTrack(TrackPieceEx* track, int inPoint, TrackPieceEx* ignore)
 		for (int i = 0; i < nrConnectors; i++)
 		{
 			VecFx32 pos;
-			trackPiece->GetConnectionPoint(i, &pos);
+			trackPiece->GetVertex(i)->GetPosition(&pos);
 			fx32 sedist =
 				FX_Mul(pos.x - ghostEnd.x, pos.x - ghostEnd.x) +
 				FX_Mul(pos.y - ghostEnd.y, pos.y - ghostEnd.y) +
 				FX_Mul(pos.z - ghostEnd.z, pos.z - ghostEnd.z);
 			if (sedist <= FX32_ONE / 16)//>> 2)
 			{
+				track->ConnectVertex(inPoint, 
 				track->Connect(inPoint, trackPiece, i, true);
 				return;
 			}
 		}
 	}
-	track->Disconnect(inPoint);
+	track->Disconnect(inPoint);*/
 }

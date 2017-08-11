@@ -39,10 +39,15 @@ TerrainTextureManager16::TerrainTextureManager16()
 
 	for (int j = 0; j < i; j++)
 	{
+		int rr = 0, gg = 0, bb = 0;
 		for (int k = 0; k < 16 * 16; k++)
 		{
+			rr += mTextureDatas[j][k] & 0x1F;
+			gg += (mTextureDatas[j][k] >> 5) & 0x1F;
+			bb += (mTextureDatas[j][k] >> 10) & 0x1F;
 			mTextureDatas[j][k] &= 0x7FFF;
 		}
+		mMeanColors[j] = GX_RGB(rr >> 8, gg >> 8, bb >> 8);
 		for (int k = 0; k < 4; k++)
 		{
 			for (int l = 0; l < 16 * 16; l++)

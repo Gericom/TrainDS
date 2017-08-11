@@ -11,7 +11,8 @@ struct hvtx_t
 class TerrainData
 {
 private:
-	FSFile mDataFile;
+	//u8* mTerrainData;
+	//FSFile mDataFile;
 
 	struct terrain_data_header_t
 	{
@@ -20,25 +21,24 @@ private:
 		uint32_t height;
 		uint32_t v_block_count;
 	};
-	terrain_data_header_t mDataHeader;
+	struct terrain_data_t
+	{
+		terrain_data_header_t header;
+	};
+	terrain_data_t* mTerrainData;
 
 public:
-	TerrainData(const char* filePath)
-	{
-		FS_InitFile(&mDataFile);
-		FS_OpenFile(&mDataFile, filePath);
-		FS_ReadFile(&mDataFile, &mDataHeader, sizeof(terrain_data_header_t));
-	}
+	TerrainData(const char* filePath);
 
 	~TerrainData()
 	{
-		FS_CloseFile(&mDataFile);
+		NNS_FndFreeToExpHeap(gHeapHandle, mTerrainData);
 	}
 
-	int GetHBlockCount() { return mDataHeader.h_block_count; }
-	int GetWidth() { return mDataHeader.width; }
-	int GetVBlockCount() { return mDataHeader.v_block_count; }
-	int GetHeight() { return mDataHeader.height; }
+	int GetHBlockCount() { return mTerrainData->header.h_block_count; }
+	int GetWidth() { return mTerrainData->header.width; }
+	int GetVBlockCount() { return mTerrainData->header.v_block_count; }
+	int GetHeight() { return mTerrainData->header.height; }
 
 	void GetBlock(int x, int y, hvtx_t* dst);
 };

@@ -13,7 +13,8 @@ SimpleSceneryObject::SimpleSceneryObject(Map* map, u32 type, fx32 x, fx32 z, fx3
 	mPosition.x = x;
 	mPosition.z = z;
 	NNS_G3dRenderObjInit(&mRenderObj, NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mMap->mObjectData->mLoadedObjects[type].modelData), 0));
-	mUse1Mat1ShpRendering = mBillboard || mRenderObj.resMdl->info.numShp == 1;
+	mUse1Mat1ShpRendering = /*mBillboard || */mRenderObj.resMdl->info.numShp == 1;
+	mBillboard = mBillboard && mRenderObj.resMdl->info.numShp == 1;
 }
 
 void SimpleSceneryObject::Render()
