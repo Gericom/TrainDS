@@ -7,7 +7,7 @@
 
 ObjectData::ObjectData(const char* filePath)
 {
-	mFileData = (object_data_t*)Util_LoadFileToBuffer(filePath, NULL, false);
+	mFileData = (object_data_t*)Util_LoadLZ77FileToBuffer(filePath, NULL, false);
 	mLoadedObjects = new loaded_object_t[mFileData->header.nr_object_refs];
 	char* stringTable = (char*)&mFileData->object_ref_entries[mFileData->header.nr_object_refs];
 	for (int i = 0; i < mFileData->header.nr_object_refs; i++)
@@ -16,12 +16,12 @@ ObjectData::ObjectData(const char* filePath)
 		mFileData->object_ref_entries[i].string_offset = name;
 		//load model
 		char path[50];
-		GEN_FILE_PATH(name, "nsbmd", path);
-		NNSG3dResFileHeader* modelData = (NNSG3dResFileHeader*)Util_LoadFileToBuffer(path, NULL, false);
+		GEN_FILE_PATH(name, "nsbmd.lz", path);
+		NNSG3dResFileHeader* modelData = (NNSG3dResFileHeader*)Util_LoadLZ77FileToBuffer(path, NULL, false);
 		mLoadedObjects[i].modelData = modelData;
 		NNS_G3dResDefaultSetup(mLoadedObjects[i].modelData);
-		GEN_FILE_PATH(name, "nsbtx", path);
-		NNSG3dResFileHeader* mTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer(path, NULL, true);
+		GEN_FILE_PATH(name, "nsbtx.lz", path);
+		NNSG3dResFileHeader* mTextures = (NNSG3dResFileHeader*)Util_LoadLZ77FileToBuffer(path, NULL, true);
 		NNS_G3dResDefaultSetup(mTextures);
 		NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(modelData), 0);
 		//NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);

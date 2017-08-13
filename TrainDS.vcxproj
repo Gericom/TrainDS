@@ -71,12 +71,11 @@
     <ClCompile Include="src\engine\TitleSequence.cpp" />
     <ClCompile Include="src\engine\TitleSequencePlayer.cpp" />
     <ClCompile Include="src\engine\cameras\VehicleCamera.cpp" />
-    <ClCompile Include="src\engine\TOTDController.cpp" />
+    <ClCompile Include="src\engine\controllers\TOTDController.cpp" />
     <ClCompile Include="src\inih\ini.c" />
     <ClCompile Include="src\inih\INIReader.cpp" />
     <ClCompile Include="src\io\ObjectData.cpp" />
     <ClCompile Include="src\io\TerrainData.cpp" />
-    <ClCompile Include="src\lh.cpp" />
     <ClCompile Include="src\mb\mbp.c" />
     <ClCompile Include="src\mb\wfs_common.c" />
     <ClCompile Include="src\mb\wh.c" />
@@ -118,6 +117,7 @@
     <ClInclude Include="src\core\os\VAlarm.h" />
     <ClInclude Include="src\engine\cameras\Camera.h" />
     <ClInclude Include="src\engine\cameras\FreeRoamCamera.h" />
+    <ClInclude Include="src\engine\controllers\MissionController.h" />
     <ClInclude Include="src\engine\Hemisphere.h" />
     <ClInclude Include="src\engine\cameras\LookAtCamera.h" />
     <ClInclude Include="src\engine\objects\Water.h" />
@@ -128,12 +128,11 @@
     <ClInclude Include="src\engine\TitleSequencePlayer.h" />
     <ClInclude Include="src\engine\cameras\VehicleCamera.h" />
     <ClInclude Include="src\engine\objects\WorldObject.h" />
-    <ClInclude Include="src\engine\TOTDController.h" />
+    <ClInclude Include="src\engine\controllers\TOTDController.h" />
     <ClInclude Include="src\inih\ini.h" />
     <ClInclude Include="src\inih\INIReader.h" />
     <ClInclude Include="src\io\ObjectData.h" />
     <ClInclude Include="src\io\TerrainData.h" />
-    <ClInclude Include="src\lh.h" />
     <ClInclude Include="src\mb\mbp.h" />
     <ClInclude Include="src\mb\wfs.h" />
     <ClInclude Include="src\mb\wh.h" />

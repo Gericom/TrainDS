@@ -40,11 +40,11 @@ Wagon::Wagon(GameController* gameController, char* name)
 	mMaxSpeed = FX64C_ONE / 20;
 
 	//load model
-	GEN_FILE_PATH(name, "low.nsbmd.lh", path);
-	mModelData = (NNSG3dResFileHeader*)Util_LoadLHFileToBuffer(path, NULL, false);
+	GEN_FILE_PATH(name, "low.nsbmd.lz", path);
+	mModelData = (NNSG3dResFileHeader*)Util_LoadLZ77FileToBuffer(path, NULL, false);
 	NNS_G3dResDefaultSetup(mModelData);
-	GEN_FILE_PATH(name, "low.nsbtx.lh", path);
-	NNSG3dResFileHeader* mTextures = (NNSG3dResFileHeader*)Util_LoadLHFileToBuffer(path, NULL, true);
+	GEN_FILE_PATH(name, "low.nsbtx.lz", path);
+	NNSG3dResFileHeader* mTextures = (NNSG3dResFileHeader*)Util_LoadLZ77FileToBuffer(path, NULL, true);
 	NNS_G3dResDefaultSetup(mTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mModelData), 0);
 	NNS_G3dMdlSetMdlLightEnableFlagAll(model, GX_LIGHTMASK_0);

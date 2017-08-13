@@ -24,7 +24,7 @@ Map::Map(GameController* gameController)
 	NNS_FND_INIT_LIST(&mSceneryList, SimpleSceneryObject, mLink);
 	mTerrainManager = new TerrainManager();
 
-	mTerrainData = new TerrainData("/data/map/britainmap.tdat");
+	mTerrainData = new TerrainData("/data/map/britainmap.tdat.lz");
 	for (int i = 0; i < 4; i++)
 	{
 		mHeightMapBlockData[i].last_accessed = 0;
@@ -35,7 +35,7 @@ Map::Map(GameController* gameController)
 	VecFx32 wpos = { 373680, -6 * FX32_ONE + (FX32_ONE >> 2), 1153947 };
 	mWaterTest = new Water(&wpos, 50 * FX32_ONE, 50 * FX32_ONE, 4 * FX32_ONE);
 
-	mObjectData = new ObjectData("/data/map/objects.objd");
+	mObjectData = new ObjectData("/data/map/objects.objd.lz");
 	mObjectTree = new QuadTree(0, 0, mTerrainData->GetWidth() * FX32_ONE, mTerrainData->GetHeight() * FX32_ONE, 6);
 	for (int i = 0; i < mObjectData->mFileData->header.nr_sceneries; i++)
 	{
@@ -49,33 +49,8 @@ Map::Map(GameController* gameController)
 		//AddSceneryObject(new SimpleSceneryObject(this, s->object_type, s->x - 32 * FX32_ONE, s->z - 32 * FX32_ONE));
 	}
 
-	//pHMap = new hvtx_t[128 * 128];
-	/*hvtx_t* pHMap = mHeightMap[0];
-
-	uint8_t* vtx = (uint8_t*)Util_LoadLHFileToBuffer("/data/map/terrain.hmap.diff.lh", NULL, true);
-	MI_UnfilterDiff8(vtx, vtx);
-	for (int y = 0; y < 128; y++)
-	{
-		for (int x = 0; x < 128; x++)
-		{
-			pHMap[y * 128 + x].y = vtx[y * 128 + x];
-		}
-	}
-	NNS_FndFreeToExpHeap(gHeapHandle, vtx);
-
-	uint8_t* tex = (uint8_t*)Util_LoadLHFileToBuffer("/data/map/terrain.tmap.lh", NULL, true);
-	for (int y = 0; y < 128; y++)
-	{
-		for (int x = 0; x < 128; x++)
-		{
-			pHMap[y * 128 + x].tex = tex[y * 128 + x];
-			pHMap[y * 128 + x].texAddress = 0;
-		}
-	}
-	NNS_FndFreeToExpHeap(gHeapHandle, tex);*/
-
 	//mount the tex data archive
-	mTexArcData = Util_LoadLHFileToBuffer("/data/map/britain.narc.lh", NULL, FALSE);
+	mTexArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.narc.lz", NULL, FALSE);
 	NNS_FndMountArchive(&mTexArc, "mtx", mTexArcData);
 
 	//mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);

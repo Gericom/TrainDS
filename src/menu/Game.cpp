@@ -114,7 +114,7 @@ void Game::Initialize(int arg)
 	NNS_G2dLoadPalette(palDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DMAIN, &mImagePaletteProxyMain);
 	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
 
-	mCharDataSub = Util_LoadLHFileToBuffer("/data/game/IngameOBJ.NCGR.lh", NULL, TRUE);
+	mCharDataSub = Util_LoadLZ77FileToBuffer("/data/game/IngameOBJ.NCGR.lz", NULL, TRUE);
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &charDataUnpacked);
 	NNS_G2dInitImageProxy(&mImageProxy);
 	NNS_G2dLoadImage2DMapping(charDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImageProxy);
@@ -126,9 +126,9 @@ void Game::Initialize(int arg)
 	NNS_G2dLoadPalette(palDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImagePaletteProxy);
 	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
 	
-	void* mScreenDataSub = Util_LoadLHFileToBuffer("/data/game/BG.NSCR.lh", NULL, TRUE);
+	void* mScreenDataSub = Util_LoadLZ77FileToBuffer("/data/game/BG.NSCR.lz", NULL, TRUE);
 	NNS_G2dGetUnpackedScreenData(mScreenDataSub, &screenDataUnpacked);
-	mCharDataSub = Util_LoadLHFileToBuffer("/data/game/IngameBG.NCGR.lh", NULL, TRUE);
+	mCharDataSub = Util_LoadLZ77FileToBuffer("/data/game/IngameBG.NCGR.lz", NULL, TRUE);
 	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &charDataUnpacked);
 	mPalDataSub = Util_LoadFileToBuffer("/data/game/IngameBG.NCLR", NULL, TRUE);
 	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &palDataUnpacked);
@@ -153,7 +153,7 @@ void Game::Initialize(int arg)
 
 	reg_G2_BLDCNT = 0x2801;
 
-	mSubFontData = Util_LoadLHFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR.lh", NULL, false);
+	mSubFontData = Util_LoadLZ77FileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR.lz", NULL, false);
 	MI_CpuClear8(&mSubFont, sizeof(mSubFont));
 	NNS_G2dFontInitAuto(&mSubFont, mSubFontData);
 
@@ -175,7 +175,7 @@ void Game::Initialize(int arg)
 	NNS_G2dTextCanvasDrawTextRect(
 		&mSubTextCanvas, 0, 0, 64, 16, 1, NNS_G2D_VERTICALORIGIN_TOP | NNS_G2D_HORIZONTALORIGIN_LEFT | NNS_G2D_HORIZONTALALIGN_CENTER | NNS_G2D_VERTICALALIGN_MIDDLE, (NNSG2dChar*)L"Headlight");
 
-	mSubFontData2 = Util_LoadLHFileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_b_13pt.NFTR.lh", NULL, false);
+	mSubFontData2 = Util_LoadLZ77FileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_b_13pt.NFTR.lz", NULL, false);
 	MI_CpuClear8(&mSubFont2, sizeof(mSubFont2));
 	NNS_G2dFontInitAuto(&mSubFont2, mSubFontData2);
 

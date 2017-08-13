@@ -6,7 +6,7 @@
 #include "managers/SfxManager.h"
 #include "vehicles/Wagon.h"
 #include "engine/Hemisphere.h"
-#include "engine/TOTDController.h"
+#include "engine/controllers/TOTDController.h"
 class LookAtCamera;
 
 class GameController

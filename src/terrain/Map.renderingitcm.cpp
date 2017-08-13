@@ -451,22 +451,22 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 							{
 								reg_G3X_GXFIFO = 0;
 								reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColors[pmap2[0].tex]);//->mTextureDatas[pmap2[0].tex][0]);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColors[pmap2[0].tex]);
 								reg_G3X_GXFIFO = pmap2[0].normal;
 							}
 							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_LIGHT_COLOR, G3OP_NORMAL, G3OP_VTX_10);
 							{
 								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColors[pmap2[2 * MAP_BLOCK_WIDTH].tex]);//mTerrainTextureManager16->mTextureDatas[pmap2[2 * MAP_BLOCK_WIDTH].tex][15 * 16]);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColors[pmap2[2 * MAP_BLOCK_WIDTH].tex]);
 								reg_G3X_GXFIFO = pmap2[2 * MAP_BLOCK_WIDTH].normal;
 								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
 							}
 							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_LIGHT_COLOR, G3OP_NORMAL, G3OP_VTX_10, G3OP_LIGHT_COLOR);
 							{
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColors[pmap2[2].tex]);//mTerrainTextureManager16->mTextureDatas[pmap2[2].tex][15]);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColors[pmap2[2].tex]);
 								reg_G3X_GXFIFO = pmap2[2].normal;
 								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColors[pmap2[2 * MAP_BLOCK_WIDTH + 2].tex]);//mTerrainTextureManager16->mTextureDatas[pmap2[2 * MAP_BLOCK_WIDTH + 2].tex][15 * 16 + 15]);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColors[pmap2[2 * MAP_BLOCK_WIDTH + 2].tex]);
 							}
 							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_END, G3OP_LIGHT_COLOR);
 							{

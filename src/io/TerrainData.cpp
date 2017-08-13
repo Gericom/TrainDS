@@ -5,7 +5,7 @@
 
 TerrainData::TerrainData(const char* filePath)
 {
-	mTerrainData = (terrain_data_t*)Util_LoadFileToBuffer(filePath, NULL, false);
+	mTerrainData = (terrain_data_t*)Util_LoadLZ77FileToBuffer(filePath, NULL, false);
 	//FS_InitFile(&mDataFile);
 	//FS_OpenFile(&mDataFile, filePath);
 	//FS_ReadFile(&mDataFile, &mDataHeader, sizeof(terrain_data_header_t));
