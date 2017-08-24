@@ -12,6 +12,7 @@
 #include "engine/TitleSequencePlayer.h"
 #include "Game.h"
 #include "MultibootMenu.h"
+#include "PCConnectMenu.h"
 #include "TitleMenu.h"
 
 #define SWAP_BUFFERS_SORTMODE	GX_SORTMODE_MANUAL //AUTO
@@ -145,6 +146,8 @@ void TitleMenu::Render()
 		Game::GotoMenu();
 	else if (gKeys & PAD_BUTTON_B)
 		MultibootMenu::GotoMenu();
+	else if (gKeys & PAD_BUTTON_X)
+		PCConnectMenu::GotoMenu();
 	G3X_Reset();
 	if (mRenderMode == GameController::RENDER_MODE_FAR)
 	{
@@ -198,6 +201,7 @@ void TitleMenu::Render()
 				mStateCounter++;
 			break;
 		case TITLE_MENU_STATE_LOGO_SCALE:
+		{
 			fx32 newX = 27 * FX32_ONE + (86 * FX32_ONE - 27 * FX32_ONE) * mStateCounter / 19;
 			fx32 newY = 8 * FX32_ONE + (-10 * FX32_ONE - 8 * FX32_ONE) * mStateCounter / 19;
 			fx32 newScale = (202 * FX32_ONE + (138 * FX32_ONE - 202 * FX32_ONE) * mStateCounter / 19) / 202;
@@ -210,6 +214,7 @@ void TitleMenu::Render()
 			else
 				mStateCounter++;
 			break;
+		}
 		case TITLE_MENU_STATE_LOOP:
 			Util_DrawSpriteScaled(86 * FX32_ONE, -10 * FX32_ONE, 1024 * FX32_ONE, 202 * FX32_ONE, 64 * FX32_ONE, 138 * FX32_ONE / 202);
 			break;

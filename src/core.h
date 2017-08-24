@@ -41,7 +41,7 @@ typedef s64 int64_t;
 
 #define MKTAG(a0,a1,a2,a3) ((uint32)((a0) | ((a1) << 8) | ((a2) << 16) | ((a3) << 24))) 
 
-#define NOCASH_Break() asm("mov r11, r11")
+#define NOCASH_Break() __asm { mov r11, r11 }
 
 extern GXOamAttr gOamTmpBuffer[128];
 
@@ -72,6 +72,11 @@ extern NNSSndArc gSndArc;
 extern NNSSndHeapHandle gSndHeapHandle;
 
 void Core_Init();
+
+void Core_StartTPSampling();
+void Core_StopTPSampling();
+
+void Core_SetupSndArc();
 
 extern uint16_t gKeys;
 void Core_ReadInput();

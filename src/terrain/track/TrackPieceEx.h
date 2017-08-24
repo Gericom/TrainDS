@@ -6,6 +6,7 @@
 #include "TrackVertex.h"
 
 class TerrainManager;
+class Map;
 
 class TrackPieceEx : public WorldObject
 {

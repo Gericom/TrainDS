@@ -2,6 +2,7 @@
 #include <nnsys/fnd.h>
 #include <nnsys/g3d.h>
 #include <nnsys/gfd.h>
+#include <dwc.h>
 #include "core.h"
 #include "util.h"
 
@@ -85,13 +86,172 @@ static void* mPMgrWork;
 
 static TPData mTPData[4];
 
+//compatibility patch for dwc to work with old nitrosystem
+
+typedef struct NNSiG2dCharCanvasVTable
+{
+	NNSiG2dDrawGlyphFunc    pDrawGlyph;
+	NNSiG2dClearFunc        pClear;
+	NNSiG2dClearAreaFunc    pClearArea;
+}
+NNSiG2dCharCanvasVTable;
+
+static NNSiG2dCharCanvasVTable VTABLE_BG = { NULL };
+//{ DrawGlyphLine, ClearContinuous, ClearAreaLine };
+static NNSiG2dCharCanvasVTable VTABLE_OBJ1D = { NULL };
+//{ DrawGlyph1D, ClearContinuous, ClearArea1D };
+
+extern "C" void FIX_G2dCharCanvasInitForBG(NNSG2dCharCanvas* pCC, void* charBase, int areaWidth, int areaHeight, NNSG2dCharaColorMode colorMode)
+{
+	u32 save[2] = { (u32)pCC->pClear, (u32)pCC->pClearArea };
+	NNS_G2dCharCanvasInitForBG(pCC, charBase, areaWidth, areaHeight, colorMode);
+	VTABLE_BG.pDrawGlyph = pCC->pDrawGlyph;
+	VTABLE_BG.pClear = pCC->pClear;
+	VTABLE_BG.pClearArea = pCC->pClearArea;
+	pCC->pDrawGlyph = (NNSiG2dDrawGlyphFunc)&VTABLE_BG;
+	pCC->pClear = (NNSiG2dClearFunc)save[0];
+	pCC->pClearArea = (NNSiG2dClearAreaFunc)save[1];
+}
+
+extern "C" void FIX_G2dCharCanvasInitForOBJ1D(NNSG2dCharCanvas* pCC, void* charBase, int areaWidth, int areaHeight, NNSG2dCharaColorMode colorMode)
+{
+	u32 save[2] = { (u32)pCC->pClear, (u32)pCC->pClearArea };
+	NNS_G2dCharCanvasInitForOBJ1D(pCC, charBase, areaWidth, areaHeight, colorMode);
+	VTABLE_OBJ1D.pDrawGlyph = pCC->pDrawGlyph;
+	VTABLE_OBJ1D.pClear = pCC->pClear;
+	VTABLE_OBJ1D.pClearArea = pCC->pClearArea;
+	pCC->pDrawGlyph = (NNSiG2dDrawGlyphFunc)&VTABLE_OBJ1D;
+	pCC->pClear = (NNSiG2dClearFunc)save[0];
+	pCC->pClearArea = (NNSiG2dClearAreaFunc)save[1];
+}
+
+extern "C" void FIX_G2dCharCanvasDrawChar(const NNSG2dCharCanvas* pCC, const NNSG2dFont* pFont, int x, int y, int cl, u16 ccode)
+{
+	NNSG2dCharCanvas clone;
+	MI_CpuCopy32(pCC, &clone, sizeof(NNSG2dCharCanvas));
+	NNSiG2dCharCanvasVTable* vt = (NNSiG2dCharCanvasVTable*)pCC->pDrawGlyph;
+	clone.pDrawGlyph = vt->pDrawGlyph;
+	clone.pClear = vt->pClear;
+	clone.pClearArea = vt->pClearArea;
+	NNS_G2dCharCanvasDrawChar(&clone, pFont, x, y, cl, ccode);
+}
+
+extern "C" void FIXi_G2dTextCanvasDrawTextRect(const NNSG2dTextCanvas* pTxn, int x, int y, int w, int h, int cl, u32 flags, const void* txt)
+{
+	NNSG2dCharCanvas clone;
+	MI_CpuCopy32(pTxn->pCanvas, &clone, sizeof(NNSG2dCharCanvas));
+	NNSiG2dCharCanvasVTable* vt = (NNSiG2dCharCanvasVTable*)pTxn->pCanvas->pDrawGlyph;
+	clone.pDrawGlyph = vt->pDrawGlyph;
+	clone.pClear = vt->pClear;
+	clone.pClearArea = vt->pClearArea;
+	NNSG2dTextCanvas clone2;
+	MI_CpuCopy32(pTxn, &clone2, sizeof(NNSG2dTextCanvas));
+	clone2.pCanvas = &clone;
+	NNSi_G2dTextCanvasDrawTextRect(&clone2, x, y, w, h, cl, flags, txt);
+}
+
+extern "C" void FIXi_G2dTextCanvasDrawText(const NNSG2dTextCanvas* pTxn, int x, int y, int cl, u32 flags, const void* txt)
+{
+	NNSG2dCharCanvas clone;
+	MI_CpuCopy32(pTxn->pCanvas, &clone, sizeof(NNSG2dCharCanvas));
+	NNSiG2dCharCanvasVTable* vt = (NNSiG2dCharCanvasVTable*)pTxn->pCanvas->pDrawGlyph;
+	clone.pDrawGlyph = vt->pDrawGlyph;
+	clone.pClear = vt->pClear;
+	clone.pClearArea = vt->pClearArea;
+	NNSG2dTextCanvas clone2;
+	MI_CpuCopy32(pTxn, &clone2, sizeof(NNSG2dTextCanvas));
+	clone2.pCanvas = &clone;
+	NNSi_G2dTextCanvasDrawText(&clone2, x, y, cl, flags, txt);
+}
+
+static int IrqAppli;
+static OSIrqFunction FuncAppliVBlank;
+
+extern "C" void DWCi_ITRlIntr();
+extern "C" void DWCi_TSKlAct(int a);
+
+void intrVBlank()
+{
+	DWCi_TSKlAct(1);
+	OS_SetIrqCheckFlag(OS_IE_V_BLANK);
+}
+
+void DWCi_ITRlIntrPatch()
+{
+	IrqAppli = reg_OS_IE;
+	OS_SetIrqMask(0x40018);
+	OS_EnableIrqMask(1);
+	FuncAppliVBlank = OS_GetIrqFunction(1);
+	OS_SetIrqFunction(1, intrVBlank);
+	OS_ResetRequestIrqMask(1);
+	reg_OS_IME = 1;
+	OS_EnableInterrupts();
+}
+
+asm void DWCi_ITRlIntrPatch2()
+{
+	ldr r12, = DWCi_ITRlIntrPatch
+	bx r12
+}
+
+extern "C" void DWCi_ITRlEnd();
+
+void DWCi_ITRlEndPatch()
+{
+	OSIntrMode old = OS_DisableInterrupts();
+	OS_SetIrqMask(IrqAppli);
+	OS_SetIrqFunction(1, FuncAppliVBlank);
+	OS_RestoreInterrupts(old);
+}
+
+asm void DWCi_ITRlEndPatch2()
+{
+	ldr r12,= DWCi_ITRlEndPatch
+	bx r12
+}
+
+static void* dwcAllocFunc(DWCAllocType name, u32 size, int align)
+{
+	void * ptr;
+	OSIntrMode old;
+	(void)name;
+	(void)align;
+
+	old = OS_DisableInterrupts();
+
+	ptr = NNS_FndAllocFromExpHeapEx(gHeapHandle, size, align);
+
+	OS_RestoreInterrupts(old);
+
+	return ptr;
+}
+
+/*---------------------------------------------------------------------------*
+Memory release function
+*---------------------------------------------------------------------------*/
+static void dwcFreeFunc(DWCAllocType name, void* ptr, u32 size)
+{
+	OSIntrMode old;
+	(void)name;
+	(void)size;
+
+	if (!ptr) return;
+
+	old = OS_DisableInterrupts();
+
+	NNS_FndFreeToExpHeap(gHeapHandle, ptr);
+
+	OS_RestoreInterrupts(old);
+}
+
 void Core_Init()
 {
+	//patch dwc utility library
+	MI_CpuCopy32(&DWCi_ITRlIntrPatch2, &DWCi_ITRlIntr, 3 * 4);
+	MI_CpuCopy32(&DWCi_ITRlEndPatch2, &DWCi_ITRlEnd, 3 * 4);
+
 	NNS_SndInit();
-	gSndHeapHandle = NNS_SndHeapCreate(&mSndHeap[0], sizeof(mSndHeap));
-	NNS_SndArcInit(&gSndArc, "/data/sound_data.sdat", gSndHeapHandle, FALSE);
-	NNS_SndArcPlayerSetup(gSndHeapHandle);
-	NNS_SndArcStrmInit(STREAM_THREAD_PRIO, gSndHeapHandle);
+	Core_SetupSndArc();
 
 	//If we do it like this, we can only use 2 vram blocks for textures in the whole game
 	//Should I do this different?
@@ -107,7 +267,31 @@ void Core_Init()
 	NNS_G3dGeSetBuffer(&sGeBuffer);
 	NNS_G3dGeUseFastDma(true);
 
+	void* dwcWork = NNS_FndAllocFromExpHeapEx(gHeapHandle, DWC_INIT_WORK_SIZE, 32);
+	DWC_Init(dwcWork);
+	NNS_FndFreeToExpHeap(gHeapHandle, dwcWork);
+
+	DWC_SetMemFunc(dwcAllocFunc, dwcFreeFunc);
+
+	Core_StartTPSampling();
+}
+
+void Core_StartTPSampling()
+{
 	TP_RequestAutoSamplingStart(192, 2, &mTPData[0], 4);
+}
+
+void Core_StopTPSampling()
+{
+	TP_RequestAutoSamplingStop();
+}
+
+void Core_SetupSndArc()
+{
+	gSndHeapHandle = NNS_SndHeapCreate(&mSndHeap[0], sizeof(mSndHeap));
+	NNS_SndArcInit(&gSndArc, "/data/sound_data.sdat", gSndHeapHandle, FALSE);
+	NNS_SndArcPlayerSetup(gSndHeapHandle);
+	NNS_SndArcStrmInit(STREAM_THREAD_PRIO, gSndHeapHandle);
 }
 
 uint16_t gKeys;

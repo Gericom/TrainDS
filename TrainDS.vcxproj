@@ -41,7 +41,7 @@
     <NMakeCleanCommandLine>clean</NMakeCleanCommandLine>
     <NMakeReBuildCommandLine>rebuild</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>SDK_ARM9;SDK_CODE_ARM;asm=</NMakePreprocessorDefinitions>
-    <IncludePath>$(NITROSDK_ROOT)\include;$(ProjectDir)\src;$(NITROSYSTEM_ROOT)\include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C\MSL_Common\Include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C++\MSL_Common\Include</IncludePath>
+    <IncludePath>$(NITROSDK_ROOT)\include;$(ProjectDir)\src;$(NITROSYSTEM_ROOT)\include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C\MSL_Common\Include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C++\MSL_Common\Include;$(NITROWIFI_ROOT)\include;$(NITRODWC_ROOT)\include</IncludePath>
     <NMakeForcedIncludes>
     </NMakeForcedIncludes>
   </PropertyGroup>
@@ -81,6 +81,7 @@
     <ClCompile Include="src\mb\wh.c" />
     <ClCompile Include="src\menu\Depot.cpp" />
     <ClCompile Include="src\menu\MultibootMenu.cpp" />
+    <ClCompile Include="src\menu\PCConnectMenu.cpp" />
     <ClCompile Include="src\menu\TitleMenu.cpp" />
     <ClCompile Include="src\menu\VideoPlayer.cpp" />
     <ClCompile Include="src\menu\VideoPlayer.videoplayeritcm.cpp" />
@@ -139,6 +140,7 @@
     <ClInclude Include="src\mb\wh_config.h" />
     <ClInclude Include="src\menu\Depot.h" />
     <ClInclude Include="src\menu\MultibootMenu.h" />
+    <ClInclude Include="src\menu\PCConnectMenu.h" />
     <ClInclude Include="src\menu\SimpleMenu.h" />
     <ClInclude Include="src\menu\TitleMenu.h" />
     <ClInclude Include="src\menu\VideoPlayer.h" />
