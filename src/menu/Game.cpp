@@ -143,13 +143,7 @@ void Game::Initialize(int arg)
 
 	mGameController = new GameController(mCamera);
 
-	VecFx32 a = { 64 * FX32_ONE, 0, (2 + 24) * FX32_ONE };
-	TrackVertex* a2 = new TrackVertex(&a);
-	VecFx32 b = { 64 * FX32_ONE, 0, (2 + 20 + 24) * FX32_ONE };
-	TrackVertex* b2 = new TrackVertex(&b);
-	FlexTrack* tmp = new FlexTrack(mGameController->mMap, a2, b2);
-
-	mGameController->mWagon->PutOnTrack(tmp, 0, 10 * FX32_ONE);
+	mGameController->mTrain->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 1, 260 * FX32_ONE);
 
 	reg_G2_BLDCNT = 0x2801;
 
@@ -223,7 +217,7 @@ void Game::Initialize(int arg)
 
 	mPickingCallback = NULL;
 
-	mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
+	mGameController->mTrain->GetPosition(&mGameController->mCamera->mDestination);
 	//mCamera->mDestination.x = 373680;
 	//mCamera->mDestination.y = 0;
 	//mCamera->mDestination.z = 1153947;
@@ -337,11 +331,9 @@ void Game::Render()
 	if (mCurFrameType == FRAME_TYPE_MAIN_FAR)
 	{
 		if (keyData & PAD_BUTTON_B)
-		{
-			mGameController->mWagon->mDriving = true;
-		}
+			mGameController->mTrain->SetDriving(true);
 		else
-			mGameController->mWagon->mDriving = false;
+			mGameController->mTrain->SetDriving(false);
 		if (!mKeyTimer)
 		{
 			if (keyData & PAD_BUTTON_L && keyData & PAD_BUTTON_R)
@@ -356,9 +348,9 @@ void Game::Render()
 			}
 			if (keyData & PAD_BUTTON_SELECT)
 			{
-				if (mGameController->mMap->GetFirstTrackPiece() != NULL)
+				if (mGameController->mMap->GetFirstTrackPiece())
 				{
-					mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 1, 60 * FX32_ONE);
+					mGameController->mTrain->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 1, 60 * FX32_ONE);
 					mTrainMode = true;
 				}
 				mKeyTimer = 5;
@@ -421,7 +413,7 @@ void Game::Render()
 		mPassedFrameCounter = 0;
 		if (mTrainMode)
 		{
-			mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
+			mGameController->mTrain->GetPosition(&mGameController->mCamera->mDestination);
 			mCamera->mCamDistance = FX32_CONST(1.25f);
 			mCamera->mDestination.y += FX32_CONST(0.2f);
 		}
@@ -447,7 +439,7 @@ void Game::Render()
 		NNS_G3dGlbSetViewPort(0, 96, 127, 191);
 
 		FreeRoamCamera cam = FreeRoamCamera();
-		mGameController->mWagon->GetPosition(&cam.mDestination);
+		mGameController->mTrain->GetPosition(&cam.mDestination);
 		cam.mDestination.x -= 32 * FX32_ONE;
 		cam.mDestination.y += FX32_CONST(0.15f);
 		cam.mDestination.z -= 32 * FX32_ONE;
@@ -468,7 +460,7 @@ void Game::Render()
 		{
 			G3_Translate(-32 * FX32_ONE, 0, -32 * FX32_ONE);
 			G3_Translate(0, 0, FX32_CONST(-0.2f));
-			mGameController->mWagon->Render();
+			mGameController->mTrain->Render();
 		}
 		G3_PopMtx(1);
 	}

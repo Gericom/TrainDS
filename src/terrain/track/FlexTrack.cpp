@@ -161,7 +161,7 @@ void FlexTrack::RenderMarkers()
 					//fx32 y = mMap->GetYOnMap(mPoints[i].x, mPoints[i].z);
 					VecFx32 pos;
 					mVertices[i]->GetPosition(&pos);
-					G3_Translate(pos.x, mCurvePoints[i * (FLEXTRACK_NR_POINTS - 1)].y + FX32_ONE / 32 + FX32_ONE / 64, pos.z);
+					G3_Translate(pos.x, mCurvePoints[i * (FLEXTRACK_NR_POINTS - 1)].y + FX32_ONE / 64, pos.z);
 					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, 0);
 					G3_Vtx(-FLEXTRACK_TRACK_WIDTH >> 1, 0, -FLEXTRACK_TRACK_WIDTH >> 1);
 					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, (8 << tex->nitroHeight) * FX32_ONE);

@@ -46,9 +46,9 @@ public:
 		GetPosition(&pos);
 
 		VecFx32 traintocam;
-		traintocam.x = (pos.x - 32 * FX32_ONE) - camera->mPosition.x;
+		traintocam.x = pos.x - camera->mPosition.x;
 		traintocam.y = pos.y - camera->mPosition.y;
-		traintocam.z = (pos.z - 32 * FX32_ONE) - camera->mPosition.z;
+		traintocam.z = pos.z - camera->mPosition.z;
 		fx32 dist = VEC_Mag(&traintocam);
 		//traintocam.y = 0;
 		VEC_Normalize(&traintocam, &traintocam);

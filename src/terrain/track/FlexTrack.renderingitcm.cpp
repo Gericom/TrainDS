@@ -37,7 +37,7 @@ void FlexTrack::Render()
 				VecFx32 normal = mCurveNormals[i];
 				G3_PushMtx();
 				{
-					G3_Translate(mCurvePoints[i].x, mCurvePoints[i].y + (FX32_ONE / 32), mCurvePoints[i].z);
+					G3_Translate(mCurvePoints[i].x, mCurvePoints[i].y, mCurvePoints[i].z);
 
 					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, FX_Mul(texHeight, dist) - 2048 * 4096);
 

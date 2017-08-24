@@ -113,8 +113,8 @@ void TitleMenu::Initialize(int arg)
 
 	mGameController = new GameController(NULL);
 
-	mGameController->mWagon->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 1, /*118*/250 * FX32_ONE/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
-	mGameController->mWagon->mDriving = true;
+	mGameController->mTrain->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 1, /*118*/250 * FX32_ONE/*146 * FX32_ONE + (FX32_HALF >> 1)*/);
+	mGameController->mTrain->SetDriving(true);
 
 	mTSPlayer = new TitleSequencePlayer(mGameController, gTitleSequence);
 

@@ -324,7 +324,7 @@ void GameController::Render(RenderMode mode)
 		mMap->Render(xstart, xend, zstart, zend, xstart2, xend2, zstart2, zend2, mode == RENDER_MODE_PICKING, &mCamera->mPosition, &camDir, (mode == RENDER_MODE_FAR ? 1 : 0));
 		G3_PushMtx();
 		{
-			mWagon->Render();
+			mTrain->Render();		
 		}
 		G3_PopMtx(1);
 		//skybox
