@@ -15,3 +15,23 @@
 *.PDF	 diff=astextplain
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
+
+*.ntft binary
+*.nbfp binary
+*.5tx binary
+*.lz binary
+*.nsbmd binary
+*.nsbtx binary
+*.nsbca binary
+*.nsbta binary
+*.nsbtp binary
+*.nsbma binary
+*.nclr binary
+*.ncgr binary
+*.nscr binary
+*.ncer binary
+*.nftr binary
+*.nbfc binary
+*.nbfp binary
+*.sdat binary
+*.bnlyt binary
