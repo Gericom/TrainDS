@@ -34,14 +34,14 @@ void Core_PreInit()
 
 void* operator new(std::size_t blocksize)
 {
-    void* block = NNS_FndAllocFromExpHeapEx(gHeapHandle, blocksize, 16);
+    void* block = NNS_FndAllocFromExpHeapEx(gHeapHandle, blocksize, 32);
 	MI_CpuClear32(block, blocksize);
 	return block;
 }
 
 void* operator new[](std::size_t blocksize)
 {
-    void* block = NNS_FndAllocFromExpHeapEx(gHeapHandle, blocksize, 16);
+    void* block = NNS_FndAllocFromExpHeapEx(gHeapHandle, blocksize, 32);
 	MI_CpuClear32(block, blocksize);
 	return block;
 }
@@ -255,12 +255,12 @@ void Core_Init()
 
 	//If we do it like this, we can only use 2 vram blocks for textures in the whole game
 	//Should I do this different?
-	mSzWork = NNS_GfdGetLnkTexVramManagerWorkSize(4096);
+	mSzWork = NNS_GfdGetLnkTexVramManagerWorkSize(512);
 	mPMgrWork = NNS_FndAllocFromExpHeapEx(gHeapHandle, mSzWork, 16);
 	//NNS_GfdInitLnkTexVramManager(256 * 1024, 128 * 1024, mPMgrWork, mSzWork, TRUE);
 	NNS_GfdInitLnkTexVramManager(/*256*/128 * 1024, 0, mPMgrWork, mSzWork, TRUE);
 
-	uint32_t szWork = NNS_GfdGetLnkPlttVramManagerWorkSize(4096);
+	uint32_t szWork = NNS_GfdGetLnkPlttVramManagerWorkSize(1024);
 	void* pMgrWork = NNS_FndAllocFromExpHeapEx(gHeapHandle, szWork, 16);
 	NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
 
@@ -294,10 +294,12 @@ void Core_SetupSndArc()
 	NNS_SndArcStrmInit(STREAM_THREAD_PRIO, gSndHeapHandle);
 }
 
+uint16_t gOldKeys;
 uint16_t gKeys;
 
 void Core_ReadInput()
 {
+	gOldKeys = gKeys;
 	gKeys = PAD_Read();
 }
 

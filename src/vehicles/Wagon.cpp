@@ -13,6 +13,7 @@
 
 #define GEN_FILE_PATH(wagonName, fileName, dst) OS_SPrintf((dst), "/data/wagons/%s/%s", (wagonName), (fileName))
 
+//TODO: Prevent multi loading of models
 Wagon::Wagon(GameController* gameController, char* name)
 	: Vehicle(gameController), mOnTrack(false), mDriving(false), mSfx(NULL)
 {
@@ -23,8 +24,8 @@ Wagon::Wagon(GameController* gameController, char* name)
 	INIReader iniReader(path);
 	//wagon name
 	const char* displayName = iniReader.Get("wagon", "name", "<no name>").c_str();
-	mName = new char[STD_StrLen(name) + 1];
-	STD_StrCpy(mName, name);
+	mName = new char[STD_StrLen(displayName) + 1];
+	STD_StrCpy(mName, displayName);
 	//front
 	mFront.x = FX_F32_TO_FX32(iniReader.GetReal("front", "x", 0));
 	mFront.y = FX_F32_TO_FX32(iniReader.GetReal("front", "y", 0));
@@ -178,6 +179,11 @@ void Wagon::Render()
 		MTX_RotY33(&rotmtx, FX32_SIN90, FX32_COS90);
 		NNS_G3dGeMultMtx33(&rotmtx);
 
+		//try to fix x rot
+		
+		MTX_RotX33(&rotmtx, FX_SinIdx(mXAng), FX_CosIdx(mXAng));
+		NNS_G3dGeMultMtx33(&rotmtx);
+
 		//calculate rotation matrix
 		/*VecFx32 up = { 0, FX32_ONE, 0 };
 
@@ -275,17 +281,41 @@ void Wagon::Update()
 	}
 	VecFx32 dir = { 0, 0, 0 };
 	VecFx32 tmp;
+	bogey_t* frontBogey;
+	fx32 frontBogeyDist = FX32_MIN;
+	bogey_t* backBogey;
+	fx32 backBogeyDist = FX32_MAX;
 	for (int i = 0; i < mNrBogeys; i++)
 	{
 		mBogeys[i].pathWorker->GetCurrent(NULL, &tmp);
 		mBogeys[i].direction = tmp;
 		VEC_Add(&dir, &tmp, &dir);
+		fx32 dist = VEC_Distance(&mBack, &mBogeys[i].position);
+		if (dist < backBogeyDist)
+		{
+			backBogeyDist = dist;
+			backBogey = &mBogeys[i];
+		}
+		if (dist > frontBogeyDist)
+		{
+			frontBogeyDist = dist;
+			frontBogey = &mBogeys[i];
+		}
 	}
 	dir.x /= mNrBogeys;
 	dir.y /= mNrBogeys;
 	dir.z /= mNrBogeys;
 	dir.y = 0;
 	VEC_Normalize(&dir, &dir);
+
+	VecFx32 back;
+	backBogey->pathWorker->GetCurrent(&back, NULL);
+	VecFx32 front;
+	frontBogey->pathWorker->GetCurrent(&front, NULL);
+	fx32 deg = FX_RAD_TO_DEG(FX_Atan2((back.y - front.y) / 2, front.z - back.z));
+	if (deg > 90 * FX32_ONE)
+		deg -= 180 * FX32_ONE;
+	mXAng = FX_DEG_TO_IDX(deg);
 
 	fx16 trainrot = FX_Atan2(dir.z, dir.x);
 	mCurRot = trainrot;

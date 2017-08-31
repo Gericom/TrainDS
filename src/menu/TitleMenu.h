@@ -1,10 +1,14 @@
 #ifndef __TITLEMENU_H__
 #define __TITLEMENU_H__
 
+#define TITLE_MENU_VRAM_TRANSFER_MANAGER_NR_TASKS	64
+
 #include "SimpleMenu.h"
 #include "core/os/VAlarm.h"
 #include "terrain/GameController.h"
 #include "terrain/TerrainManager.h"
+#include "ui/layoutengine/Layout.h"
+#include "ui/layoutengine/PicturePane.h"
 class TitleSequencePlayer;
 
 class TitleMenu : public SimpleMenu
@@ -25,12 +29,37 @@ private:
 
 	NNSSndStrmHandle mMusicHandle;
 
+	FontManager* mFontManager;
+
 	NNSG2dFont mFont;
 	void* mFontData;
+	NNSG2dFont mFont2;
+	void* mFontData2;
 	NNSG2dCharCanvas mCanvas;
 	NNSG2dTextCanvas mTextCanvas;
 
-	texture_t mLogoLargeTexture;
+	NNSGfdVramTransferTask mVramTransferTaskArray[TITLE_MENU_VRAM_TRANSFER_MANAGER_NR_TASKS];
+
+	NNSG2dOamManagerInstance mSubObjOamManager;
+	GXOamAttr mTmpSubOamBuffer[128];
+	NNSG2dRendererInstance mOAMRender;
+	NNSG2dRenderSurface mOAMRenderSurface;
+	NNSG2dImageProxy mImageProxy;
+	NNSG2dImagePaletteProxy mImagePaletteProxy;
+	Layout* mLayoutTest;
+	NNSG2dCellDataBank* mLayoutCellDataBank;
+	PicturePane* mButtons[3][4];
+	//PicturePane* mMissionsButton;
+	//PicturePane* mSandboxButton;
+	//PicturePane* mDepotButton;
+	//PicturePane* mOptionsButton;
+	int mKeyCounter;
+	int mKeyDelay;
+	int mSelectedButton;
+	int mLeftRight;
+
+	texture_t mLogoLargeTextureA;
+	texture_t mLogoLargeTextureB;
 
 	TitleMenuState mState;
 	int mStateCounter;
@@ -46,7 +75,7 @@ private:
 	void SetSwapBuffersFlag();
 public:
 	TitleMenu() : SimpleMenu(17, 17), mRenderMode(GameController::RENDER_MODE_FAR), mState(TITLE_MENU_STATE_LOGO_IN), mStateCounter(0),
-		mPassedFrameCounter(1), mSwap(false)
+		mPassedFrameCounter(1), mSwap(false), mSelectedButton(0), mKeyCounter(0), mKeyDelay(0), mLeftRight(0)
 	{ }
 
 	void Initialize(int arg);
@@ -70,6 +99,9 @@ public:
 		gNextMenuArg = 0;// TITLEMENU_ARG_DONT_PLAY_INTRO;
 		gNextMenuCreateFunc = CreateMenu;
 	}
+
+	static BOOL CallBackAddOam(const GXOamAttr* pOam, u16 affineIndex, BOOL bDoubleAffine);
+	static u16 CallBackAddAffine(const MtxFx22* mtx);
 
 private:
 	void HandleKeys();

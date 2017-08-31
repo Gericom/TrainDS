@@ -19,14 +19,20 @@ private:
 	box2d_t mBounds;
 	int mDepth;
 	quadtree_node_t* mRootNode;
+	std::vector<WorldObject*>* mWorldObjectLists;
 	u32 mRenderFlag;
 
-	void SetupNode(quadtree_node_t* node, int &nodeIdx, int depth, box2d_t* nodeBounds);
+	void SetupNode(quadtree_node_t* node, int &nodeIdx, int &leafNodeIdx, int depth, box2d_t* nodeBounds);
 	void Insert(quadtree_node_t* node, int depth, WorldObject* object);
 	void Render(quadtree_node_t* node, int depth, box2d_t* frustum);
 
 public:
 	QuadTree(fx32 x, fx32 z, fx32 width, fx32 height, int depth);
+	~QuadTree()
+	{
+		delete[] mWorldObjectLists;
+		delete mRootNode;
+	}
 
 	void Insert(WorldObject* object)
 	{

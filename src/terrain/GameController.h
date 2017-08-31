@@ -7,6 +7,7 @@
 #include "vehicles/Wagon.h"
 #include "engine/Hemisphere.h"
 #include "engine/controllers/TOTDController.h"
+#include "vehicles/Train.h"
 class LookAtCamera;
 
 class GameController
@@ -16,7 +17,7 @@ private:
 
 	void UpdateSingleFrame()
 	{
-		mWagon->Update();
+		mTrain->Update();
 		mSfxManager->Update(mCamera);
 	}
 
@@ -37,7 +38,10 @@ public:
 		mMap = new Map(this);
 		mSfxManager = new SfxManager();
 		mCamera = camera;
-		mWagon = new Wagon(this, "a3");
+		mTrain = new Train(this);
+		mTrain->AddWagon(new Wagon(this, "a3"));
+		mTrain->AddWagon(new Wagon(this, "usa_tanker"));
+		mTrain->AddWagon(new Wagon(this, "usa_tanker"));
 		mHemisphere = new Hemisphere();
 		mTOTDController = new TOTDController(this);
 		mTOTDController->Update();
@@ -48,12 +52,13 @@ public:
 		delete mTOTDController;
 		delete mMap;
 		delete mSfxManager;
-		delete mWagon;
+		mTrain->DestroyClearWagons();
+		delete mTrain;
 		delete mHemisphere;
 	}
 
 	Map* mMap;
-	Wagon* mWagon;
+	Train* mTrain;
 	SfxManager* mSfxManager;
 	LookAtCamera* mCamera;
 	Hemisphere* mHemisphere;

@@ -38,13 +38,13 @@ void TitleSequencePlayer::UpdateSingleFrame()
 			rot.x = *mCurSequencePos++;
 			rot.y = *mCurSequencePos++;
 			rot.z = *mCurSequencePos++;
-			mGameController->mWagon->GetPosition(&mGameController->mCamera->mDestination);
+			mGameController->mTrain->GetPosition(&mGameController->mCamera->mDestination);
 			//mGameController->mCamera->mDestination.x -= 32 * FX32_ONE;
 			//mGameController->mCamera->mDestination.z -= 32 * FX32_ONE;
 			//mGameController->mCamera->mDestination.y += FX32_CONST(0.2f);
 			if (mGameController->mCamera)
 				delete mGameController->mCamera;
-			mGameController->mCamera = new VehicleCamera(mGameController->mWagon);
+			mGameController->mCamera = new VehicleCamera(mGameController->mTrain->GetFirstWagon());
 
 			((VehicleCamera*)mGameController->mCamera)->mCamDistance = FX32_CONST(1.25f);
 			((VehicleCamera*)mGameController->mCamera)->SetRotation(&rot);

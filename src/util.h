@@ -24,4 +24,6 @@ void Util_SetupSubOAMForDouble3D();
 void Util_SetupBillboardMatrix();
 void Util_SetupBillboardYMatrix();
 
+void Util_Reset2D(bool clearVram = true);
+
 #endif

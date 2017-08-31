@@ -82,9 +82,6 @@ private:
 
 	QuadTree* mObjectTree;
 
-	void* mTexArcData;
-	NNSFndArchive mTexArc;
-
 	void RecalculateNormals(int xstart, int xend, int zstart, int zend);
 	void RecalculateNormals(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend);
 	hvtx_t* GetMapBlock(int x, int y, bool withNormals);

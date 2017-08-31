@@ -16,7 +16,7 @@ BANK_TRAIN     : TEXT, "train.bnk",   WAVE_TRAIN
 ;; Player
 
 @PLAYER
-PLAYER_SFX : 8
+PLAYER_SFX : 16
  
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Sequence

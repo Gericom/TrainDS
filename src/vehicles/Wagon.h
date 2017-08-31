@@ -11,6 +11,9 @@ class Sfx;
 
 class Wagon : public Vehicle
 {
+	friend class Train;
+private:
+	NNSFndLink mLink;
 public:
 	//I'm almost certain I'm not gonna keep it like this
 	//eventually it should work with acceleration and velocity
@@ -45,6 +48,8 @@ private:
 	fx64c mDeceleration;
 	fx64c mSpeed;
 	fx64c mMaxSpeed;
+
+	u16 mXAng;
 public:
 	Wagon(GameController* gameController, char* name);
 	void PutOnTrack(TrackPieceEx* track, int inPoint, fx32 offset = 0);
@@ -63,6 +68,11 @@ public:
 	void GetBounds(box2d_t* box)
 	{
 		*box = box2d_t();
+	}
+
+	fx32 GetLength() const
+	{
+		return VEC_Distance(&mBack, &mFront) / 13;
 	}
 };
 
