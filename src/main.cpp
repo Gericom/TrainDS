@@ -360,40 +360,7 @@ void NitroMain ()
 		//restore sound heap
 		NNS_SndHeapLoadState(gSndHeapHandle, sndHeapState);
 		//clean up some gfx stuff
-		GX_SetVisiblePlane(GX_PLANEMASK_NONE);
-		GX_SetVisibleWnd(GX_WNDMASK_NONE);
-		GXS_SetVisiblePlane(GX_PLANEMASK_NONE);
-		GXS_SetVisibleWnd(GX_WNDMASK_NONE);
-		G2_BlendNone();
-		G2S_BlendNone();
-		GX_SetDispSelect(GX_DISP_SELECT_MAIN_SUB);
-		G2_SetBG0Offset(0, 0);
-		G2_SetBG1Offset(0, 0);
-		G2_SetBG2Offset(0, 0);
-		G2_SetBG3Offset(0, 0);
-		G2S_SetBG0Offset(0, 0);
-		G2S_SetBG1Offset(0, 0);
-		G2S_SetBG2Offset(0, 0);
-		G2S_SetBG3Offset(0, 0);
-		MtxFx22 mtx;
-		mtx._00 = FX32_ONE;
-		mtx._01 = 0;
-		mtx._10 = 0;
-		mtx._11 = FX32_ONE;
-		G2_SetBG2Affine(&mtx, 0, 0, 0, 0);
-		G2_SetBG3Affine(&mtx, 0, 0, 0, 0);
-		G2S_SetBG2Affine(&mtx, 0, 0, 0, 0);
-		G2S_SetBG3Affine(&mtx, 0, 0, 0, 0);
-
-		GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
-		MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
-		(void)GX_DisableBankForLCDC();
-
-		MI_CpuFillFast((void *)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
-		MI_CpuClearFast((void *)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
-
-		MI_CpuFillFast((void *)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
-		MI_CpuClearFast((void *)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
+		Util_Reset2D();
 	}
 	while (1)
 	{

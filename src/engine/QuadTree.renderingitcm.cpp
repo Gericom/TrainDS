@@ -11,15 +11,19 @@ QuadTree::QuadTree(fx32 x, fx32 z, fx32 width, fx32 height, int depth)
 	mBounds.x2 = x + width;
 	mBounds.y2 = z + height;
 	mRootNode = new quadtree_node_t[(4 * (1 << mDepth) * (1 << mDepth) - 1) / 3];
+	mWorldObjectLists = new std::vector<WorldObject*>[1 << (mDepth * 2)];
 	int nodeIdx = 1;
-	SetupNode(mRootNode, nodeIdx, 0, &mBounds);
+	int leafNodeIdx = 0;
+	SetupNode(mRootNode, nodeIdx, leafNodeIdx, 0, &mBounds);
 }
 
-void QuadTree::SetupNode(quadtree_node_t* node, int &nodeIdx, int depth, box2d_t* nodeBounds)
+void QuadTree::SetupNode(quadtree_node_t* node, int &nodeIdx, int &leafNodeIdx, int depth, box2d_t* nodeBounds)
 {
 	node->bounds = *nodeBounds;
 	if (depth == mDepth)
-		node->objects = new std::vector<WorldObject*>();
+	{
+		node->objects = &mWorldObjectLists[leafNodeIdx++]; //new std::vector<WorldObject*>();
+	}
 	else
 	{
 		node->subnodes = &mRootNode[nodeIdx];
@@ -29,16 +33,16 @@ void QuadTree::SetupNode(quadtree_node_t* node, int &nodeIdx, int depth, box2d_t
 		int newheight = bound.GetHeight() / 2;
 		bound.x2 -= newwidth;
 		bound.y2 -= newheight;
-		SetupNode(node->subnodes, nodeIdx, depth + 1, &bound);
+		SetupNode(node->subnodes, nodeIdx, leafNodeIdx, depth + 1, &bound);
 		bound.x1 += newwidth;
 		bound.x2 += newwidth;
-		SetupNode(node->subnodes + 1, nodeIdx, depth + 1, &bound);
+		SetupNode(node->subnodes + 1, nodeIdx, leafNodeIdx, depth + 1, &bound);
 		bound.y1 += newheight;
 		bound.y2 += newheight;
-		SetupNode(node->subnodes + 3, nodeIdx, depth + 1, &bound);
+		SetupNode(node->subnodes + 3, nodeIdx, leafNodeIdx, depth + 1, &bound);
 		bound.x1 -= newwidth;
 		bound.x2 -= newwidth;
-		SetupNode(node->subnodes + 2, nodeIdx, depth + 1, &bound);
+		SetupNode(node->subnodes + 2, nodeIdx, leafNodeIdx, depth + 1, &bound);
 		//SetupNode(node->subnodes, nodeIdx, depth + 1);
 		//SetupNode(node->subnodes + 1, nodeIdx, depth + 1);
 		//SetupNode(node->subnodes + 2, nodeIdx, depth + 1);

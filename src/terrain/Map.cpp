@@ -36,7 +36,7 @@ Map::Map(GameController* gameController)
 	mWaterTest = new Water(&wpos, 50 * FX32_ONE, 50 * FX32_ONE, 4 * FX32_ONE);
 
 	mObjectData = new ObjectData("/data/map/objects.objd.lz");
-	mObjectTree = new QuadTree(0, 0, mTerrainData->GetWidth() * FX32_ONE, mTerrainData->GetHeight() * FX32_ONE, 6);
+	mObjectTree = new QuadTree(0, 0, mTerrainData->GetWidth() * FX32_ONE, mTerrainData->GetHeight() * FX32_ONE, 5);//6);
 	for (int i = 0; i < mObjectData->mFileData->header.nr_sceneries; i++)
 	{
 		ObjectData::object_data_scenery_entry_t* s = &mObjectData->mSceneryEntries[i];
@@ -50,8 +50,9 @@ Map::Map(GameController* gameController)
 	}
 
 	//mount the tex data archive
-	mTexArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.narc.lz", NULL, FALSE);
-	NNS_FndMountArchive(&mTexArc, "mtx", mTexArcData);
+	void* texArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.narc.lz", NULL, true);
+	NNSFndArchive texArc;
+	NNS_FndMountArchive(&texArc, "mtx", texArcData);
 
 	//mVtx = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.hmap", NULL, false);
 	//mTextures = (uint8_t*)Util_LoadFileToBuffer("/data/map/terrain.tmap", NULL, false);
@@ -60,6 +61,8 @@ Map::Map(GameController* gameController)
 	mTerrainTextureManager8 = new TerrainTextureManager8();
 	//mTexAddresses = new uint32_t[128 * 128];
 	//MI_CpuClearFast(mTexAddresses, 128 * 128 * 4);
+	NNS_FndUnmountArchive(&texArc);
+	NNS_FndFreeToExpHeap(gHeapHandle, texArcData);
 
 	mLodLevels = new uint8_t[128 * 128];
 	MI_CpuFillFast(mLodLevels, 0, 128 * 128);
@@ -147,9 +150,6 @@ Map::Map(GameController* gameController)
 
 Map::~Map()
 {
-	NNS_FndUnmountArchive(&mTexArc);
-	NNS_FndFreeToExpHeap(gHeapHandle, mTexArcData);
-
 	delete mTerrainData;
 	delete mTerrainManager;
 	//NNS_FndFreeToExpHeap(gHeapHandle, mVtx);
@@ -246,11 +246,9 @@ static inline fx32 sign(VecFx32* p1, VecFx32* p2, VecFx32* p3)
 
 static bool PointInTriangle(VecFx32* pt, VecFx32* v1, VecFx32* v2, VecFx32* v3)
 {
-	bool b1, b2, b3;
-
-	b1 = sign(pt, v1, v2) < 0;
-	b2 = sign(pt, v2, v3) < 0;
-	b3 = sign(pt, v3, v1) < 0;
+	bool b1 = sign(pt, v1, v2) < 0;
+	bool b2 = sign(pt, v2, v3) < 0;
+	bool b3 = sign(pt, v3, v1) < 0;
 
 	return ((b1 == b2) && (b2 == b3));
 }

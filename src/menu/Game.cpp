@@ -22,6 +22,7 @@
 #include "tools/AddTrackTool.h"
 #include "vehicles/Wagon.h"
 #include "Game.h"
+#include "Loader.h"
 
 #define SWAP_BUFFERS_SORTMODE	GX_SORTMODE_MANUAL //AUTO
 #define SWAP_BUFFERS_BUFFERMODE	GX_BUFFERMODE_Z
@@ -52,17 +53,31 @@ void Game::Initialize(int arg)
 	//load overlay
 	LOAD_OVERLAY_ITCM(rendering_itcm);
 
+	G3X_Init();
+	G3X_InitMtxStack();
+	GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
+	GX_SetBankForTexPltt(GX_VRAM_TEXPLTT_0123_E);
+
+	NNS_GfdResetLnkTexVramState();
+	NNS_GfdResetLnkPlttVramState();
+
+	Loader* loader = new Loader();
+	loader->BeginLoad();
+	{
+		mCamera = new FreeRoamCamera();
+		mGameController = new GameController(mCamera);
+		mGameController->mTrain->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 1, 260 * FX32_ONE);
+	}
+	loader->FinishLoad();
+	loader->WaitFinish();
+	delete loader;
+
 	GX_SetBankForLCDC(GX_VRAM_LCDC_D);
 
 	GX_SetBankForOBJ(GX_VRAM_OBJ_16_F);
 
 	GX_SetBankForSubBG(GX_VRAM_SUB_BG_32_H);
 	GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_16_I);
-
-	G3X_Init();
-	G3X_InitMtxStack();
-	GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
-	GX_SetBankForTexPltt(GX_VRAM_TEXPLTT_0123_E);
 
 	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_3, GX_BG0_AS_3D);
 	GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ);
@@ -85,9 +100,6 @@ void Game::Initialize(int arg)
 	G3_ViewPort(0, 0, 255, 191);
 
 	GX_SetDispSelect(GX_DISP_SELECT_SUB_MAIN);
-
-	NNS_GfdResetLnkTexVramState();
-	NNS_GfdResetLnkPlttVramState();
 
 	NNS_G2dInitOamManagerModule();
 	NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_SUB);
@@ -137,13 +149,7 @@ void Game::Initialize(int arg)
 	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
 	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
 
-	MI_CpuClear8(&mTmpSubOamBuffer[0], sizeof(mTmpSubOamBuffer));
-
-	mCamera = new FreeRoamCamera();
-
-	mGameController = new GameController(mCamera);
-
-	mGameController->mTrain->PutOnTrack(mGameController->mMap->GetFirstTrackPiece(), 1, 260 * FX32_ONE);
+	MI_CpuClear8(&mTmpSubOamBuffer[0], sizeof(mTmpSubOamBuffer));	
 
 	reg_G2_BLDCNT = 0x2801;
 
@@ -366,7 +372,8 @@ void Game::Render()
 		{
 			if (keyData & PAD_BUTTON_DEBUG)
 			{
-				OS_Printf("Camdata: dst(%d, %d, %d), rot(%d, %d, %d)\n", mGameController->mCamera->mDestination.x, mGameController->mCamera->mDestination.y, mGameController->mCamera->mDestination.z, camRot.x, camRot.y, camRot.z);
+				NNS_FndDumpHeap(gHeapHandle);
+				//OS_Printf("Camdata: dst(%d, %d, %d), rot(%d, %d, %d)\n", mGameController->mCamera->mDestination.x, mGameController->mCamera->mDestination.y, mGameController->mCamera->mDestination.z, camRot.x, camRot.y, camRot.z);
 				mDebugKeyTimer = 30;
 			}
 		}

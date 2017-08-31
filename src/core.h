@@ -1,8 +1,10 @@
 #ifndef __CORE_H__
 #define __CORE_H__
+#include <nitro.h>
 #include <nnsys/fnd.h>
 #include <nnsys/snd.h>
 #include <nnsys/g2d.h>
+#include <nnsys/g3d.h>
 #include "../resources/sound/sdat/sound_data.sadl"
 #include "print.h"
 
@@ -39,7 +41,7 @@ typedef s16 int16_t;
 typedef s32 int32_t;
 typedef s64 int64_t;
 
-#define MKTAG(a0,a1,a2,a3) ((uint32)((a0) | ((a1) << 8) | ((a2) << 16) | ((a3) << 24))) 
+#define MKTAG(a0,a1,a2,a3) ((u32)((a0) | ((a1) << 8) | ((a2) << 16) | ((a3) << 24))) 
 
 #define NOCASH_Break() asm("mov r11, r11")
 
@@ -55,6 +57,8 @@ void* operator new(std::size_t blocksize);
 void* operator new[](std::size_t blocksize);
 void operator delete(void *block) throw();
 void operator delete[](void *block) throw();
+
+//#define tmpnew new (NNS_FndAllocFromExpHeapEx(gHeapHandle, blocksize, -16));
 
 #endif
 
@@ -73,6 +77,7 @@ extern NNSSndHeapHandle gSndHeapHandle;
 
 void Core_Init();
 
+extern uint16_t gOldKeys;
 extern uint16_t gKeys;
 void Core_ReadInput();
 void Core_GetTouchInput(TPData* dst);

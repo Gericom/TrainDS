@@ -77,12 +77,15 @@ void Util_LoadTextureFromCard(const char* texPath, const char* plttPath, NNSGfdT
 	Util_LoadTextureWithKey(texKey, buffer);
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 
-	buffer = Util_LoadFileToBuffer(plttPath, &size, TRUE);
-	DC_FlushRange(buffer, size);
+	if (plttPath)
+	{
+		buffer = Util_LoadFileToBuffer(plttPath, &size, TRUE);
+		DC_FlushRange(buffer, size);
 
-	plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
-	Util_LoadPaletteWithKey(plttKey, buffer);
-	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+		plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
+		Util_LoadPaletteWithKey(plttKey, buffer);
+		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+	}
 }
 
 void Util_LoadLZ77TextureFromCard(const char* texPath, const char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
@@ -95,12 +98,15 @@ void Util_LoadLZ77TextureFromCard(const char* texPath, const char* plttPath, NNS
 	Util_LoadTextureWithKey(texKey, buffer);
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 
-	buffer = Util_LoadFileToBuffer(plttPath, &size, TRUE);
-	DC_FlushRange(buffer, size);
+	if (plttPath)
+	{
+		buffer = Util_LoadFileToBuffer(plttPath, &size, TRUE);
+		DC_FlushRange(buffer, size);
 
-	plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
-	Util_LoadPaletteWithKey(plttKey, buffer);
-	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+		plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
+		Util_LoadPaletteWithKey(plttKey, buffer);
+		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+	}
 }
 
 void Util_LoadTexture4x4FromCard(const char* texPath, const char* texIndexPath, const char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
@@ -116,12 +122,15 @@ void Util_LoadTexture4x4FromCard(const char* texPath, const char* texIndexPath, 
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer2);
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 
-	buffer = Util_LoadFileToBuffer(plttPath, &size, TRUE);
-	DC_FlushRange(buffer, size);
+	if (plttPath)
+	{
+		buffer = Util_LoadFileToBuffer(plttPath, &size, TRUE);
+		DC_FlushRange(buffer, size);
 
-	plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
-	Util_LoadPaletteWithKey(plttKey, buffer);
-	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+		plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
+		Util_LoadPaletteWithKey(plttKey, buffer);
+		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+	}
 }
 
 void Util_LoadLZ77Texture4x4FromCard(const char* texPath, const char* texIndexPath, const char* plttPath, NNSGfdTexKey &texKey, NNSGfdPlttKey &plttKey)
@@ -137,12 +146,15 @@ void Util_LoadLZ77Texture4x4FromCard(const char* texPath, const char* texIndexPa
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer2);
 	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
 
-	buffer = Util_LoadLZ77FileToBuffer(plttPath, &size, TRUE);
-	DC_FlushRange(buffer, size);
+	if (plttPath)
+	{
+		buffer = Util_LoadLZ77FileToBuffer(plttPath, &size, TRUE);
+		DC_FlushRange(buffer, size);
 
-	plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
-	Util_LoadPaletteWithKey(plttKey, buffer);
-	NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+		plttKey = NNS_GfdAllocPlttVram(size, FALSE, 0);
+		Util_LoadPaletteWithKey(plttKey, buffer);
+		NNS_FndFreeToExpHeap(gHeapHandle, buffer);
+	}
 }
 
 void Util_LoadPaletteWithKey(NNSGfdPlttKey key, void* data)
@@ -211,6 +223,7 @@ void Util_DrawSpriteScaled(fx32 x, fx32 y, fx32 z, fx32 width, fx32 height, fx32
 	}
 	G3_PopMtx(1);
 }
+
 
 void VEC_Lerp(VecFx32* a, VecFx32* b, fx32 t, VecFx32* result)
 {
@@ -363,4 +376,47 @@ void Util_SetupBillboardYMatrix()
 		mtx->_11 = mtx->_22;
 	}
 	MI_CpuSend32(&bbcmd1[0], &reg_G3X_GXFIFO, 18 * sizeof(u32));
+}
+
+void Util_Reset2D(bool clearVram)
+{
+	GX_SetVisiblePlane(GX_PLANEMASK_NONE);
+	GX_SetVisibleWnd(GX_WNDMASK_NONE);
+	GXS_SetVisiblePlane(GX_PLANEMASK_NONE);
+	GXS_SetVisibleWnd(GX_WNDMASK_NONE);
+	G2_BlendNone();
+	G2S_BlendNone();
+	GX_SetDispSelect(GX_DISP_SELECT_MAIN_SUB);
+	G2_SetBG0Offset(0, 0);
+	G2_SetBG1Offset(0, 0);
+	G2_SetBG2Offset(0, 0);
+	G2_SetBG3Offset(0, 0);
+	G2S_SetBG0Offset(0, 0);
+	G2S_SetBG1Offset(0, 0);
+	G2S_SetBG2Offset(0, 0);
+	G2S_SetBG3Offset(0, 0);
+	MtxFx22 mtx;
+	mtx._00 = FX32_ONE;
+	mtx._01 = 0;
+	mtx._10 = 0;
+	mtx._11 = FX32_ONE;
+	G2_SetBG2Affine(&mtx, 0, 0, 0, 0);
+	G2_SetBG3Affine(&mtx, 0, 0, 0, 0);
+	G2S_SetBG2Affine(&mtx, 0, 0, 0, 0);
+	G2S_SetBG3Affine(&mtx, 0, 0, 0, 0);
+
+	if (clearVram)
+	{
+		GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
+		MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
+		(void)GX_DisableBankForLCDC();
+	}
+
+	MI_CpuFillFast((void *)HW_OAM, 192, HW_OAM_SIZE);   // clear OAM
+	if (clearVram)
+		MI_CpuClearFast((void *)HW_PLTT, HW_PLTT_SIZE);     // clear the standard palette
+
+	MI_CpuFillFast((void *)HW_DB_OAM, 192, HW_DB_OAM_SIZE);     // clear OAM
+	if (clearVram)
+		MI_CpuClearFast((void *)HW_DB_PLTT, HW_DB_PLTT_SIZE);       // clear the standard palette
 }
