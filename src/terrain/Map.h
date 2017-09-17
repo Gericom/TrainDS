@@ -28,12 +28,14 @@ typedef uint16_t picking_result_t;
 #define PICKING_TYPE(result) (((result) >> 12) & 7)
 #define PICKING_IDX(result) ((result) & 0xFFF)
 
-#define Y_SCALE /*768*/512 //128
+#define Y_SCALE 2048//512/*768*///512 //128
 
 #define Y_OFFSET 128 //40 //100
 
 #define MAP_BLOCK_WIDTH		132
 #define MAP_BLOCK_HEIGHT	132
+
+#define MAP_BLOCK_CACHE_SIZE	8
 
 class Water;
 class SimpleSceneryObject;
@@ -54,8 +56,8 @@ public:
 	//hvtx_t* pHMap;
 	TerrainData* mTerrainData;
 	//4 blocks of 128x128
-	hvtx_t mHeightMap[4][MAP_BLOCK_WIDTH * MAP_BLOCK_HEIGHT];
-	hmap_block_data_t mHeightMapBlockData[4];
+	hvtx_t mHeightMap[MAP_BLOCK_CACHE_SIZE][MAP_BLOCK_WIDTH * MAP_BLOCK_HEIGHT];
+	hmap_block_data_t mHeightMapBlockData[MAP_BLOCK_CACHE_SIZE];
 	//uint8_t* mVtx;
 	//uint8_t* mTextures;
 	//VecFx10* mNormals;

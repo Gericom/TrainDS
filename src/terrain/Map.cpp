@@ -24,15 +24,15 @@ Map::Map(GameController* gameController)
 	NNS_FND_INIT_LIST(&mSceneryList, SimpleSceneryObject, mLink);
 	mTerrainManager = new TerrainManager();
 
-	mTerrainData = new TerrainData("/data/map/britainmap.tdat.lz");
-	for (int i = 0; i < 4; i++)
+	mTerrainData = new TerrainData("/data/map/map.tdat");
+	for (int i = 0; i < MAP_BLOCK_CACHE_SIZE; i++)
 	{
 		mHeightMapBlockData[i].last_accessed = 0;
 		mHeightMapBlockData[i].x = 0xFFFF;
 		mHeightMapBlockData[i].y = 0xFFFF;
 	}
 
-	VecFx32 wpos = { 373680, -6 * FX32_ONE + (FX32_ONE >> 2), 1153947 };
+	/*VecFx32 wpos = { 373680, -6 * FX32_ONE + (FX32_ONE >> 2), 1153947 };
 	mWaterTest = new Water(&wpos, 50 * FX32_ONE, 50 * FX32_ONE, 4 * FX32_ONE);
 
 	mObjectData = new ObjectData("/data/map/objects.objd.lz");
@@ -47,10 +47,10 @@ Map::Map(GameController* gameController)
 		ob->Invalidate();
 		mObjectTree->Insert(ob);
 		//AddSceneryObject(new SimpleSceneryObject(this, s->object_type, s->x - 32 * FX32_ONE, s->z - 32 * FX32_ONE));
-	}
+	}*/
 
 	//mount the tex data archive
-	void* texArcData = Util_LoadLZ77FileToBuffer("/data/map/britain.narc.lz", NULL, true);
+	void* texArcData = Util_LoadLZ77FileToBuffer("/data/map/botw.narc.lz", NULL, true);
 	NNSFndArchive texArc;
 	NNS_FndMountArchive(&texArc, "mtx", texArcData);
 
@@ -130,7 +130,7 @@ Map::Map(GameController* gameController)
 	while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
 	{
 		trackPiece->Invalidate();
-		mObjectTree->Insert((WorldObject*)trackPiece);
+		//mObjectTree->Insert((WorldObject*)trackPiece);
 	}
 	/*TrackPieceEx* trackPiece = NULL;
 	while ((trackPiece = (TrackPieceEx*)NNS_FndGetNextListObject(&mTrackList, trackPiece)) != NULL)
@@ -166,7 +166,7 @@ hvtx_t* Map::GetMapBlock(int x, int y, bool withNormals)
 {
 	if (x < 0 || y < 0 || x >= mTerrainData->GetHBlockCount() || y >= mTerrainData->GetVBlockCount())
 		return NULL;
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < MAP_BLOCK_CACHE_SIZE; i++)
 	{
 		if (mHeightMapBlockData[i].x == x && mHeightMapBlockData[i].y == y)
 		{
@@ -181,7 +181,7 @@ hvtx_t* Map::GetMapBlock(int x, int y, bool withNormals)
 	}
 	int oldest = -1;
 	u32 oldestcounter = 0x7FFFFFFF;
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < MAP_BLOCK_CACHE_SIZE; i++)
 	{
 		if (mHeightMapBlockData[i].last_accessed < oldestcounter)
 		{

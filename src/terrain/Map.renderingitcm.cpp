@@ -145,12 +145,12 @@ void Map::Render(int xstart, int xend, int zstart, int zend, int xstart2, int xe
 				G3_PushMtx();
 				{
 					G3_Translate(0, (FX32_ONE / 32), 0);
-					mObjectTree->Render(&frustumbox);
+					//mObjectTree->Render(&frustumbox);
 				}
 				G3_PopMtx(1);
 			}
-			mWaterTest->Render();
-			mWaterTest->Render2();
+			//mWaterTest->Render();
+			//mWaterTest->Render2();
 		}
 	}
 	G3_PopMtx(1);
@@ -419,11 +419,11 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 
 						if (top >= (8 * FX32_ONE * FX32_ONE) && top <= (/*35*/25 * FX32_ONE * FX32_ONE))
 						{
-							lodData[y * 128 + (x + 1)] = 1;
-							lodData[(y + 1) * 128 + x] = 1;
-							lodData[(y + 1) * 128 + (x + 1)] = 1;
-							lodData[(y + 2) * 128 + (x + 1)] = 1;
-							lodData[(y + 1) * 128 + (x + 2)] = 1;
+							//lodData[y * 128 + (x + 1)] = 1;
+							//lodData[(y + 1) * 128 + x] = 1;
+							//lodData[(y + 1) * 128 + (x + 1)] = 1;
+							//lodData[(y + 2) * 128 + (x + 1)] = 1;
+							//lodData[(y + 1) * 128 + (x + 2)] = 1;
 
 							uint32_t texOffset = mTerrainTextureManager8->GetTextureAddress(
 								pmap2[0].tex,
@@ -439,13 +439,13 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 							count++;
 #endif
 						}
-						else if (top > (/*35*/25 * FX32_ONE * FX32_ONE) && top <= (52 * FX32_ONE * FX32_ONE))
+						else if (top > (/*35*/25 * FX32_ONE * FX32_ONE) && top <= (/*52*/100 * FX32_ONE * FX32_ONE))
 						{
-							lodData[y * 128 + (x + 1)] = 1;
-							lodData[(y + 1) * 128 + x] = 1;
-							lodData[(y + 1) * 128 + (x + 1)] = 1;
-							lodData[(y + 2) * 128 + (x + 1)] = 1;
-							lodData[(y + 1) * 128 + (x + 2)] = 1;
+							//lodData[y * 128 + (x + 1)] = 1;
+							//lodData[(y + 1) * 128 + x] = 1;
+							//lodData[(y + 1) * 128 + (x + 1)] = 1;
+							//lodData[(y + 2) * 128 + (x + 1)] = 1;
+							//lodData[(y + 1) * 128 + (x + 2)] = 1;
 
 							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXIMAGE_PARAM, G3OP_BEGIN, G3OP_LIGHT_COLOR, G3OP_NORMAL);
 							{
@@ -472,7 +472,7 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 							{
 								reg_G3X_GXFIFO = pmap2[2 * MAP_BLOCK_WIDTH + 2].normal;
 								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH + 2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, clr);
+								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, GX_RGB(31, 31, 31));// clr);
 							}
 #ifdef DEBUG_TILE_COUNT
 							count++;

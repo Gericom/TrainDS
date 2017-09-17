@@ -12,7 +12,7 @@ class TerrainData
 {
 private:
 	//u8* mTerrainData;
-	//FSFile mDataFile;
+	FSFile mDataFile;
 
 	struct terrain_data_header_t
 	{
@@ -25,20 +25,20 @@ private:
 	{
 		terrain_data_header_t header;
 	};
-	terrain_data_t* mTerrainData;
+	terrain_data_header_t mDataHeader;//mTerrainData;
 
 public:
 	TerrainData(const char* filePath);
 
 	~TerrainData()
 	{
-		NNS_FndFreeToExpHeap(gHeapHandle, mTerrainData);
+		//NNS_FndFreeToExpHeap(gHeapHandle, mDataHeader);
 	}
 
-	int GetHBlockCount() { return mTerrainData->header.h_block_count; }
-	int GetWidth() { return mTerrainData->header.width; }
-	int GetVBlockCount() { return mTerrainData->header.v_block_count; }
-	int GetHeight() { return mTerrainData->header.height; }
+	int GetHBlockCount() const { return mDataHeader.h_block_count; }
+	int GetWidth() const { return mDataHeader.width; }
+	int GetVBlockCount() const { return mDataHeader.v_block_count; }
+	int GetHeight() const { return mDataHeader.height; }
 
 	void GetBlock(int x, int y, hvtx_t* dst);
 };

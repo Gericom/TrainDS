@@ -187,9 +187,9 @@ void GameController::Render(RenderMode mode)
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(true);
 		G3X_AntiAlias(true);
-		if (mode == RENDER_MODE_FAR)
-			G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x2000, 0x8000 - 0x2000);
-		else
+		//if (mode == RENDER_MODE_FAR)
+		//	G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x2000, 0x8000 - 0x2000);
+		//else
 			G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0200, 0x8000 - 0x200);
 
 		//G3X_SetFog(/*true*/false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
@@ -237,7 +237,7 @@ void GameController::Render(RenderMode mode)
 	mCamera->GetLookDirection(&camDir);
 	NNS_G3dGlbPolygonAttr(GX_LIGHTMASK_0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, GX_POLYGON_ATTR_MISC_FOG | GX_POLYGON_ATTR_MISC_FAR_CLIPPING);
 	NNS_G3dGlbLightVector(GX_LIGHTID_0, mLightDirection.x, mLightDirection.y, mLightDirection.z);
-	NNS_G3dGlbLightColor(GX_LIGHTID_0, mLightColor);
+	NNS_G3dGlbLightColor(GX_LIGHTID_0, GX_RGB(31, 31, 31));//mLightColor);
 	if (mode == RENDER_MODE_PICKING)
 	{
 		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(0, 0, 0), GX_RGB(0, 0, 0), false);
@@ -260,7 +260,7 @@ void GameController::Render(RenderMode mode)
 		fx32 cosang = FX_CosIdx(ang - FX_DEG_TO_IDX(90 * FX32_ONE));
 		cosang = FX_Mul(cosang, cosang);
 		//OS_Printf("ang: %d\n", FX_IDX_TO_DEG(ang) >> 12);
-		newDist = camY + FX_Mul(cosang, 50 * 4096);
+		newDist = 100 * FX32_ONE;//camY + FX_Mul(cosang, /*50*/100 * 4096);
 		if (mode == RENDER_MODE_FAR)
 		{
 			if (newDist < 8 * 4096)
@@ -333,7 +333,7 @@ void GameController::Render(RenderMode mode)
 			if (gKeys & PAD_BUTTON_X)
 				mTOTDController->Update();
 
-			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, 56 * FX32_ONE, 40960 * 4);
+			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, /*56*/106 * FX32_ONE, 40960 * 4);
 			NNS_G3dGlbFlushP();
 			NNS_G3dGeFlushBuffer();
 			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 62, 30, 0);
@@ -343,7 +343,7 @@ void GameController::Render(RenderMode mode)
 				G3_Translate(mCamera->mDestination.x, 0, mCamera->mDestination.z);
 				G3_PushMtx();
 				{
-					G3_Scale(50 * FX32_ONE, 50 * FX32_ONE, 50 * FX32_ONE);
+					G3_Scale(100 * FX32_ONE, 100 * FX32_ONE, 100 * FX32_ONE);
 					mHemisphere->Render();
 				}
 				G3_PopMtx(1);
