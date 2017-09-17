@@ -2,6 +2,9 @@
 #include <nnsys/g3d.h>
 #include <nnsys/gfd.h>
 #include "core.h"
+#include "io/dldi.h"
+#include "io/dldi_archive.h"
+
 extern "C" 
 {
 	#include "mb/wh.h"
@@ -324,6 +327,19 @@ void OnIntroVideoFinish()
 	//Game::GotoMenu();
 }
 
+static bool initDldi()
+{
+	if ((OS_GetConsoleType() & OS_CONSOLE_MASK) != OS_CONSOLE_NITRO || MB_IsMultiBootChild())
+		return false;
+	if (!DLDI_Init(DLDI_IdentifyCard()))
+		return false;
+	if (!DLDI_DeviceStartup())
+		return false;
+	if (!DLDI_Mount())
+		return false;
+	return true;
+}
+
 void NitroMain ()
 {
 	Init();
@@ -334,6 +350,8 @@ void NitroMain ()
 	GXS_SetMasterBrightness(-16);
 	GX_DispOn();
 	GXS_DispOn();
+	
+	initDldi();
 
 	NNS_FndSetGroupIDForExpHeap(gHeapHandle, MENU_PRIVATE_HEAP_GROUP_ID);//This is to be able to simply free all resources used by the menu after it is closed
 	//Game loop

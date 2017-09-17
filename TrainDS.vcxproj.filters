@@ -187,6 +187,36 @@
     <ClCompile Include="src\menu\Loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\io\dldi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\fat\fat_access.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\fat\fat_cache.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\fat\fat_filelib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\fat\fat_misc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\fat\fat_string.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\fat\fat_table.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\fat\fat_write.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\dldi_archive.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\dldi_identify.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\util.h">
@@ -403,6 +433,48 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\layoutengine\FontManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\dldi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_access.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_cache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_filelib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_misc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_opts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\fat\fat_write.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\dldi_archive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\io\dldi_identify.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
