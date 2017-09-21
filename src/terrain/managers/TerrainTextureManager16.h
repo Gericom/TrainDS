@@ -15,6 +15,7 @@ private:
 public:
 	uint16_t* mTextureDatas[26] ATTRIBUTE_ALIGN(32);
 	GXRgb mMeanColors[26] ATTRIBUTE_ALIGN(32);
+	GXRgb mMeanColorsFixed[26] ATTRIBUTE_ALIGN(32);
 
 private:
 	coefd_texture_sample_t mCoefdTextureDatas[26][4][16 * 16];

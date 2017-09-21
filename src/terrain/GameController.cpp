@@ -169,6 +169,16 @@ void GameController::Render(RenderMode mode)
 {
 	if (!mCamera)
 		return;
+	//fix average texture colors
+	for (int i = 0; i < 26; i++)
+	{
+		GXRgb color = mMap->mTerrainTextureManager16->mMeanColors[i];
+		int rr = ((color & 0x1F) * (mLightColor & 0x1F)) / 0x1F;
+		int gg = (((color >> 5) & 0x1F) * ((mLightColor >> 5) & 0x1F)) / 0x1F;
+		int bb = (((color >> 10) & 0x1F) * ((mLightColor >> 10) & 0x1F)) / 0x1F;
+		mMap->mTerrainTextureManager16->mMeanColorsFixed[i] = GX_RGB(rr, gg, bb);
+	}
+
 	if (mode == RENDER_MODE_PICKING)
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT & ~REG_G3X_DISP3DCNT_TME_MASK;

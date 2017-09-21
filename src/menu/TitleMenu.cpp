@@ -62,6 +62,7 @@ void TitleMenu::Initialize(int arg)
 	GX_SetBankForLCDC(GX_VRAM_LCDC_D);
 
 	GX_SetBankForOBJ(GX_VRAM_OBJ_16_F);
+	GX_SetBankForBG(GX_VRAM_BG_16_G);
 
 	GX_SetBankForSubBG(GX_VRAM_SUB_BG_32_H);
 	GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_16_I);
@@ -183,6 +184,22 @@ void TitleMenu::Initialize(int arg)
 	Util_LoadTextureFromCard("/data/menu/title/titlelogolarge_new_reduced_a.ntft", "/data/menu/title/titlelogolarge_new_reduced.ntfp", mLogoLargeTextureA.texKey, mLogoLargeTextureA.plttKey);
 	Util_LoadTextureFromCard("/data/menu/title/titlelogolarge_new_reduced_b.ntft", NULL, mLogoLargeTextureB.texKey, mLogoLargeTextureB.plttKey);
 	mLogoLargeTextureB.plttKey = mLogoLargeTextureA.plttKey;
+
+	((vu16*)HW_BG_PLTT)[1] = 0x0421;
+	((vu16*)HW_BG_PLTT)[2] = 0x0000;
+
+	((vu32*)HW_BG_VRAM)[0] = 0x12121212;
+	((vu32*)HW_BG_VRAM)[1] = 0x21212121;
+	((vu32*)HW_BG_VRAM)[2] = 0x12121212;
+	((vu32*)HW_BG_VRAM)[3] = 0x21212121;
+	((vu32*)HW_BG_VRAM)[4] = 0x12121212;
+	((vu32*)HW_BG_VRAM)[5] = 0x21212121;
+	((vu32*)HW_BG_VRAM)[6] = 0x12121212;
+	((vu32*)HW_BG_VRAM)[7] = 0x21212121;
+
+	G2_SetBlendAlpha(GX_BLEND_PLANEMASK_BG1, GX_BLEND_PLANEMASK_BG0, 8, 16);
+	G2_SetBG0Priority(3);
+	G2_SetBG1Control(GX_BG_SCRSIZE_TEXT_256x256, GX_BG_COLORMODE_16, GX_BG_SCRBASE_0x0800, GX_BG_CHARBASE_0x00000, GX_BG_EXTPLTT_01);
 
 	mVRAMCopyVAlarm = new OS::VAlarm();
 	mVRAMCopyVAlarm->SetPeriodic(192 - 48, 5, TitleMenu::OnVRAMCopyVAlarm, this);
@@ -376,7 +393,7 @@ void TitleMenu::VBlankIrq()
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
 		mGameController->mDisplayFlare = true;//(((GXRgb*)HW_LCDC_VRAM_B)[mGameController->mSunY * 256 + mGameController->mSunX] & 0x7FFF) == mGameController->mSunColorMatch;
 		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG0);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	}
 	else if (mRenderMode == GameController::RENDER_MODE_NEAR)
 	{
@@ -388,10 +405,10 @@ void TitleMenu::VBlankIrq()
 			GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
 		else
 			GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_5, GX_BG0_AS_3D);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG3*/ | GX_PLANEMASK_OBJ);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG1*/ | GX_PLANEMASK_OBJ);
 		//G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
 		//G2_SetBG3Priority(3);
-		G2_SetBG0Priority(0);
+		//G2_SetBG0Priority(0);
 	}
 	NNS_GfdDoVramTransfer();
 	mSwap = false;
@@ -403,7 +420,7 @@ void TitleMenu::VBlank()
 	NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
 	if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
 	{
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 		mRenderMode = GameController::RENDER_MODE_NEAR;
 	}
 	else if (mRenderMode == GameController::RENDER_MODE_NEAR)
