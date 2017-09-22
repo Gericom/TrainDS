@@ -5,6 +5,8 @@ class GameController;
 #define TOTD_THREAD_STACK_SIZE	1024
 #define TOTD_THREAD_PRIORITY   (OS_THREAD_LAUNCHER_PRIORITY + 15)
 
+//#define ENABLE_NEW_TOTD
+
 //based on https://github.com/Pixelstudio/Skydome
 class TOTDController
 {
@@ -58,6 +60,21 @@ private:
 	void InternalUpdate();
 	void TOTDThreadMain();
 
+#ifdef ENABLE_NEW_TOTD
+	bool solveQuadratic(float a, float b, float c, float& x1, float& x2);
+	bool raySphereIntersect(const vec3& orig, const vec3& dir, const float& radius, float& t0, float& t1);
+	bool computeIncidentLight(const vec3& orig, const vec3& dir, float tmin, float tmax, vec3 &result);
+
+	//vec3 sunDirection;     // The sun direction (normalized) 
+	float earthRadius;      // In the paper this is usually Rg or Re (radius ground, eart) 
+	float atmosphereRadius; // In the paper this is usually R or Ra (radius atmosphere) 
+	float Hr;               // Thickness of the atmosphere if density was uniform (Hr) 
+	float Hm;               // Same as above but for Mie scattering (Hm) 
+
+	static const vec3 betaR;
+	static const vec3 betaM;
+#endif
+
 public:
 	TOTDController(GameController* gameController)
 		: /*mG(FX32_CONST(0.8)),*/ mGameController(gameController)
@@ -87,6 +104,13 @@ public:
 		mSunColor.z = FX32_CONST(0.4217);
 		mSunColorIntensity = FX32_CONST(0.7 * 3.f);
 		mDirectionalityFactor = FX32_CONST(1.5);
+
+#ifdef ENABLE_NEW_TOTD
+		earthRadius = 6360e3;
+		atmosphereRadius = 6420e3;
+		Hr = 7994;
+		Hm = 1200;
+#endif
 
 		InternalUpdate();
 

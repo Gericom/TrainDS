@@ -224,7 +224,7 @@ void Game::Initialize(int arg)
 
 	mPickingCallback = NULL;
 
-	mGameController->mTrain->GetPosition(&mGameController->mCamera->mDestination);
+	mGameController->mTrain->GetFirstWagon()->GetPosition(&mGameController->mCamera->mDestination);
 	//mCamera->mDestination.x = 373680;
 	//mCamera->mDestination.y = 0;
 	//mCamera->mDestination.z = 1153947;
@@ -437,7 +437,7 @@ void Game::Render()
 		mPassedFrameCounter = 0;
 		if (mTrainMode)
 		{
-			mGameController->mTrain->GetPosition(&mGameController->mCamera->mDestination);
+			mGameController->mTrain->GetFirstWagon()->GetPosition(&mGameController->mCamera->mDestination);
 			mCamera->mCamDistance = FX32_CONST(1.25f);
 			mCamera->mDestination.y += FX32_CONST(0.2f);
 		}
@@ -448,7 +448,12 @@ void Game::Render()
 		if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)
 			mGameController->Render(GameController::RENDER_MODE_PICKING);
 		else
+		{
+			OSTick tstart = OS_GetTick();
 			mGameController->Render((mCurFrameType == FRAME_TYPE_MAIN_FAR ? GameController::RENDER_MODE_FAR : GameController::RENDER_MODE_NEAR));
+			OSTick diff = OS_GetTick() - tstart;
+			OS_Printf("Frame %d Time: %d us\n", mCurFrameType, OS_TicksToMicroSeconds(diff));
+		}
 		mUIManager->Render();
 	}
 	else

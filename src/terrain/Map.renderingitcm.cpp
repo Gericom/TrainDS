@@ -274,90 +274,82 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 									pmap3--;
 								if (y & 1)
 									pmap3 -= MAP_BLOCK_WIDTH;
-								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_BEGIN, G3OP_TEXCOORD, G3OP_NORMAL, G3OP_VTX_10);
-								{
-									reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
-									reg_G3X_GXFIFO = ~(x << 8) ^ (y << 24);
-									reg_G3X_GXFIFO = pmap2[0].normal;
+								reg_G3_BEGIN_VTXS = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
+								reg_G3_TEXCOORD = ~(x << 8) ^ (y << 24);
+								reg_G3_NORMAL = pmap2[0].normal;
 
-									if (lodData[y * 128 + x])
-									{
-										uint8_t tl = pmap3[0].y;
-										uint8_t tr = pmap3[2].y;
-										uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
-										uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
-										uint16_t newy;
-										if ((x & 1) && !(y & 1))
-											newy = tl + tr;
-										else if (!(x & 1) && (y & 1))
-											newy = tl + bl;
-										else if ((x & 1) && (y & 1))
-											newy = (tl + tr + bl + br) >> 1;
-										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | (y << GX_VEC_VTX10_Z_SHIFT);
-									}
-									else
-										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
-								}
-								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_NORMAL, G3OP_VTX_10);
+								if (lodData[y * 128 + x])
 								{
-									reg_G3X_GXFIFO = pmap2[MAP_BLOCK_WIDTH].normal;
-									if (lodData[(y + 1) * 128 + x])
-									{
-										uint8_t tl = pmap3[0].y;
-										uint8_t tr = pmap3[2].y;
-										uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
-										uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
-										uint16_t newy;
-										if ((x & 1) && !((y + 1) & 1))
-											newy = bl + br;
-										else if (!(x & 1) && ((y + 1) & 1))
-											newy = tl + bl;
-										else if ((x & 1) && ((y + 1) & 1))
-											newy = (tl + tr + bl + br) >> 1;
-										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
-									}
-									else
-										reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
-									reg_G3X_GXFIFO = pmap2[1].normal;
-									if (lodData[y * 128 + (x + 1)])
-									{
-										uint8_t tl = pmap3[0].y;
-										uint8_t tr = pmap3[2].y;
-										uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
-										uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
-										uint16_t newy;
-										if (((x + 1) & 1) && !(y & 1))
-											newy = tl + tr;
-										else if (!((x + 1) & 1) && (y & 1))
-											newy = tr + br;
-										else if (((x + 1) & 1) && (y & 1))
-											newy = (tl + tr + bl + br) >> 1;
-										reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | (y << GX_VEC_VTX10_Z_SHIFT);
-									}
-									else
-										reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (pmap2[1].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+									uint8_t tl = pmap3[0].y;
+									uint8_t tr = pmap3[2].y;
+									uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
+									uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
+									uint16_t newy;
+									if ((x & 1) && !(y & 1))
+										newy = tl + tr;
+									else if (!(x & 1) && (y & 1))
+										newy = tl + bl;
+									else if ((x & 1) && (y & 1))
+										newy = (tl + tr + bl + br) >> 1;
+									reg_G3_VTX_10 = (x << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | (y << GX_VEC_VTX10_Z_SHIFT);
 								}
-								reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_END, G3OP_NOP);
-								{	
-									reg_G3X_GXFIFO = pmap2[MAP_BLOCK_WIDTH + 1].normal;
-									if (lodData[(y + 1) * 128 + (x + 1)])
-									{
-										uint8_t tl = pmap3[0].y;
-										uint8_t tr = pmap3[2].y;
-										uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
-										uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
-										uint16_t newy;
-										if (((x + 1) & 1) && !((y + 1) & 1))
-											newy = bl + br;
-										else if (!((x + 1) & 1) && ((y + 1) & 1))
-											newy = tr + br;
-										else if (((x + 1) & 1) && ((y + 1) & 1))
-											newy = (tl + tr + bl + br) >> 1;
-										reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
-									}
-									else
-										reg_G3X_GXFIFO = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (pmap2[MAP_BLOCK_WIDTH + 1].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+								else
+									reg_G3_VTX_10 = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+								reg_G3_NORMAL = pmap2[MAP_BLOCK_WIDTH].normal;
+								if (lodData[(y + 1) * 128 + x])
+								{
+									uint8_t tl = pmap3[0].y;
+									uint8_t tr = pmap3[2].y;
+									uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
+									uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
+									uint16_t newy;
+									if ((x & 1) && !((y + 1) & 1))
+										newy = bl + br;
+									else if (!(x & 1) && ((y + 1) & 1))
+										newy = tl + bl;
+									else if ((x & 1) && ((y + 1) & 1))
+										newy = (tl + tr + bl + br) >> 1;
+									reg_G3_VTX_10 = (x << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
 								}
+								else
+									reg_G3_VTX_10 = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+								reg_G3_NORMAL = pmap2[1].normal;
+								if (lodData[y * 128 + (x + 1)])
+								{
+									uint8_t tl = pmap3[0].y;
+									uint8_t tr = pmap3[2].y;
+									uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
+									uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
+									uint16_t newy;
+									if (((x + 1) & 1) && !(y & 1))
+										newy = tl + tr;
+									else if (!((x + 1) & 1) && (y & 1))
+										newy = tr + br;
+									else if (((x + 1) & 1) && (y & 1))
+										newy = (tl + tr + bl + br) >> 1;
+									reg_G3_VTX_10 = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | (y << GX_VEC_VTX10_Z_SHIFT);
+								}
+								else
+									reg_G3_VTX_10 = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (pmap2[1].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+								reg_G3_NORMAL = pmap2[MAP_BLOCK_WIDTH + 1].normal;
+								if (lodData[(y + 1) * 128 + (x + 1)])
+								{
+									uint8_t tl = pmap3[0].y;
+									uint8_t tr = pmap3[2].y;
+									uint8_t bl = pmap3[2 * MAP_BLOCK_WIDTH].y;
+									uint8_t br = pmap3[2 * MAP_BLOCK_WIDTH + 2].y;
+									uint16_t newy;
+									if (((x + 1) & 1) && !((y + 1) & 1))
+										newy = bl + br;
+									else if (!((x + 1) & 1) && ((y + 1) & 1))
+										newy = tr + br;
+									else if (((x + 1) & 1) && ((y + 1) & 1))
+										newy = (tl + tr + bl + br) >> 1;
+									reg_G3_VTX_10 = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (newy << GX_VEC_VTX10_Y_SHIFT) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+								}
+								else
+									reg_G3_VTX_10 = ((x + 1) << GX_VEC_VTX10_X_SHIFT) | (pmap2[MAP_BLOCK_WIDTH + 1].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 1) << GX_VEC_VTX10_Z_SHIFT);
+								reg_G3_END_VTXS = 0;
 							}
 							else
 							{
@@ -409,6 +401,21 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 					ymul * Y_OFFSET;
 				fx32 xadd2 = camDir->x * 2 * FX32_ONE;
 				fx32 zadd2 = camDir->z * 2 * FX32_ONE;
+#define MAP_FAR_DRAWINGFLAG_STARTED	1
+				u32 drawingFlags = 0;
+#define MAP_FAR_DRAWING_START_EXT_STRIP() \
+				do { \
+					reg_G3_TEXIMAGE_PARAM = 0; \
+					reg_G3_BEGIN_VTXS = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP); \
+					drawingFlags |= MAP_FAR_DRAWINGFLAG_STARTED; \
+				} while(0)
+#define MAP_FAR_DRAWING_END_EXT_STRIP() \
+				do { \
+					reg_G3_END_VTXS = 0; \
+					reg_G3_LIGHT_COLOR = GX_PACK_LIGHTCOLOR_PARAM(0, clr); \
+					drawingFlags &= ~MAP_FAR_DRAWINGFLAG_STARTED; \
+				} while(0)
+
 				for (int y = zstart; y < zend; y += 2)
 				{
 					hvtx_t* pmap2 = pmap;
@@ -424,6 +431,9 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 							lodData[(y + 1) * 128 + (x + 1)] = 1;
 							lodData[(y + 2) * 128 + (x + 1)] = 1;
 							lodData[(y + 1) * 128 + (x + 2)] = 1;
+
+							if (drawingFlags & MAP_FAR_DRAWINGFLAG_STARTED)
+								MAP_FAR_DRAWING_END_EXT_STRIP();
 
 							uint32_t texOffset = mTerrainTextureManager8->GetTextureAddress(
 								pmap2[0].tex,
@@ -447,33 +457,23 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 							lodData[(y + 2) * 128 + (x + 1)] = 1;
 							lodData[(y + 1) * 128 + (x + 2)] = 1;
 
-							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_TEXIMAGE_PARAM, G3OP_BEGIN, G3OP_LIGHT_COLOR, G3OP_NORMAL);
+							if (!(drawingFlags & MAP_FAR_DRAWINGFLAG_STARTED))
 							{
-								reg_G3X_GXFIFO = 0;
-								reg_G3X_GXFIFO = GX_PACK_BEGIN_PARAM(GX_BEGIN_TRIANGLE_STRIP);
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColorsFixed[pmap2[0].tex]);
-								reg_G3X_GXFIFO = pmap2[0].normal;
+								MAP_FAR_DRAWING_START_EXT_STRIP();
+								reg_G3_LIGHT_COLOR = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColorsFixed[pmap2[0].tex]);
+								reg_G3_NORMAL = pmap2[0].normal;
+								reg_G3_VTX_10 = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+								reg_G3_LIGHT_COLOR = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColorsFixed[pmap2[2 * MAP_BLOCK_WIDTH].tex]);
+								reg_G3_NORMAL = pmap2[2 * MAP_BLOCK_WIDTH].normal;
+								reg_G3_VTX_10 = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
 							}
-							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_VTX_10, G3OP_LIGHT_COLOR, G3OP_NORMAL, G3OP_VTX_10);
-							{
-								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[0].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColorsFixed[pmap2[2 * MAP_BLOCK_WIDTH].tex]);
-								reg_G3X_GXFIFO = pmap2[2 * MAP_BLOCK_WIDTH].normal;
-								reg_G3X_GXFIFO = (x << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
-							}
-							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_LIGHT_COLOR, G3OP_NORMAL, G3OP_VTX_10, G3OP_LIGHT_COLOR);
-							{
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColorsFixed[pmap2[2].tex]);
-								reg_G3X_GXFIFO = pmap2[2].normal;
-								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColorsFixed[pmap2[2 * MAP_BLOCK_WIDTH + 2].tex]);
-							}
-							reg_G3X_GXFIFO = GX_PACK_OP(G3OP_NORMAL, G3OP_VTX_10, G3OP_END, G3OP_LIGHT_COLOR);
-							{
-								reg_G3X_GXFIFO = pmap2[2 * MAP_BLOCK_WIDTH + 2].normal;
-								reg_G3X_GXFIFO = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH + 2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
-								reg_G3X_GXFIFO = GX_PACK_LIGHTCOLOR_PARAM(0, clr);
-							}
+
+							reg_G3_LIGHT_COLOR = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColorsFixed[pmap2[2].tex]);
+							reg_G3_NORMAL = pmap2[2].normal;
+							reg_G3_VTX_10 = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | (y << GX_VEC_VTX10_Z_SHIFT);
+							reg_G3_LIGHT_COLOR = GX_PACK_LIGHTCOLOR_PARAM(0, mTerrainTextureManager16->mMeanColorsFixed[pmap2[2 * MAP_BLOCK_WIDTH + 2].tex]);
+							reg_G3_NORMAL = pmap2[2 * MAP_BLOCK_WIDTH + 2].normal;
+							reg_G3_VTX_10 = ((x + 2) << GX_VEC_VTX10_X_SHIFT) | (pmap2[2 * MAP_BLOCK_WIDTH + 2].y << (GX_VEC_VTX10_Y_SHIFT + 1)) | ((y + 2) << GX_VEC_VTX10_Z_SHIFT);
 #ifdef DEBUG_TILE_COUNT
 							count++;
 #endif
@@ -481,6 +481,8 @@ void Map::Render(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, bool
 						distbase2 += xadd2;
 						pmap2 += 2;
 					}
+					if (drawingFlags & MAP_FAR_DRAWINGFLAG_STARTED)
+						MAP_FAR_DRAWING_END_EXT_STRIP();
 					distbase += zadd2;
 					pmap += 2 * MAP_BLOCK_WIDTH;
 				}
