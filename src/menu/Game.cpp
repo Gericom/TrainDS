@@ -316,11 +316,6 @@ void Game::OnPenMove(int x, int y)
 	mDragTool->OnPenMove(x, y);
 }
 
-int state = 0;
-int firstX;
-int firstZ;
-FlexTrack* piece;
-
 void Game::OnPenUp(int x, int y)
 {
 	mDragTool->OnPenUp(x, y);

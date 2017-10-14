@@ -54,8 +54,6 @@ static void VEC_MinMax(VecFx32* a, VecFx32* min, VecFx32* max)
 
 static void calculateVisibleGrid(VecFx32* bbmin, VecFx32* bbmax)
 {
-	int y = 0;
-
 	//calculate the corners of the frustum box
 	VecFx32 far_top_left;
 	VecFx32 near_top_left;
@@ -87,6 +85,96 @@ static void calculateVisibleGrid(VecFx32* bbmin, VecFx32* bbmax)
 
 	*bbmin = min;
 	*bbmax = max;
+}
+
+void GameController::RenderSky()
+{
+	//just for testing totd
+	if (gKeys & PAD_BUTTON_X)
+		mTOTDController->Update();
+
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, 56 * FX32_ONE, 40960 * 4);
+	NNS_G3dGlbFlushP();
+	NNS_G3dGeFlushBuffer();
+	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 62, 30, 0);
+	G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S8, GX_TEXSIZE_T8, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
+	G3_PushMtx();
+	{
+		G3_Translate(mCamera->mDestination.x, 0, mCamera->mDestination.z);
+		G3_PushMtx();
+		{
+			G3_Scale(50 * FX32_ONE, 50 * FX32_ONE, 50 * FX32_ONE);
+			mHemisphere->Render();
+		}
+		G3_PopMtx(1);
+		//sun
+		G3_Translate(mSunPosition.x, mSunPosition.y, mSunPosition.z);
+
+		Util_SetupBillboardMatrix();
+		G3_Translate(0, -4 * FX32_ONE, 2 * FX32_ONE);
+
+		VecFx32 sunDir;
+		VEC_Normalize(&mSunPosition, &sunDir);
+		VecFx32 camDir;
+		mCamera->GetLookDirection(&camDir);
+		fx32 alpha = VEC_DotProduct(&sunDir, &camDir);
+		if (alpha < 0)
+		{
+			mSunX = -1;
+			mSunY = -1;
+			mFlareAlpha = 0;
+		}
+		else
+		{
+			mFlareAlpha = ((FX_Mul(alpha, alpha) - FX32_CONST(0.3)) * 31) >> 12;
+			if (mFlareAlpha < 0)
+				mFlareAlpha = 0;
+			NNS_G3dLocalOriginToScrPos(&mSunX, &mSunY);
+		}
+
+		G3_Scale(6 * FX32_ONE, 6 * FX32_ONE, 6 * FX32_ONE);
+
+		int r = (mLightColor & 0x1F) * 2;
+		if (r > 31)
+			r = 31;
+		int g = ((mLightColor >> 5) & 0x1F) * 2;
+		if (g > 31)
+			g = 31;
+		int b = ((mLightColor >> 10) & 0x1F) * 2;
+		if (b > 31)
+			b = 31;
+
+		mSunColorMatch = GX_RGB(r, g, b);
+
+		G3_Color(GX_RGB(r, g, b));
+
+		texture_t* tex = mMap->mTerrainManager->GetSunTexture();
+		G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
+			GX_TEXGEN_TEXCOORD,    // use texcoord
+			(GXTexSizeS)tex->nitroWidth,        // 16 pixels
+			(GXTexSizeT)tex->nitroHeight,        // 16 pixels
+			GX_TEXREPEAT_NONE,     // no repeat
+			GX_TEXFLIP_NONE,       // no flip
+			GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
+			NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
+		);
+		G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
+
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, 0);
+		G3_Begin(GX_BEGIN_QUADS);
+		{
+			G3_TexCoord(0, 0);
+			G3_Vtx(-FX32_HALF, FX32_HALF, 0);
+			G3_TexCoord(0, 32 * FX32_ONE);
+			G3_Vtx(-FX32_HALF, -FX32_HALF, 0);
+			G3_TexCoord(32 * FX32_ONE, 32 * FX32_ONE);
+			G3_Vtx(FX32_HALF, -FX32_HALF, 0);
+			G3_TexCoord(32 * FX32_ONE, 0);
+			G3_Vtx(FX32_HALF, FX32_HALF, 0);
+		}
+		G3_End();
+	}
+	G3_PopMtx(1);
 }
 
 void GameController::RenderFlare()
@@ -256,7 +344,7 @@ void GameController::Render(RenderMode mode)
 	else
 	{
 		NNS_G3dGlbMaterialColorDiffAmb(GX_RGB(31, 31, 31), /*GX_RGB(5, 5, 5)*/GX_RGB(10, 10, 10), false);
-		NNS_G3dGlbMaterialColorSpecEmi(/*GX_RGB(3, 3, 3)*/GX_RGB(1, 1, 1), GX_RGB(0, 0, 0), false);
+		NNS_G3dGlbMaterialColorSpecEmi(/*GX_RGB(3, 3, 3)*/GX_RGB(6, 6, 6), GX_RGB(0, 0, 0), false);
 	}
 
 	fx32 newDist = 0;
@@ -337,93 +425,8 @@ void GameController::Render(RenderMode mode)
 			mTrain->Render();		
 		}
 		G3_PopMtx(1);
-		//skybox
 		if (mode == RENDER_MODE_FAR)
-		{
-			if (gKeys & PAD_BUTTON_X)
-				mTOTDController->Update();
-
-			NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, 56 * FX32_ONE, 40960 * 4);
-			NNS_G3dGlbFlushP();
-			NNS_G3dGeFlushBuffer();
-			G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 62, 30, 0);
-			G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S8, GX_TEXSIZE_T8, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
-			G3_PushMtx();
-			{
-				G3_Translate(mCamera->mDestination.x, 0, mCamera->mDestination.z);
-				G3_PushMtx();
-				{
-					G3_Scale(50 * FX32_ONE, 50 * FX32_ONE, 50 * FX32_ONE);
-					mHemisphere->Render();
-				}
-				G3_PopMtx(1);
-				//sun
-				G3_Translate(mSunPosition.x, mSunPosition.y, mSunPosition.z);
-
-				Util_SetupBillboardMatrix();
-				G3_Translate(0, -4 * FX32_ONE, 2 * FX32_ONE);
-
-				VecFx32 sunDir;
-				VEC_Normalize(&mSunPosition, &sunDir);
-				fx32 alpha = VEC_DotProduct(&sunDir, &camDir);
-				if (alpha < 0)
-				{
-					mSunX = -1;
-					mSunY = -1;
-					mFlareAlpha = 0;
-				}
-				else
-				{
-					mFlareAlpha = ((FX_Mul(alpha, alpha) - FX32_CONST(0.3)) * 31) >> 12;
-					if (mFlareAlpha < 0)
-						mFlareAlpha = 0;
-					NNS_G3dLocalOriginToScrPos(&mSunX, &mSunY);
-				}
-
-				G3_Scale(6 * FX32_ONE, 6 * FX32_ONE, 6 * FX32_ONE);
-
-				int r = (mLightColor & 0x1F) * 2;
-				if (r > 31)
-					r = 31;
-				int g = ((mLightColor >> 5) & 0x1F) * 2;
-				if (g > 31)
-					g = 31;
-				int b = ((mLightColor >> 10) & 0x1F) * 2;
-				if (b > 31)
-					b = 31;
-
-				mSunColorMatch = GX_RGB(r, g, b);
-
-				G3_Color(GX_RGB(r, g, b));
-
-				texture_t* tex = mMap->mTerrainManager->GetSunTexture();
-				G3_TexImageParam((GXTexFmt)tex->nitroFormat,       // use alpha texture
-					GX_TEXGEN_TEXCOORD,    // use texcoord
-					(GXTexSizeS)tex->nitroWidth,        // 16 pixels
-					(GXTexSizeT)tex->nitroHeight,        // 16 pixels
-					GX_TEXREPEAT_NONE,     // no repeat
-					GX_TEXFLIP_NONE,       // no flip
-					GX_TEXPLTTCOLOR0_USE,  // use color 0 of the palette
-					NNS_GfdGetTexKeyAddr(tex->texKey)     // the offset of the texture image
-				);
-				G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(tex->plttKey), (GXTexFmt)tex->nitroFormat);
-
-				G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0, 31, 0);
-				G3_Begin(GX_BEGIN_QUADS);
-				{
-					G3_TexCoord(0, 0);
-					G3_Vtx(-FX32_HALF, FX32_HALF, 0);
-					G3_TexCoord(0, 32 * FX32_ONE);
-					G3_Vtx(-FX32_HALF, -FX32_HALF, 0);
-					G3_TexCoord(32 * FX32_ONE, 32 * FX32_ONE);
-					G3_Vtx(FX32_HALF, -FX32_HALF, 0);
-					G3_TexCoord(32 * FX32_ONE, 0);
-					G3_Vtx(FX32_HALF, FX32_HALF, 0);
-				}
-				G3_End();
-			}
-			G3_PopMtx(1);
-		}
+			RenderSky();
 	}
 	G3_PopMtx(1);
 	if (mode == RENDER_MODE_NEAR)

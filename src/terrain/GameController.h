@@ -13,6 +13,7 @@ class LookAtCamera;
 class GameController
 {
 private:
+	void RenderSky();
 	void RenderFlare();
 
 	void UpdateSingleFrame()

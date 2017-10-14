@@ -174,7 +174,7 @@ static void ExceptionHandler(u32 ptr, void* arg)
 	GX_SetDispSelect(GX_DISP_SELECT_MAIN_SUB);
 
 	NOCASH_Break();
-	while (1);
+	while (true);
 }
 
 void NitroStartUp()
@@ -362,7 +362,7 @@ void NitroMain ()
 		//clean up some gfx stuff
 		Util_Reset2D();
 	}
-	while (1)
+	while (true)
 	{
 		OS_WaitVBlankIntr();
 	}
