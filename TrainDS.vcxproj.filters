@@ -187,6 +187,9 @@
     <ClCompile Include="src\menu\Loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui\layoutengine\behavior\ButtonBehavior.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\util.h">
@@ -403,6 +406,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\layoutengine\FontManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\layoutengine\behavior\Behavior.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\layoutengine\behavior\ButtonBehavior.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

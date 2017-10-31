@@ -40,8 +40,8 @@
     <NMakeOutput>run.bat</NMakeOutput>
     <NMakeCleanCommandLine>clean</NMakeCleanCommandLine>
     <NMakeReBuildCommandLine>rebuild</NMakeReBuildCommandLine>
-    <NMakePreprocessorDefinitions>SDK_ARM9;SDK_CODE_ARM;asm=;BOOL=bool</NMakePreprocessorDefinitions>
-    <IncludePath>$(NITROSDK_ROOT)\include;$(ProjectDir)\src;$(NITROSYSTEM_ROOT)\include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C\MSL_Common\Include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C++\MSL_Common\Include</IncludePath>
+    <NMakePreprocessorDefinitions>SDK_ARM9;SDK_CODE_ARM;asm=;BOOL=bool;__arm__</NMakePreprocessorDefinitions>
+    <IncludePath>$(NITROSDK_ROOT)\include;$(ProjectDir)\src;$(NITROSYSTEM_ROOT)\include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C\MSL_Common\Include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C++\MSL_Common\Include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_Extras\MSL_ARM\Include</IncludePath>
     <NMakeForcedIncludes>
     </NMakeForcedIncludes>
   </PropertyGroup>
@@ -107,6 +107,7 @@
     <ClCompile Include="src\tools\AddTrackTool.cpp" />
     <ClCompile Include="src\tools\DragTool.cpp" />
     <ClCompile Include="src\tools\PointerTool.cpp" />
+    <ClCompile Include="src\ui\layoutengine\behavior\ButtonBehavior.cpp" />
     <ClCompile Include="src\ui\layoutengine\Layout.cpp" />
     <ClCompile Include="src\ui\layoutengine\Pane.cpp" />
     <ClCompile Include="src\ui\layoutengine\PicturePane.cpp" />
@@ -177,6 +178,8 @@
     <ClInclude Include="src\tools\Tool.h" />
     <ClInclude Include="src\ui\components\Button.h" />
     <ClInclude Include="src\ui\components\UIComponent.h" />
+    <ClInclude Include="src\ui\layoutengine\behavior\Behavior.h" />
+    <ClInclude Include="src\ui\layoutengine\behavior\ButtonBehavior.h" />
     <ClInclude Include="src\ui\layoutengine\FontManager.h" />
     <ClInclude Include="src\ui\layoutengine\Layout.h" />
     <ClInclude Include="src\ui\layoutengine\lyt_res_struct.h" />

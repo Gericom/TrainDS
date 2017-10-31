@@ -24,6 +24,8 @@ protected:
 	Layout::LayoutScreen mScreen;
 	u32 mObjVramOffset;
 
+	void RenderContent();
+
 	void SetupCanvas(u32 &freeObjVramOffset)
 	{
 		int areaWidth = (mWidth + 7) / 8;
@@ -71,6 +73,4 @@ public:
 		delete mTextCharacterData;
 		delete mTextCell;
 	}
-
-	virtual void Render();
 };

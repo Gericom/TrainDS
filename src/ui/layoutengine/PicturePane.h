@@ -14,7 +14,7 @@ public:
 		: Pane(parent, pic1Res, name), mCell(cell)
 	{ }
 
-	virtual void Render();
+	void RenderContent();
 
 	const NNSG2dCellData* GetCell() const { return mCell; }
 	void SetCell(const NNSG2dCellData* cell) { mCell = cell; }

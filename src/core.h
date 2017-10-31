@@ -24,6 +24,11 @@
 		FS_SetDefaultDMA(default_dma);	\
 	} while (false);
 
+#define CALLBACK_FUNC(accessor, class_name, func_name)										\
+	accessor: void func_name##();															\
+	public: static void func_name##(void* arg) { ((##class_name##*)arg)->##func_name##(); } \
+	accessor:
+
 //fix error in include (; removed)
 #undef GX_FX32_FX10_MAX
 #undef GX_FX32_FX10_MIN

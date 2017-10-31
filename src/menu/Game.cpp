@@ -213,10 +213,10 @@ void Game::Initialize(int arg)
 	G2S_SetBG0Priority(3);
 	G2S_SetBG3Priority(0);
 
-	mUIManager = new UIManager(UIManager::UI_MANAGER_SCREEN_MAIN);
-	mUIManager->AddUIComponent(new Button(0, 0, 20, 20, NNS_G2dGetCellDataByIdx(mCellDataMainBank, 0), NNS_G2dGetCellDataByIdx(mCellDataMainBank, 1)));
-	mUIManager->AddUIComponent(new Button(0, 20, 20, 20, NNS_G2dGetCellDataByIdx(mCellDataMainBank, 2), NNS_G2dGetCellDataByIdx(mCellDataMainBank, 3)));
-	mUIManager->AddUIComponent(new Button(0, 40, 20, 20, NNS_G2dGetCellDataByIdx(mCellDataMainBank, 4), NNS_G2dGetCellDataByIdx(mCellDataMainBank, 5)));
+	mUIManager = new UIManager(UIManager::UI_MANAGER_SCREEN_MAIN, &mImageProxyMain, &mImagePaletteProxyMain);
+	//mUIManager->AddUIComponent(new Button(0, 0, 20, 20, NNS_G2dGetCellDataByIdx(mCellDataMainBank, 0), NNS_G2dGetCellDataByIdx(mCellDataMainBank, 1)));
+	//mUIManager->AddUIComponent(new Button(0, 20, 20, 20, NNS_G2dGetCellDataByIdx(mCellDataMainBank, 2), NNS_G2dGetCellDataByIdx(mCellDataMainBank, 3)));
+	//mUIManager->AddUIComponent(new Button(0, 40, 20, 20, NNS_G2dGetCellDataByIdx(mCellDataMainBank, 4), NNS_G2dGetCellDataByIdx(mCellDataMainBank, 5)));
 	mUIManager->RegisterPenCallbacks(OnPenDown, OnPenMove, OnPenUp, this);
 
 	NNS_SndArcLoadSeqArc(SEQ_TRAIN, gSndHeapHandle);

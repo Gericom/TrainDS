@@ -10,6 +10,7 @@
 #include "ui/layoutengine/Layout.h"
 #include "ui/layoutengine/PicturePane.h"
 class TitleSequencePlayer;
+class ButtonBehavior;
 
 class TitleMenu : public SimpleMenu
 {
@@ -40,15 +41,17 @@ private:
 
 	NNSGfdVramTransferTask mVramTransferTaskArray[TITLE_MENU_VRAM_TRANSFER_MANAGER_NR_TASKS];
 
-	NNSG2dOamManagerInstance mSubObjOamManager;
-	GXOamAttr mTmpSubOamBuffer[128];
-	NNSG2dRendererInstance mOAMRender;
-	NNSG2dRenderSurface mOAMRenderSurface;
+	UIManager* mSubUIManager;
+
+	//NNSG2dOamManagerInstance mSubObjOamManager;
+	//GXOamAttr mTmpSubOamBuffer[128];
+	//NNSG2dRendererInstance mOAMRender;
+	//NNSG2dRenderSurface mOAMRenderSurface;
 	NNSG2dImageProxy mImageProxy;
 	NNSG2dImagePaletteProxy mImagePaletteProxy;
 	Layout* mLayoutTest;
 	NNSG2dCellDataBank* mLayoutCellDataBank;
-	PicturePane* mButtons[2][4];
+	ButtonBehavior* mButtons[2][4];
 	//PicturePane* mMissionsButton;
 	//PicturePane* mSandboxButton;
 	//PicturePane* mDepotButton;
@@ -73,6 +76,12 @@ private:
 
 	bool mSwap;
 	void SetSwapBuffersFlag();
+
+	CALLBACK_FUNC(private, TitleMenu, OnMissionsButtonActivate);
+	CALLBACK_FUNC(private, TitleMenu, OnSandboxButtonActivate);
+	CALLBACK_FUNC(private, TitleMenu, OnDepotButtonActivate);
+	CALLBACK_FUNC(private, TitleMenu, OnCloneBootButtonActivate);
+	CALLBACK_FUNC(private, TitleMenu, OnOptionsButtonActivate);
 public:
 	TitleMenu() : SimpleMenu(17, 17), mRenderMode(GameController::RENDER_MODE_FAR), mState(TITLE_MENU_STATE_LOGO_IN), mStateCounter(0),
 		mPassedFrameCounter(1), mSwap(false), mSelectedButton(0), mKeyCounter(0), mKeyDelay(0), mLeftRight(0)
@@ -100,8 +109,8 @@ public:
 		gNextMenuCreateFunc = CreateMenu;
 	}
 
-	static BOOL CallBackAddOam(const GXOamAttr* pOam, u16 affineIndex, BOOL bDoubleAffine);
-	static u16 CallBackAddAffine(const MtxFx22* mtx);
+	//static BOOL CallBackAddOam(const GXOamAttr* pOam, u16 affineIndex, BOOL bDoubleAffine);
+	//static u16 CallBackAddAffine(const MtxFx22* mtx);
 
 private:
 	void HandleKeys();

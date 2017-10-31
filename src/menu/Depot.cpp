@@ -5,6 +5,7 @@
 #include "util.h"
 #include "Menu.h"
 #include "Depot.h"
+#include "TitleMenu.h"
 
 static void rotEnvMap(NNSG3dRS* rs)
 {
@@ -85,20 +86,24 @@ void Depot::Initialize(int arg)
 	NNS_GfdResetLnkTexVramState();
 	NNS_GfdResetLnkPlttVramState();
 
-	mEnvModel = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbmd", NULL, FALSE);
+	mEnvModel = (NNSG3dResFileHeader*)Util_LoadLZ77FileToBuffer("/data/wagons/atsf_f7/low.nsbmd.lz", NULL, FALSE);
 	NNS_G3dResDefaultSetup(mEnvModel);
-	NNSG3dResFileHeader* mEnvTextures = (NNSG3dResFileHeader*)Util_LoadFileToBuffer("/data/locomotives/atsf_f7/low.nsbtx", NULL, TRUE);
+	NNSG3dResFileHeader* mEnvTextures = (NNSG3dResFileHeader*)Util_LoadLZ77FileToBuffer("/data/wagons/atsf_f7/low.nsbtx.lz", NULL, TRUE);
 	NNS_G3dResDefaultSetup(mEnvTextures);
 	NNSG3dResMdl* model = NNS_G3dGetMdlByIdx(NNS_G3dGetMdlSet(mEnvModel), 0);
 	NNSG3dResTex* tex = NNS_G3dGetTex(mEnvTextures);
 	NNS_G3dBindMdlSet(NNS_G3dGetMdlSet(mEnvModel), tex);
 	NNS_G3dRenderObjInit(&mEnvRenderObj, model);
 	NNS_FndFreeToExpHeap(gHeapHandle, mEnvTextures);
-	NNS_G3dRenderObjSetCallBack(&mEnvRenderObj, &rotEnvMap, NULL, NNS_G3D_SBC_ENVMAP, NNS_G3D_SBC_CALLBACK_TIMING_B);
+	//NNS_G3dRenderObjSetCallBack(&mEnvRenderObj, &rotEnvMap, NULL, NNS_G3D_SBC_ENVMAP, NNS_G3D_SBC_CALLBACK_TIMING_B);
 }
 
 void Depot::Render()
 {
+	Core_ReadInput();
+	if (gKeys & PAD_BUTTON_B)
+		TitleMenu::GotoMenu();
+
 	G3X_Reset();
 	G3X_ResetMtxStack();
 	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 1 * 4096, 512 * 4096, 40960);

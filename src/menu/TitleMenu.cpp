@@ -12,16 +12,19 @@
 #include "engine/TitleSequencePlayer.h"
 #include "Game.h"
 #include "MultibootMenu.h"
+#include "ui/UIManager.h"
 #include "ui/layoutengine/Layout.h"
 #include "ui/layoutengine/FontManager.h"
 #include "Loader.h"
 #include "TitleMenu.h"
 #include "ui/layoutengine/PicturePane.h"
+#include "ui/layoutengine/behavior/ButtonBehavior.h"
+#include "Depot.h"
 
 #define SWAP_BUFFERS_SORTMODE	GX_SORTMODE_MANUAL //AUTO
 #define SWAP_BUFFERS_BUFFERMODE	GX_BUFFERMODE_Z
 
-BOOL TitleMenu::CallBackAddOam(const GXOamAttr* pOam, u16 affineIndex, BOOL bDoubleAffine)
+/*BOOL TitleMenu::CallBackAddOam(const GXOamAttr* pOam, u16 affineIndex, BOOL bDoubleAffine)
 {
 #pragma unused( bDoubleAffine )
 	return NNS_G2dEntryOamManagerOamWithAffineIdx(&((TitleMenu*)gRunningMenu)->mSubObjOamManager, pOam, affineIndex);
@@ -30,7 +33,7 @@ BOOL TitleMenu::CallBackAddOam(const GXOamAttr* pOam, u16 affineIndex, BOOL bDou
 u16 TitleMenu::CallBackAddAffine(const MtxFx22* mtx)
 {
 	return NNS_G2dEntryOamManagerAffine(&((TitleMenu*)gRunningMenu)->mSubObjOamManager, mtx);
-}
+}*/
 
 void TitleMenu::Initialize(int arg)
 {
@@ -127,7 +130,8 @@ void TitleMenu::Initialize(int arg)
 	NNS_G2dArrangeOBJ1D((GXOamAttr*)HW_OAM, 32, 2, 0, 168 + 6, GX_OAM_COLORMODE_16, 0, NNS_G2D_OBJVRAMMODE_32K);
 
 	NNS_G2dInitOamManagerModule();
-	NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_SUB);
+	mSubUIManager = new UIManager(UIManager::UI_MANAGER_SCREEN_SUB, &mImageProxy, &mImagePaletteProxy);
+	//NNS_G2dGetNewOamManagerInstanceAsFastTransferMode(&mSubObjOamManager, 0, 128, NNS_G2D_OAMTYPE_SUB);
 
 	void* cData = Util_LoadFileToBuffer("/data/menu/title/titlelayout.ncer", NULL, FALSE);
 	NNS_G2dGetUnpackedCellBank(cData, &mLayoutCellDataBank);
@@ -153,33 +157,36 @@ void TitleMenu::Initialize(int arg)
 	mLayoutTest = new Layout(lytData, Layout::LAYOUT_SCREEN_SUB, mLayoutCellDataBank, mFontManager, objDataOffset);
 	NNS_FndFreeToExpHeap(gHeapHandle, lytData);
 
-	PicturePane* btn_missions = (PicturePane*)mLayoutTest->FindPaneByName("btn_missions");
-	btn_missions->SetCell(NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 2));
-	mButtons[0][0] = btn_missions;
-	mButtons[1][0] = btn_missions;
-	PicturePane* btn_sandbox = (PicturePane*)mLayoutTest->FindPaneByName("btn_sandbox");
-	mButtons[0][1] = btn_sandbox;
-	mButtons[1][1] = btn_sandbox;
-	PicturePane* btn_depot = (PicturePane*)mLayoutTest->FindPaneByName("btn_depot");
-	mButtons[0][2] = btn_depot;
-	mButtons[1][2] = btn_depot;
-	mButtons[0][3] = (PicturePane*)mLayoutTest->FindPaneByName("btn_clone");
-	mButtons[1][3] = (PicturePane*)mLayoutTest->FindPaneByName("btn_options");
+	const NNSG2dCellData* buttonBigNormal = NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 0);
+	const NNSG2dCellData* buttonBigDown = NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 2);
+	const NNSG2dCellData* buttonSmallNormal = NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 1);
+	const NNSG2dCellData* buttonSmallDown = NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 3);
 
-	NNS_G2dInitRenderer(&mOAMRender);
-	NNS_G2dInitRenderSurface(&mOAMRenderSurface);
+	ButtonBehavior* behavior = new ButtonBehavior(buttonBigNormal, buttonBigDown, true);
+	behavior->SetOnActivateHandler(OnMissionsButtonActivate, this);
+	mLayoutTest->FindPaneByName("btn_missions")->SetBehavior(behavior);
+	mButtons[0][0] = behavior;
+	mButtons[1][0] = behavior;
+	behavior = new ButtonBehavior(buttonBigNormal, buttonBigDown);
+	behavior->SetOnActivateHandler(OnSandboxButtonActivate, this);
+	mLayoutTest->FindPaneByName("btn_sandbox")->SetBehavior(behavior);
+	mButtons[0][1] = behavior;
+	mButtons[1][1] = behavior;
+	behavior = new ButtonBehavior(buttonBigNormal, buttonBigDown);
+	behavior->SetOnActivateHandler(OnDepotButtonActivate, this);
+	mLayoutTest->FindPaneByName("btn_depot")->SetBehavior(behavior);
+	mButtons[0][2] = behavior;
+	mButtons[1][2] = behavior;
+	behavior = new ButtonBehavior(buttonSmallNormal, buttonSmallDown);
+	behavior->SetOnActivateHandler(OnCloneBootButtonActivate, this);
+	mLayoutTest->FindPaneByName("btn_clone")->SetBehavior(behavior);
+	mButtons[0][3] = behavior;
+	behavior = new ButtonBehavior(buttonSmallNormal, buttonSmallDown);
+	behavior->SetOnActivateHandler(OnOptionsButtonActivate, this);
+	mLayoutTest->FindPaneByName("btn_options")->SetBehavior(behavior);
+	mButtons[1][3] = behavior;
 
-	mOAMRenderSurface.viewRect.posTopLeft.x = 0;
-	mOAMRenderSurface.viewRect.posTopLeft.y = 0;
-	mOAMRenderSurface.viewRect.sizeView.x = 256 * FX32_ONE;
-	mOAMRenderSurface.viewRect.sizeView.y = 192 * FX32_ONE;
-	mOAMRenderSurface.type = NNS_G2D_SURFACETYPE_SUB2D;
-
-	mOAMRenderSurface.pFuncOamRegister = CallBackAddOam;
-	mOAMRenderSurface.pFuncOamAffineRegister = CallBackAddAffine;
-
-	NNS_G2dAddRendererTargetSurface(&mOAMRender, &mOAMRenderSurface);
-	NNS_G2dSetRendererImageProxy(&mOAMRender, &mImageProxy, &mImagePaletteProxy);
+	mSubUIManager->AddLayout(mLayoutTest);
 
 	Util_LoadTextureFromCard("/data/menu/title/titlelogolarge_new_reduced_a.ntft", "/data/menu/title/titlelogolarge_new_reduced.ntfp", mLogoLargeTextureA.texKey, mLogoLargeTextureA.plttKey);
 	Util_LoadTextureFromCard("/data/menu/title/titlelogolarge_new_reduced_b.ntft", NULL, mLogoLargeTextureB.texKey, mLogoLargeTextureB.plttKey);
@@ -213,6 +220,31 @@ void TitleMenu::Initialize(int arg)
 	OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIrqHandler);
 }
 
+void TitleMenu::OnMissionsButtonActivate()
+{
+
+}
+
+void TitleMenu::OnSandboxButtonActivate()
+{
+	Game::GotoMenu();
+}
+
+void TitleMenu::OnDepotButtonActivate()
+{
+	Depot::GotoMenu();
+}
+
+void TitleMenu::OnCloneBootButtonActivate()
+{
+	MultibootMenu::GotoMenu();
+}
+
+void TitleMenu::OnOptionsButtonActivate()
+{
+
+}
+
 void TitleMenu::OnVRAMCopyVAlarm()
 {
 	if (mRenderMode == GameController::RENDER_MODE_NEAR)
@@ -226,11 +258,10 @@ void TitleMenu::OnVRAMCopyVAlarm()
 
 void TitleMenu::Render()
 {
+	mSubUIManager->ProcessInput();
 	Core_ReadInput();
-	if (mSelectedButton == 1 && (gKeys & PAD_BUTTON_A))
-		Game::GotoMenu();
-	else if (mSelectedButton == 3 && mLeftRight == 0 && (gKeys & PAD_BUTTON_A))
-		MultibootMenu::GotoMenu();
+	if (gKeys & PAD_BUTTON_A)
+		mButtons[mLeftRight][mSelectedButton]->Activate();
 
 	u16 heldKeys = 0;
 	if (gKeys != gOldKeys)
@@ -250,10 +281,7 @@ void TitleMenu::Render()
 
 	if (heldKeys & (PAD_KEY_UP | PAD_KEY_DOWN))
 	{
-		if (mSelectedButton != 3)
-			mButtons[mLeftRight][mSelectedButton]->SetCell(NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 0));
-		else
-			mButtons[mLeftRight][mSelectedButton]->SetCell(NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 1));
+		mButtons[mLeftRight][mSelectedButton]->SetSelected(false);
 		if (heldKeys & PAD_KEY_UP)
 		{			
 			if (mSelectedButton == 0)
@@ -268,16 +296,13 @@ void TitleMenu::Render()
 			else
 				mSelectedButton++;
 		}
-		if (mSelectedButton != 3)
-			mButtons[mLeftRight][mSelectedButton]->SetCell(NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 2));
-		else
-			mButtons[mLeftRight][mSelectedButton]->SetCell(NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 3));
+		mButtons[mLeftRight][mSelectedButton]->SetSelected(true);
 	}
 	if (mSelectedButton == 3 && (heldKeys & (PAD_KEY_LEFT | PAD_KEY_RIGHT)))
 	{
-		mButtons[mLeftRight][mSelectedButton]->SetCell(NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 1));
+		mButtons[mLeftRight][mSelectedButton]->SetSelected(false);
 		mLeftRight = !mLeftRight;
-		mButtons[mLeftRight][mSelectedButton]->SetCell(NNS_G2dGetCellDataByIdx(mLayoutCellDataBank, 3));
+		mButtons[mLeftRight][mSelectedButton]->SetSelected(true);
 	}
 	G3X_Reset();
 	if (mRenderMode == GameController::RENDER_MODE_FAR)
@@ -368,11 +393,12 @@ void TitleMenu::Render()
 		Util_DrawSprite(0, (192 - 21) * FX32_ONE, 1024 * FX32_ONE, 256 * FX32_ONE, 21 * FX32_ONE);
 	}
 	SetSwapBuffersFlag();
-	NNS_G2dBeginRendering(&mOAMRender);
-	{
-		mLayoutTest->Render();
-	}
-	NNS_G2dEndRendering();
+	mSubUIManager->Render();
+	//NNS_G2dBeginRendering(&mOAMRender);
+	//{
+	//	mLayoutTest->Render();
+	//}
+	//NNS_G2dEndRendering();
 }
 
 void TitleMenu::SetSwapBuffersFlag()
@@ -416,8 +442,9 @@ void TitleMenu::VBlankIrq()
 
 void TitleMenu::VBlank()
 {
-	NNS_G2dApplyOamManagerToHW(&mSubObjOamManager);
-	NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
+	mSubUIManager->ProcessVBlank();
+	//NNS_G2dApplyOamManagerToHW(&mSubObjOamManager);
+	//NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
 	if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
 	{
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);

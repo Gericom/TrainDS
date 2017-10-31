@@ -1,5 +1,6 @@
 #pragma once
 #include "lyt_res_struct.h"
+#include "behavior/Behavior.h"
 
 class Pane
 {
@@ -19,15 +20,16 @@ protected:
 	u16 mWidth;
 	u16 mHeight;
 
-	void RenderChildren()
-	{
-		Pane* pane = NULL;
-		while ((pane = (Pane*)NNS_FndGetPrevListObject(&mChildrenList, pane)) != NULL)
-			pane->Render();
-	}
+	Behavior* mBehavior;
+
+	NNSG2dFVec2 GetBaseTranslation() const;
+	MtxFx32 ApplyTransform(const MtxFx32* mtx) const;
+	bool IsPointInBounds(const MtxFx32* mtx, fx32 px, fx32 py, NNSG2dFVec2* newPoint = NULL) const;
+
+	virtual void RenderContent() { }
 public:
 	Pane(Pane* parent, const char* name, int x, int y, int width, int height)
-		: mParent(parent), mTranslationX(x), mTranslationY(y), mRotation(0), mScaleX(FX16_ONE), mScaleY(FX16_ONE), mWidth(width), mHeight(height)
+		: mParent(parent), mTranslationX(x), mTranslationY(y), mRotation(0), mScaleX(FX16_ONE), mScaleY(FX16_ONE), mWidth(width), mHeight(height), mBehavior(NULL)
 	{
 		NNS_FND_INIT_LIST(&mChildrenList, Pane, mLink);
 		mFlags.visible = true;
@@ -41,8 +43,8 @@ public:
 	}
 
 	Pane(Pane* parent, lyt_res_pan1_t* pan1Res, const char* name)
-		: mParent(parent), mFlags(pan1Res->flags), mTranslationX(pan1Res->xtranslation), mTranslationY(pan1Res->ytranslation), 
-		mRotation(pan1Res->rotation), mScaleX(pan1Res->scalex), mScaleY(pan1Res->scaley), mWidth(pan1Res->width), mHeight(pan1Res->height)
+		: mParent(parent), mFlags(pan1Res->flags), mTranslationX(pan1Res->xtranslation), mTranslationY(pan1Res->ytranslation),
+		mRotation(pan1Res->rotation), mScaleX(pan1Res->scalex), mScaleY(pan1Res->scaley), mWidth(pan1Res->width), mHeight(pan1Res->height), mBehavior(NULL)
 	{
 		NNS_FND_INIT_LIST(&mChildrenList, Pane, mLink);
 		mName = new char[STD_StrLen(name) + 1];
@@ -54,7 +56,7 @@ public:
 		delete mName;
 	}
 
-	virtual void Render();
+	void Render();
 
 	void AddChild(Pane* pane)
 	{
@@ -75,7 +77,11 @@ public:
 		return NULL;
 	}
 
-	Pane* GetParent() const { return mParent;}
+	bool OnPenDown(const MtxFx32* mtx, fx32 px, fx32 py);
+	bool OnPenMove(const MtxFx32* mtx, fx32 px, fx32 py);
+	bool OnPenUp(const MtxFx32* mtx, fx32 px, fx32 py);
+
+	Pane* GetParent() const { return mParent; }
 	const char* GetName() const { return mName; }
 
 	bool GetVisible() const { return mFlags.visible; }
@@ -86,4 +92,10 @@ public:
 
 	int GetWidth() const { return mWidth; }
 	int GetHeight() const { return mHeight; }
+
+	void SetBehavior(Behavior* behavior)
+	{
+		mBehavior = behavior;
+		mBehavior->SetPane(this);
+	}
 };

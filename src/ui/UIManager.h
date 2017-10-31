@@ -2,6 +2,7 @@
 #define __UIMANAGER_H__
 #include <nnsys/g2d.h>
 
+class Layout;
 typedef void(*PenFunc)(void* arg, int x, int y);
 
 class UISlice;
@@ -17,7 +18,7 @@ public:
 	};
 
 private:
-	NNSFndList mUIComponentList;
+	NNSFndList mLayoutList;
 
 	TPData mLastTouchState;
 
@@ -26,14 +27,21 @@ private:
 	PenFunc mOnPenUpFunc;
 	void* mCallbackArg;
 
+	NNSG2dImageProxy* mImageProxy;
+	NNSG2dImagePaletteProxy* mImagePaletteProxy;
 	NNSG2dOamManagerInstance mOamManager;
+	NNSG2dRendererInstance mOamRenderer;
+	NNSG2dRenderSurface mOamRenderSurface;
 	GXOamAttr mOamBuffer[128];
 
 	UIManagerScreen mScreen;
-public:
-	UIManager(UIManagerScreen screen);
 
-	void AddUIComponent(UIComponent* uiComponent);
+	static BOOL CallBackAddOam(const GXOamAttr* pOam, u16 affineIndex, BOOL bDoubleAffine);
+	static u16 CallBackAddAffine(const MtxFx22* mtx);
+public:
+	UIManager(UIManagerScreen screen, NNSG2dImageProxy* imageProxy, NNSG2dImagePaletteProxy* imagePaletteProxy);
+
+	void AddLayout(Layout* layout);
 	void RegisterPenCallbacks(PenFunc onPenDown, PenFunc onPenMove, PenFunc onPenUp, void* arg)
 	{
 		mOnPenDownFunc = onPenDown;
