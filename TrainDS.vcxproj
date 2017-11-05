@@ -108,6 +108,7 @@
     <ClCompile Include="src\tools\DragTool.cpp" />
     <ClCompile Include="src\tools\PointerTool.cpp" />
     <ClCompile Include="src\ui\layoutengine\behavior\ButtonBehavior.cpp" />
+    <ClCompile Include="src\ui\layoutengine\behavior\ListRecyclerBehavior.cpp" />
     <ClCompile Include="src\ui\layoutengine\Layout.cpp" />
     <ClCompile Include="src\ui\layoutengine\Pane.cpp" />
     <ClCompile Include="src\ui\layoutengine\PicturePane.cpp" />
@@ -145,6 +146,7 @@
     <ClInclude Include="src\mb\wh.h" />
     <ClInclude Include="src\mb\wh_config.h" />
     <ClInclude Include="src\menu\Depot.h" />
+    <ClInclude Include="src\menu\DepotListAdapter.h" />
     <ClInclude Include="src\menu\Loader.h" />
     <ClInclude Include="src\menu\MultibootMenu.h" />
     <ClInclude Include="src\menu\SimpleMenu.h" />
@@ -180,6 +182,8 @@
     <ClInclude Include="src\ui\components\UIComponent.h" />
     <ClInclude Include="src\ui\layoutengine\behavior\Behavior.h" />
     <ClInclude Include="src\ui\layoutengine\behavior\ButtonBehavior.h" />
+    <ClInclude Include="src\ui\layoutengine\behavior\ListAdapter.h" />
+    <ClInclude Include="src\ui\layoutengine\behavior\ListRecyclerBehavior.h" />
     <ClInclude Include="src\ui\layoutengine\FontManager.h" />
     <ClInclude Include="src\ui\layoutengine\Layout.h" />
     <ClInclude Include="src\ui\layoutengine\lyt_res_struct.h" />

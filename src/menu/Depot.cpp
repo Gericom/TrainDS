@@ -6,6 +6,8 @@
 #include "Menu.h"
 #include "Depot.h"
 #include "TitleMenu.h"
+#include "ui/layoutengine/behavior/ListRecyclerBehavior.h"
+#include "DepotListAdapter.h"
 
 static void rotEnvMap(NNSG3dRS* rs)
 {
@@ -66,6 +68,11 @@ void Depot::Initialize(int arg)
 	G3X_InitMtxStack();
 	GX_SetBankForTex(GX_VRAM_TEX_01_AB);
 	GX_SetBankForTexPltt(GX_VRAM_TEXPLTT_0123_E);
+
+	GX_SetBankForSubBG(GX_VRAM_SUB_BG_32_H);
+	GX_SetBankForSubOBJ(GX_VRAM_SUB_OBJ_16_I);
+	GXS_SetGraphicsMode(GX_BGMODE_0);
+	GXS_SetVisiblePlane(GX_PLANEMASK_OBJ | GX_PLANEMASK_BG1);
    
    	GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_3D);
 	GX_SetVisiblePlane(GX_PLANEMASK_BG0);
@@ -96,10 +103,70 @@ void Depot::Initialize(int arg)
 	NNS_G3dRenderObjInit(&mEnvRenderObj, model);
 	NNS_FndFreeToExpHeap(gHeapHandle, mEnvTextures);
 	//NNS_G3dRenderObjSetCallBack(&mEnvRenderObj, &rotEnvMap, NULL, NNS_G3D_SBC_ENVMAP, NNS_G3D_SBC_CALLBACK_TIMING_B);
+
+	NNS_GfdInitVramTransferManager(mVramTransferTaskArray, DEPOT_VRAM_TRANSFER_MANAGER_NR_TASKS);
+
+	NNSG2dScreenData* screenDataUnpacked;
+	void* screenData = Util_LoadFileToBuffer("/data/menu/menu_bg_bottom.NSCR", NULL, true);
+	NNS_G2dGetUnpackedScreenData(screenData, &screenDataUnpacked);
+	NNSG2dCharacterData* charDataUnpacked;
+	void* charData = Util_LoadFileToBuffer("/data/menu/menu_bg_bottom.NCGR", NULL, true);
+	NNS_G2dGetUnpackedCharacterData(charData, &charDataUnpacked);
+	NNSG2dPaletteData* palDataUnpacked;
+	void* palData = Util_LoadFileToBuffer("/data/menu/menu_bg_bottom.NCLR", NULL, true);
+	NNS_G2dGetUnpackedPaletteData(palData, &palDataUnpacked);
+	NNS_G2dBGSetup(NNS_G2D_BGSELECT_SUB1, screenDataUnpacked, charDataUnpacked, palDataUnpacked, GX_BG_SCRBASE_0x6000, GX_BG_CHARBASE_0x00000);
+	NNS_FndFreeToExpHeap(gHeapHandle, screenData);
+	NNS_FndFreeToExpHeap(gHeapHandle, charData);
+	NNS_FndFreeToExpHeap(gHeapHandle, palData);
+
+	mFontManager = new FontManager();
+
+	mFontData = Util_LoadLZ77FileToBuffer("/data/fonts/fot_rodin_bokutoh_pro_db_9pt.NFTR.lz", NULL, false);
+	MI_CpuClear8(&mFont, sizeof(mFont));
+	NNS_G2dFontInitAuto(&mFont, mFontData);
+
+	mFontManager->RegisterFont("rodin_db_9", &mFont);
+
+	NNS_G2dInitOamManagerModule();
+	mSubUIManager = new UIManager(UIManager::UI_MANAGER_SCREEN_SUB, &mImageProxy, &mImagePaletteProxy);
+
+	void* cData = Util_LoadFileToBuffer("/data/menu/depot/Depot.ncer", NULL, FALSE);
+	NNS_G2dGetUnpackedCellBank(cData, &mLayoutCellDataBank);
+
+	void* mCharDataSub = Util_LoadFileToBuffer("/data/menu/depot/Depot.ncgr", NULL, TRUE);
+	NNS_G2dGetUnpackedCharacterData(mCharDataSub, &charDataUnpacked);
+	u32 objDataLength = charDataUnpacked->szByte;
+	NNS_G2dInitImageProxy(&mImageProxy);
+	NNS_G2dLoadImage1DMapping(charDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImageProxy);
+	NNS_FndFreeToExpHeap(gHeapHandle, mCharDataSub);
+
+	void* mPalDataSub = Util_LoadFileToBuffer("/data/menu/depot/Depot.nclr", NULL, TRUE);
+	NNS_G2dInitImagePaletteProxy(&mImagePaletteProxy);
+	NNS_G2dGetUnpackedPaletteData(mPalDataSub, &palDataUnpacked);
+	NNS_G2dLoadPalette(palDataUnpacked, 0, NNS_G2D_VRAM_TYPE_2DSUB, &mImagePaletteProxy);
+	NNS_FndFreeToExpHeap(gHeapHandle, mPalDataSub);
+
+	lyt_res_t* lytData = (lyt_res_t*)Util_LoadFileToBuffer("/data/menu/depot/Depot.bnlyt", NULL, TRUE);
+	u32 objDataOffset = objDataLength;
+	mLayoutTest = new Layout(lytData, Layout::LAYOUT_SCREEN_SUB, mLayoutCellDataBank, mFontManager, objDataOffset);
+	NNS_FndFreeToExpHeap(gHeapHandle, lytData);
+
+	ListRecyclerBehavior* listRecycler = new ListRecyclerBehavior();
+	listRecycler->SetAdapter(new DepotListAdapter());
+	mLayoutTest->FindPaneByName("List")->SetBehavior(listRecycler);
+
+	mSubUIManager->AddLayout(mLayoutTest);
+
+	G2S_SetWnd0Position(18, 10, 238, 152);
+	G2S_SetWnd0InsidePlane(GX_WND_PLANEMASK_BG1 | GX_WND_PLANEMASK_OBJ, false);
+	G2S_SetWndOutsidePlane(GX_WND_PLANEMASK_BG1, false);
+	GXS_SetVisibleWnd(GX_WNDMASK_W0);
 }
 
 void Depot::Render()
 {
+	mSubUIManager->ProcessInput();
 	Core_ReadInput();
 	if (gKeys & PAD_BUTTON_B)
 		TitleMenu::GotoMenu();
@@ -138,11 +205,13 @@ void Depot::Render()
 	NNS_G3dGlbFlush();
     NNS_G3dGeFlushBuffer();
 	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+	mSubUIManager->Render();
 }
 
 void Depot::VBlank()
 {
-
+	mSubUIManager->ProcessVBlank();
+	NNS_GfdDoVramTransfer();
 }
 
 void Depot::Finalize()

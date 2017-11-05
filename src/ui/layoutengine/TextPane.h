@@ -73,4 +73,13 @@ public:
 		delete mTextCharacterData;
 		delete mTextCell;
 	}
+
+	void SetText(const wchar_t* text)
+	{
+		if (mText)
+			delete mText;
+		mText = new wchar_t[wcslen(text) + 2];
+		wcscpy(mText, text);
+		mInvalidated = true;
+	}
 };

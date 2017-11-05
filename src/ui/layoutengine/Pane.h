@@ -77,6 +77,27 @@ public:
 		return NULL;
 	}
 
+	Pane* FindPaneByNamePrefix(const char* name)
+	{
+		return FindPaneByNamePrefix(name, STD_StrLen(name));
+	}
+
+private:
+	Pane* FindPaneByNamePrefix(const char* name, int count)
+	{
+		if (!STD_StrNCmp(name, mName, count))
+			return this;
+		Pane* pane = NULL;
+		while ((pane = (Pane*)NNS_FndGetNextListObject(&mChildrenList, pane)) != NULL)
+		{
+			Pane* result = pane->FindPaneByNamePrefix(name, count);
+			if (result)
+				return result;
+		}
+		return NULL;
+	}
+public:
+
 	bool OnPenDown(const MtxFx32* mtx, fx32 px, fx32 py);
 	bool OnPenMove(const MtxFx32* mtx, fx32 px, fx32 py);
 	bool OnPenUp(const MtxFx32* mtx, fx32 px, fx32 py);
@@ -90,6 +111,11 @@ public:
 	bool GetTouchable() const { return mFlags.touchable; }
 	void SetTouchable(bool touchable) { mFlags.touchable = touchable; }
 
+	s16 GetTranslationX() const { return mTranslationX; }
+	void SetTranslationX(s16 x) { mTranslationX = x; }
+	s16 GetTranslationY() const { return mTranslationY; }
+	void SetTranslationY(s16 y) { mTranslationY = y; }
+
 	int GetWidth() const { return mWidth; }
 	int GetHeight() const { return mHeight; }
 
@@ -98,4 +124,6 @@ public:
 		mBehavior = behavior;
 		mBehavior->SetPane(this);
 	}
+
+	NNSFndList* GetChildrenList() { return &mChildrenList; }
 };

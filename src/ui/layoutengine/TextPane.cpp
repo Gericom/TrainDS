@@ -19,7 +19,7 @@ void TextPane::RenderContent()
 			flags |= NNS_G2D_HORIZONTALALIGN_RIGHT;
 		if (mTextFlags.textVAlignment == TEXT_PANE_TEXT_VALIGNMENT_TOP)
 			flags |= NNS_G2D_VERTICALALIGN_TOP;
-		else if (mTextFlags.textHAlignment == TEXT_PANE_TEXT_VALIGNMENT_CENTER)
+		else if (mTextFlags.textVAlignment == TEXT_PANE_TEXT_VALIGNMENT_CENTER)
 			flags |= NNS_G2D_VERTICALALIGN_MIDDLE;
 		else
 			flags |= NNS_G2D_VERTICALALIGN_BOTTOM;

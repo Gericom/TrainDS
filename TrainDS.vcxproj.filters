@@ -190,6 +190,9 @@
     <ClCompile Include="src\ui\layoutengine\behavior\ButtonBehavior.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui\layoutengine\behavior\ListRecyclerBehavior.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\util.h">
@@ -412,6 +415,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\layoutengine\behavior\ButtonBehavior.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\layoutengine\behavior\ListRecyclerBehavior.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\layoutengine\behavior\ListAdapter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\menu\DepotListAdapter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
