@@ -1,5 +1,5 @@
-#include <nitro.h>
-#include "core.h"
+#include "common.h"
+
 #include "Vx2Tables.h"
 
 #include <nitro/dtcm_begin.h>

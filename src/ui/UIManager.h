@@ -1,6 +1,6 @@
 #ifndef __UIMANAGER_H__
 #define __UIMANAGER_H__
-#include <nnsys/g2d.h>
+
 
 class Layout;
 typedef void(*PenFunc)(void* arg, int x, int y);

@@ -1,6 +1,6 @@
 #ifndef __TERRAIN_MANAGER_H__
 #define __TERRAIN_MANAGER_H__
-#include <nnsys/gfd.h>
+
 
 typedef struct
 {

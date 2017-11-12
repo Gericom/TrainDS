@@ -1,7 +1,4 @@
-#include <nitro.h>
-#include <nnsys/gfd.h>
-#include <nnsys/g2d.h>
-#include "core.h"
+#include "common.h"
 #include "util.h"
 
 void* Util_LoadFileToBuffer(const char* path, uint32_t* size, bool tempoarly)

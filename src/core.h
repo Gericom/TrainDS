@@ -1,10 +1,5 @@
-#ifndef __CORE_H__
-#define __CORE_H__
-#include <nitro.h>
-#include <nnsys/fnd.h>
-#include <nnsys/snd.h>
-#include <nnsys/g2d.h>
-#include <nnsys/g3d.h>
+#pragma once
+#include "common.h"
 #include "../resources/sound/sdat/sound_data.sadl"
 #include "print.h"
 
@@ -86,5 +81,3 @@ extern uint16_t gOldKeys;
 extern uint16_t gKeys;
 void Core_ReadInput();
 void Core_GetTouchInput(TPData* dst);
-
-#endif

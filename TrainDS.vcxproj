@@ -57,6 +57,12 @@
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="build.ps1" />
+    <None Include="src\common.pch">
+      <FileType>CppHeader</FileType>
+    </None>
+    <None Include="src\common.pch++">
+      <FileType>CppHeader</FileType>
+    </None>
     <None Include="src\terrain\map_asm.renderingitcm.s" />
     <None Include="src\terrain\map_asm.s" />
     <None Include="src\videoplayer\yuv2rgb_new.videoplayeritcm.s" />
@@ -122,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\box2d.h" />
+    <ClInclude Include="src\common.h" />
     <ClInclude Include="src\core\os\VAlarm.h" />
     <ClInclude Include="src\engine\cameras\Camera.h" />
     <ClInclude Include="src\engine\cameras\FreeRoamCamera.h" />

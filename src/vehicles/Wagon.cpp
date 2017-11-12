@@ -1,6 +1,6 @@
-#include <nitro.h>
-#include <nnsys/g3d.h>
-#include "core.h"
+#include "common.h"
+
+
 #include "util.h"
 #include "inih/INIReader.h"
 #include "engine/PathWorker.h"

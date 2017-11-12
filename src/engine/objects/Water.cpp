@@ -1,6 +1,6 @@
-#include <nitro.h>
-#include <nnsys/g3d.h>
-#include "core.h"
+#include "common.h"
+
+
 #include "Water.h"
 
 static void G3_Vtx32(VecFx32* pos)

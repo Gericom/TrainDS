@@ -231,7 +231,7 @@
   $NoKeywords$
  */
 
-#include <nitro.h>
+#include "common.h"
 #include <nitro/wm.h>
 #include <nitro/cht.h>
 

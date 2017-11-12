@@ -1,6 +1,4 @@
-#ifndef __UTIL_H__
-#define __UTIL_H__
-#include <nnsys/gfd.h>
+#pragma once
 
 void* Util_LoadFileToBuffer(const char* path, uint32_t* size, bool tempoarly);
 void* Util_LoadLZ77FileToBuffer(const char* path, uint32_t* size, bool tempoarly);
@@ -25,5 +23,3 @@ void Util_SetupBillboardMatrix();
 void Util_SetupBillboardYMatrix();
 
 void Util_Reset2D(bool clearVram = true);
-
-#endif

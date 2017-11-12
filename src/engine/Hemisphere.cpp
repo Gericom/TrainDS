@@ -1,6 +1,6 @@
-#include <nitro.h>
-#include <nnsys/g3d.h>
-#include "core.h"
+#include "common.h"
+
+
 #include "Hemisphere.h"
 
 static const VecFx32 SkyColor1 = { FX32_CONST(0.37), FX32_CONST(0.52), FX32_CONST(0.73) };

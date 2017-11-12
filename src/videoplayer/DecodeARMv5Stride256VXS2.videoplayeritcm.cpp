@@ -1,5 +1,5 @@
-#include <nitro.h>
-#include "core.h"
+#include "common.h"
+
 #include "DecodeARMv5Stride256VXS2.h"
 
 //#include <nitro/itcm_begin.h>

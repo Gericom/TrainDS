@@ -1,9 +1,5 @@
-#include <nitro.h>
-#include <nnsys/fnd.h>
-#include <nnsys/g3d.h>
-#include <nnsys/gfd.h>
-#include "core.h"
-#include "util.h"
+#include "common.h"
+
 
 #include <nitro/dtcm_begin.h>
 static NNSG3dGeBuffer sGeBuffer;

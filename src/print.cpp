@@ -1,5 +1,4 @@
-#include <nitro.h>
-#include "core.h"
+#include "common.h"
 #include "print.h"
 
 #include <nitro/code32.h>

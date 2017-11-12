@@ -1,7 +1,7 @@
-#include <nitro.h>
-#include <nnsys/g2d.h>
-#include <nnsys/fnd.h>
-#include "core.h"
+#include "common.h"
+
+
+
 #include "menu\Menu.h"
 #include "components/UIComponent.h"
 #include "layoutengine/Layout.h"

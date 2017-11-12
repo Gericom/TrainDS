@@ -1,6 +1,6 @@
 #ifndef __WAGON_H__
 #define __WAGON_H__
-#include <nnsys/g3d.h>
+
 
 #include "Vehicle.h"
 

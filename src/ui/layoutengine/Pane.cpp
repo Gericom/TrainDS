@@ -1,5 +1,5 @@
-#include <nitro.h>
-#include "core.h"
+#include "common.h"
+
 #include "util.h"
 //this is probably bad to do, but I'm not gonna redo this
 extern "C" {

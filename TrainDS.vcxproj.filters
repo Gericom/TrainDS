@@ -20,6 +20,8 @@
     <None Include="src\terrain\map_asm.s" />
     <None Include="src\terrain\map_asm.renderingitcm.s" />
     <None Include="src\videoplayer\yuv2rgb_new.videoplayeritcm.s" />
+    <None Include="src\common.pch++" />
+    <None Include="src\common.pch" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core.cpp">
@@ -424,6 +426,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\menu\DepotListAdapter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

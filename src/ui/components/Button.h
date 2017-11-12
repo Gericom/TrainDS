@@ -1,7 +1,7 @@
 #pragma once
 
-#include <nitro.h>
-#include <nnsys/g2d.h>
+#include "common.h"
+
 
 #include "UIComponent.h"
 

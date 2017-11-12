@@ -1,7 +1,7 @@
 #ifndef __SEQ_ARC_SFX_H__
 #define __SEQ_ARC_SFX_H__
 
-#include <nnsys/snd.h>
+
 
 #include "Sfx.h"
 

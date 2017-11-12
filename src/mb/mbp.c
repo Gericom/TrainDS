@@ -43,11 +43,11 @@
 
   $NoKeywords: $
  *---------------------------------------------------------------------------*/
-#include <nitro.h>
+#include "common.h"
 #include <nitro/wm.h>
 #include <nitro/mb.h>
 
-#include "core.h"
+
 
 #include "mbp.h"
 

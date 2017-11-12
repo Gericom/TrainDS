@@ -1,6 +1,6 @@
-#include <nitro.h>
-#include <nnsys/g3d.h>
-#include "core.h"
+#include "common.h"
+
+
 #include "Camera.h"
 #include "LookAtCamera.h"
 #include "FreeRoamCamera.h"

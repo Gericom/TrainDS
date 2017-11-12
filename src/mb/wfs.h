@@ -65,7 +65,7 @@
 #define	NITRO_BUILD_DEMOS_WIRELESSSHARED_WFS_INCLUDE_WFS_H_
 
 
-#include <nitro.h>
+#include "common.h"
 
 #ifdef __cplusplus
 extern  "C" {

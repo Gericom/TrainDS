@@ -1,5 +1,5 @@
-#include <nitro.h>
-#include "core.h"
+#include "common.h"
+
 #include "util.h"
 #include "videoplayer/Vx2Tables.h"
 #include "videoplayer/DecodeARMv5Stride256VXS2.h"

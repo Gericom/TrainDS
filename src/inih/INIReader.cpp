@@ -5,8 +5,8 @@
 //
 // https://github.com/benhoyt/inih
 
-#include <nitro.h>
-#include "core.h"
+#include "common.h"
+
 
 #include <algorithm>
 #include <cctype>

@@ -1,0 +1,8 @@
+#pragma once
+#pragma precompile_target "../build/common.mch++"
+#include <nitro.h>
+#include <nnsys/fnd.h>
+#include <nnsys/snd.h>
+#include <nnsys/g2d.h>
+#include <nnsys/g3d.h>
+#include <nnsys/gfd.h>

@@ -1,14 +1,11 @@
-#include <nitro.h>
-#include <nnsys/g3d.h>
-#include <nnsys/gfd.h>
-#include "core.h"
+#include "common.h"
+#include "util.h"
 extern "C" 
 {
 	#include "mb/wh.h"
 	#include "mb/mbp.h"
 	#include "mb/wfs.h"
 }
-#include "util.h"
 #include "terrain/TerrainManager.h"
 #include "menu/TitleMenu.h"
 #include "menu/Depot.h"

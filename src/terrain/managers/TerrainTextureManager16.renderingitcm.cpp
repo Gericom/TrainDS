@@ -1,6 +1,6 @@
-#include <nitro.h>
-#include <nnsys/fnd.h>
-#include "core.h"
+#include "common.h"
+
+
 #include "util.h"
 #include "TerrainTextureManager16.h"
 

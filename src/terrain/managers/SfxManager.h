@@ -1,7 +1,7 @@
 #ifndef __SFX_MANAGER_H__
 #define __SFX_MANAGER_H__
 
-#include <nnsys/fnd.h>
+
 #include "Sfx.h"
 
 class SfxManager

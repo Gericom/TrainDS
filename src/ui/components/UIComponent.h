@@ -1,8 +1,8 @@
 #pragma once
 
-#include <nitro.h>
-#include <nnsys/g2d.h>
-#include <nnsys/fnd.h>
+#include "common.h"
+
+
 
 class UIManager;
 

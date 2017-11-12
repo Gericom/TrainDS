@@ -1,5 +1,5 @@
-#include <nitro.h>
-#include "core.h"
+#include "common.h"
+
 #include "Menu.h"
 
 Menu* gRunningMenu = NULL;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nnsys/g3d.h>
+
 #include "engine/objects/WorldObject.h"
 
 class Map;

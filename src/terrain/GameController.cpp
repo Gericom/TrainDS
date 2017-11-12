@@ -1,9 +1,9 @@
-#include <nitro.h>
-#include <nnsys/fnd.h>
-#include <nnsys/g3d.h>
+#include "common.h"
+
+
 #include <math.h>
 #include <cmath>
-#include "core.h"
+
 #include "util.h"
 #include "engine/objects/Water.h"
 #include "TerrainManager.h"

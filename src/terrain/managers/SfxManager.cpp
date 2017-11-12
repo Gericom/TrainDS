@@ -1,6 +1,6 @@
-#include <nitro.h>
-#include <nnsys/fnd.h>
-#include "core.h"
+#include "common.h"
+
+
 #include "Sfx.h"
 #include "SfxManager.h"
 

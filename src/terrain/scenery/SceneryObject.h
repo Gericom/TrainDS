@@ -1,7 +1,7 @@
 #ifndef __SCENERYOBJECT_H__
 #define __SCENERYOBJECT_H__
 
-#include <nnsys/fnd.h>
+
 #include "terrain\Map.h"
 
 class SceneryObject

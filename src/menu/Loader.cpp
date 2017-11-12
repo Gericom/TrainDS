@@ -1,7 +1,7 @@
-#include <nitro.h>
-#include <nnsys/g3d.h>
-#include <nnsys/gfd.h>
-#include "core.h"
+#include "common.h"
+
+
+
 #include "util.h"
 #include "Loader.h"
 

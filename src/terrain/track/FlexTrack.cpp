@@ -1,6 +1,6 @@
-#include <nitro.h>
-#include <nnsys/gfd.h>
-#include "core.h"
+#include "common.h"
+
+
 #include "util.h"
 #include "terrain/TerrainManager.h"
 #include "terrain/Map.h"

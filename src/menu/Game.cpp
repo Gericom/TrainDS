@@ -1,7 +1,7 @@
-#include <nitro.h>
-#include <nnsys/g3d.h>
+#include "common.h"
+
 #include <stdlib.h>
-#include "core.h"
+
 #include "util.h"
 #include "Menu.h"
 #include "terrain/GameController.h"

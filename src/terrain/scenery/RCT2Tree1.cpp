@@ -1,6 +1,6 @@
-#include <nitro.h>
-#include <nnsys/g3d.h>
-#include "core.h"
+#include "common.h"
+
+
 #include "util.h"
 #include "terrain/TerrainManager.h"
 #include "RCT2Tree1.h"

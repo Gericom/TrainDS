@@ -1,8 +1,8 @@
-#include <nitro.h>
-#include <nnsys/g2d.h>
-#include <nnsys/g3d.h>
-#include <nnsys/gfd.h>
-#include "core.h"
+#include "common.h"
+
+
+
+
 extern "C"
 {
 	#include "mb/wh.h"

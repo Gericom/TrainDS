@@ -1,7 +1,7 @@
 #ifndef __SFX_H__
 #define __SFX_H__
 
-#include <nnsys/fnd.h>
+
 #include "engine/cameras/LookAtCamera.h"
 #include "engine/objects/WorldObject.h"
 
