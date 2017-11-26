@@ -1,5 +1,4 @@
-#ifndef __PATH_WORKER_H__
-#define __PATH_WORKER_H__
+#pragma once
 
 //typedef struct trackpiece_t;
 
@@ -35,5 +34,3 @@ public:
 			*direction = mCurDirection;
 	}
 };
-
-#endif

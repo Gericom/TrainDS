@@ -35,10 +35,10 @@ public:
 		NNS_FndFreeToExpHeap(gHeapHandle, mTerrainData);
 	}
 
-	int GetHBlockCount() { return mTerrainData->header.h_block_count; }
-	int GetWidth() { return mTerrainData->header.width; }
-	int GetVBlockCount() { return mTerrainData->header.v_block_count; }
-	int GetHeight() { return mTerrainData->header.height; }
+	int GetHBlockCount() const { return mTerrainData->header.h_block_count; }
+	int GetWidth() const { return mTerrainData->header.width; }
+	int GetVBlockCount() const { return mTerrainData->header.v_block_count; }
+	int GetHeight() const { return mTerrainData->header.height; }
 
 	void GetBlock(int x, int y, hvtx_t* dst);
 };

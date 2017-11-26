@@ -56,7 +56,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include=".gitignore" />
-    <None Include="build.ps1" />
     <None Include="src\common.pch">
       <FileType>CppHeader</FileType>
     </None>

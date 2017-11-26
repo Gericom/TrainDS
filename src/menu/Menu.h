@@ -1,5 +1,4 @@
-#ifndef __MENU_H__
-#define __MENU_H__
+#pragma once
 
 #define MENU_PRIVATE_HEAP_GROUP_ID	0x5A
 
@@ -15,5 +14,3 @@ extern int gNextMenuArg;
 typedef Menu* (*OnMenuCreate)();
 
 extern OnMenuCreate gNextMenuCreateFunc;
-
-#endif

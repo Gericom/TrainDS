@@ -1,5 +1,4 @@
-#ifndef __QUATERNION_H__
-#define __QUATERNION_H__
+#pragma once
 
 class Quaternion
 {
@@ -105,5 +104,3 @@ public:
 		dst->w = w;
 	}
 };
-
-#endif

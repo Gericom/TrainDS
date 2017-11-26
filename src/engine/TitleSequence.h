@@ -1,6 +1,3 @@
-#ifndef __TITLESEQUENCE_H__
-#define __TITLESEQUENCE_H__
+#pragma once
 
 extern u32 gTitleSequence[];
-
-#endif

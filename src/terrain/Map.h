@@ -1,5 +1,4 @@
-#ifndef __MAP_H__
-#define __MAP_H__
+#pragma once
 
 #include "io/TerrainData.h"
 #include "managers/TerrainTextureManager16.h"
@@ -150,5 +149,3 @@ public:
 		mTerrainTextureManager16->UpdateResourceCounter();
 	}
 };
-
-#endif

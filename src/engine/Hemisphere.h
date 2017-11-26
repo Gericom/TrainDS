@@ -1,5 +1,4 @@
-#ifndef __HEMISPHERE_H__
-#define __HEMISPHERE_H__
+#pragma once
 
 #define HEMISPHERE_NR_RINGS		16
 #define HEMISPHERE_NR_SECTORS	16
@@ -16,5 +15,3 @@ public:
 
 	void Render();
 };
-
-#endif

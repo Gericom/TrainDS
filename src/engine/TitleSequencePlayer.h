@@ -1,5 +1,4 @@
-#ifndef __TITLESEQUENCEPLAYER_H__
-#define __TITLESEQUENCEPLAYER_H__
+#pragma once
 
 #define TITLE_SEQUENCE_COMMAND_ID_WAIT				0x81
 #define TITLE_SEQUENCE_COMMAND_ID_TRAIN_CAM			0x82
@@ -44,5 +43,3 @@ public:
 			UpdateSingleFrame();
 	}
 };
-
-#endif
