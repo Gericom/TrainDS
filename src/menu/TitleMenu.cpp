@@ -247,9 +247,9 @@ void TitleMenu::OnOptionsButtonActivate()
 
 void TitleMenu::OnVRAMCopyVAlarm()
 {
-	if (mRenderMode == GameController::RENDER_MODE_NEAR)
+	//if (mRenderMode == GameController::RENDER_MODE_NEAR)
 		mGameController->mMap->mTerrainTextureManager16->UpdateVramC();
-	else
+	//else
 		mGameController->mMap->mTerrainTextureManager8->UpdateVramC();
 }
 
@@ -305,16 +305,18 @@ void TitleMenu::Render()
 		mButtons[mLeftRight][mSelectedButton]->SetSelected(true);
 	}
 	G3X_Reset();
-	if (mRenderMode == GameController::RENDER_MODE_FAR)
-	{
+	//if (mRenderMode == GameController::RENDER_MODE_FAR)
+	//{
 		OS_Printf("%d fps\n", 60 / mPassedFrameCounter);
 		mTSPlayer->Update(mPassedFrameCounter);
 		mGameController->Update(mPassedFrameCounter);
 		mPassedFrameCounter = 0;
-	}
+	//}
 	NNS_G3dGlbSetViewPort(0, 0, 255, 191);
-	mGameController->Render(mRenderMode);
-	if (mRenderMode == GameController::RENDER_MODE_NEAR)
+	mGameController->Render(GameController::RENDER_MODE_FAR);
+	mGameController->Render(GameController::RENDER_MODE_NEAR);
+	//mGameController->Render(mRenderMode);
+	//if (mRenderMode == GameController::RENDER_MODE_NEAR)
 	{
 		//Do some 2d with the 3d engine when needed (AKA, fucking up matrices)
 		G3_MtxMode(GX_MTXMODE_PROJECTION);
@@ -330,7 +332,7 @@ void TitleMenu::Render()
 		G3_Identity();
 		G3_Color(GX_RGB(31, 31, 31));
 
-		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0x30, 31, 0);
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0x30, 31, GX_POLYGON_ATTR_MISC_FOG);
 		
 		G3_TexPlttBase(NNS_GfdGetPlttKeyAddr(mLogoLargeTextureA.plttKey), GX_TEXFMT_A3I5);
 
@@ -387,7 +389,7 @@ void TitleMenu::Render()
 			break;
 		}
 
-		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0x30, 12, 0);
+		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 0x30, 12, GX_POLYGON_ATTR_MISC_FOG);
 		G3_TexImageParam(GX_TEXFMT_NONE, GX_TEXGEN_NONE, GX_TEXSIZE_S256, GX_TEXSIZE_T64, GX_TEXREPEAT_NONE, GX_TEXFLIP_NONE, GX_TEXPLTTCOLOR0_USE, 0);
 		G3_Color(GX_RGB(0, 0, 0));
 		Util_DrawSprite(0, (192 - 21) * FX32_ONE, 1024 * FX32_ONE, 256 * FX32_ONE, 21 * FX32_ONE);
@@ -414,7 +416,8 @@ void TitleMenu::VBlankIrq()
 {
 	OS_SetIrqCheckFlag(OS_IE_V_BLANK);
 	mPassedFrameCounter++;
-	if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
+	mGameController->mDisplayFlare = true;
+	/*if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
 		mGameController->mDisplayFlare = true;//(((GXRgb*)HW_LCDC_VRAM_B)[mGameController->mSunY * 256 + mGameController->mSunX] & 0x7FFF) == mGameController->mSunColorMatch;
@@ -431,11 +434,11 @@ void TitleMenu::VBlankIrq()
 			GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
 		else
 			GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_5, GX_BG0_AS_3D);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG1*/ | GX_PLANEMASK_OBJ);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG1/ | GX_PLANEMASK_OBJ);
 		//G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
 		//G2_SetBG3Priority(3);
 		//G2_SetBG0Priority(0);
-	}
+	}*/
 	NNS_GfdDoVramTransfer();
 	mSwap = false;
 }
@@ -445,7 +448,7 @@ void TitleMenu::VBlank()
 	mSubUIManager->ProcessVBlank();
 	//NNS_G2dApplyOamManagerToHW(&mSubObjOamManager);
 	//NNS_G2dResetOamManagerBuffer(&mSubObjOamManager);
-	if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
+	/*if (mRenderMode == GameController::RENDER_MODE_FAR)//mRenderState == 0)
 	{
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
 		mRenderMode = GameController::RENDER_MODE_NEAR;
@@ -454,7 +457,7 @@ void TitleMenu::VBlank()
 	{
 		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
 		mRenderMode = GameController::RENDER_MODE_FAR;
-	}
+	}*/
 }
 
 void TitleMenu::Finalize()

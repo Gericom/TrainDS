@@ -261,19 +261,19 @@ void Game::Initialize(int arg)
 
 void Game::OnVRAMCopyVAlarm()
 {
-	if(mCurFrameType == FRAME_TYPE_MAIN_NEAR)
+	//if(mCurFrameType == FRAME_TYPE_MAIN_NEAR)
 		mGameController->mMap->mTerrainTextureManager16->UpdateVramC();
-	else
+	//else
 		mGameController->mMap->mTerrainTextureManager8->UpdateVramC();
 }
 
 void Game::RequestPicking(int x, int y, PickingCallbackFunc callback, void* arg)
 {
-	mPickingPointX = x;
-	mPickingPointY = y;
-	mPickingCallback = callback;
-	mPickingCallbackArg = arg;
-	mPickingRequested = true;
+	//mPickingPointX = x;
+	//mPickingPointY = y;
+	//mPickingCallback = callback;
+	//mPickingCallbackArg = arg;
+	//mPickingRequested = true;
 }
 
 void Game::HandlePickingVBlank()
@@ -298,7 +298,7 @@ void Game::HandlePickingEarly()
 
 void Game::HandlePickingLate()
 {
-	if (mPickingState == PICKING_STATE_READY && mCurFrameType == FRAME_TYPE_MAIN_FAR && mLastFrameType == FRAME_TYPE_MAIN_NEAR && mPickingRequested)
+	if (mPickingState == PICKING_STATE_READY && mCurFrameType == FRAME_TYPE_NORMAL && mPickingRequested)
 	{
 		mPickingRequested = false;
 		mPickingState = PICKING_STATE_RENDERING;
@@ -332,11 +332,11 @@ int Game::MakeTextCell(GXOamAttr* pOAM, int x, int y, int w, int h, int palette,
 void Game::Render()
 {
 	G3X_Reset();
-	if (mSub3DInvalidated && mLastFrameType == FRAME_TYPE_MAIN_NEAR)
-	{
-		mSub3DInvalidated = false;
-		mCurFrameType = FRAME_TYPE_SUB;
-	}
+	//if (mSub3DInvalidated && mLastFrameType == FRAME_TYPE_NORMAL)
+	//{
+	//	mSub3DInvalidated = false;
+	//	mCurFrameType = FRAME_TYPE_SUB;
+	//}
 
 	HandlePickingEarly();
 
@@ -346,7 +346,7 @@ void Game::Render()
 
 	HandlePickingLate();
 
-	if (mCurFrameType == FRAME_TYPE_MAIN_FAR)
+	if (mCurFrameType == FRAME_TYPE_NORMAL)
 	{
 		if (keyData & PAD_BUTTON_B)
 			mGameController->mTrain->SetDriving(true);
@@ -445,7 +445,8 @@ void Game::Render()
 		else
 		{
 			OSTick tstart = OS_GetTick();
-			mGameController->Render((mCurFrameType == FRAME_TYPE_MAIN_FAR ? GameController::RENDER_MODE_FAR : GameController::RENDER_MODE_NEAR));
+			mGameController->Render(GameController::RENDER_MODE_FAR);
+			mGameController->Render(GameController::RENDER_MODE_NEAR);
 			OSTick diff = OS_GetTick() - tstart;
 			OS_Printf("Frame %d Time: %d us\n", mCurFrameType, OS_TicksToMicroSeconds(diff));
 		}
@@ -540,7 +541,7 @@ void Game::Render()
 void Game::OnSub3DCopyVAlarm()
 {
 	//this might cause glitches, because we update in the middle of a frame
-	MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_D, (void*)(HW_DB_BG_VRAM + 0x2000), 128 * 96 * 2, NULL, NULL);
+	//MI_DmaCopy32Async(0, (void*)HW_LCDC_VRAM_D, (void*)(HW_DB_BG_VRAM + 0x2000), 128 * 96 * 2, NULL, NULL);
 }
 
 void Game::SetSwapBuffersFlag()
@@ -559,12 +560,14 @@ void Game::VBlankIrq()
 	mPassedFrameCounter++;
 	//handle it as early as possible to prevent problems with the shared vram d
 	HandlePickingVBlank();
-	if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)//mPickingState == PICKING_STATE_RENDERING)
-	{
-		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
-		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
-	}
-	else if (mCurFrameType == FRAME_TYPE_MAIN_FAR)//mRenderState == 0)
+	mGameController->mDisplayFlare = true;
+	//GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
+	//if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)//mPickingState == PICKING_STATE_RENDERING)
+	//{
+	//	GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
+	//	GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
+	//}
+	/*else if (mCurFrameType == FRAME_TYPE_MAIN_FAR)//mRenderState == 0)
 	{
 		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
 		mGameController->mDisplayFlare = true;//(((GXRgb*)HW_LCDC_VRAM_B)[mGameController->mSunY * 256 + mGameController->mSunX] & 0x7FFF) == mGameController->mSunColorMatch;
@@ -580,16 +583,16 @@ void Game::VBlankIrq()
 			GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_5, GX_BG0_AS_3D);
 		else
 			GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_5, GX_BG0_AS_3D);
-		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG3*/ | GX_PLANEMASK_OBJ);
+		GX_SetVisiblePlane(GX_PLANEMASK_BG0 /*| GX_PLANEMASK_BG3/ | GX_PLANEMASK_OBJ);
 		//G2_SetBG3ControlDCBmp(GX_BG_SCRSIZE_DCBMP_256x256, GX_BG_AREAOVER_XLU, GX_BG_BMPSCRBASE_0x00000);
 		//G2_SetBG3Priority(3);
 		//G2_SetBG0Priority(0);
-	}
-	else if (mCurFrameType == FRAME_TYPE_SUB)
-	{
-		GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
-		GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
-	}
+	}*/
+	//else if (mCurFrameType == FRAME_TYPE_SUB)
+	//{
+	//	GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_B | GX_VRAM_LCDC_D);
+	//	GX_SetGraphicsMode(GX_DISPMODE_VRAM_B, GX_BGMODE_0, GX_BG0_AS_3D);
+	//}
 	mSwap = false;
 }
 
@@ -603,28 +606,18 @@ void Game::VBlank()
 	if (mCurFrameType == FRAME_TYPE_MAIN_PICKING)//mPickingState == PICKING_STATE_RENDERING)
 	{
 		//Capture the picking data
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
-		mCurFrameType = FRAME_TYPE_MAIN_FAR;
-	}
-	else if (mCurFrameType == FRAME_TYPE_MAIN_FAR)//mRenderState == 0)
-	{
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, /*GX_CAPTURE_SRCA_3D*/GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
-		mCurFrameType = FRAME_TYPE_MAIN_NEAR;
-	}
-	else if (mCurFrameType == FRAME_TYPE_MAIN_NEAR)
-	{
-		GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_2D3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_B_0x00000, 16, 0);
-		mCurFrameType = FRAME_TYPE_MAIN_FAR;
+		//GX_SetCapture(GX_CAPTURE_SIZE_256x192, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		mCurFrameType = FRAME_TYPE_NORMAL;
 	}
 	else if (mCurFrameType == FRAME_TYPE_SUB)
 	{
-		GX_SetCapture(GX_CAPTURE_SIZE_128x128, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
-		mCurFrameType = FRAME_TYPE_MAIN_FAR;
+		//GX_SetCapture(GX_CAPTURE_SIZE_128x128, GX_CAPTURE_MODE_A, GX_CAPTURE_SRCA_3D, (GXCaptureSrcB)0, GX_CAPTURE_DEST_VRAM_D_0x00000, 16, 0);
+		mCurFrameType = FRAME_TYPE_NORMAL;
 		//todo: remove the need for reallocation
-		if (mSub3DCopyVAlarm != NULL)
-			delete mSub3DCopyVAlarm;
-		mSub3DCopyVAlarm = new OS::VAlarm();
-		mSub3DCopyVAlarm->Set(96, 5, Game::OnSub3DCopyVAlarm, this);
+		//if (mSub3DCopyVAlarm != NULL)
+		//	delete mSub3DCopyVAlarm;
+		//mSub3DCopyVAlarm = new OS::VAlarm();
+		//mSub3DCopyVAlarm->Set(96, 5, Game::OnSub3DCopyVAlarm, this);
 	}
 }
 

@@ -88,11 +88,11 @@ loop2:
 void TerrainTextureManager8::WorkerThreadMain()
 {
 	OSMessage msg;
-	while (1)
+	while (true)
 	{
 		OS_ReceiveMessage(&mMessageQueue, &msg, OS_MESSAGE_BLOCK);
 		int cacheBlock = (int)msg;
-		texture_cache_block_t* block = &mCacheBlocks[cacheBlock];
+		texture_cache_block_t* block = &mCacheBlocks[cacheBlock];		
 		gen_terrain_texture_precoefd_8(
 			(u16*)mCoefdTextureDatas[block->tag & 0xFF][0],
 			(u16*)mCoefdTextureDatas[(block->tag >> 8) & 0xFF][1],
@@ -100,5 +100,6 @@ void TerrainTextureManager8::WorkerThreadMain()
 			(u16*)mCoefdTextureDatas[(block->tag >> 24) & 0xFF][3],
 			(u16*)&mVramCTexData[cacheBlock << 8]);
 		DC_FlushRange(&mVramCTexData[cacheBlock << 8], 256);
+		((u8*)mVramCacheChanged)[cacheBlock >> 3] = 0xFF;
 	}
 }

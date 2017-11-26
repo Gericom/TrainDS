@@ -1,6 +1,4 @@
 #include "common.h"
-
-
 #include <math.h>
 #include <cmath>
 
@@ -93,7 +91,7 @@ void GameController::RenderSky()
 	if (gKeys & PAD_BUTTON_X)
 		mTOTDController->Update();
 
-	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, 56 * FX32_ONE, 40960 * 4);
+	//NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 8 * FX32_ONE, 56 * FX32_ONE, 40960 * 4);
 	NNS_G3dGlbFlushP();
 	NNS_G3dGeFlushBuffer();
 	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 62, 30, 0);
@@ -103,7 +101,7 @@ void GameController::RenderSky()
 		G3_Translate(mCamera->mDestination.x, 0, mCamera->mDestination.z);
 		G3_PushMtx();
 		{
-			G3_Scale(50 * FX32_ONE, 50 * FX32_ONE, 50 * FX32_ONE);
+			G3_Scale(48 * FX32_ONE, 48 * FX32_ONE, 48 * FX32_ONE);
 			mHemisphere->Render();
 		}
 		G3_PopMtx(1);
@@ -223,29 +221,29 @@ void GameController::RenderFlare()
 
 	G3_Color(GX_RGB(mSunColorMatch & 0x1F, ((mSunColorMatch >> 5) & 0x1F) * 24 / 32, ((mSunColorMatch >> 10) & 0x1F) >> 1));
 
-	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 58, mFlareAlpha, 0);
+	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 58, mFlareAlpha, GX_POLYGON_ATTR_MISC_FOG);
 	Util_DrawSpriteScaled(FX_Mul(centerline.x, -length / 2) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, -length / 2) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.5 * 2));
 
 	G3_Color(GX_RGB((mSunColorMatch & 0x1F) >> 1, ((mSunColorMatch >> 5) & 0x1F) * 24 / 32, (mSunColorMatch >> 10) & 0x1F));
 
-	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 56, mFlareAlpha, 0);
+	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 56, mFlareAlpha, GX_POLYGON_ATTR_MISC_FOG);
 	Util_DrawSpriteScaled(FX_Mul(centerline.x, -length / 4) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, -length / 4) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.25 * 2));
-	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 55, mFlareAlpha, 0);
+	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 55, mFlareAlpha, GX_POLYGON_ATTR_MISC_FOG);
 	Util_DrawSpriteScaled(FX_Mul(centerline.x, -FX_Div(length, FX32_CONST(5.5))) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, -FX_Div(length, FX32_CONST(5.5))) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.25 * 2));
 
 	G3_Color(GX_RGB((mSunColorMatch & 0x1F) >> 1, (mSunColorMatch >> 5) & 0x1F, ((mSunColorMatch >> 10) & 0x1F) >> 1));
-	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 60, mFlareAlpha, 0);
+	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 60, mFlareAlpha, GX_POLYGON_ATTR_MISC_FOG);
 	Util_DrawSpriteScaled(FX_Mul(centerline.x, length / 8) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, length / 8) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(1.5));
 
-	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 54, mFlareAlpha, 0);
+	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 54, mFlareAlpha, GX_POLYGON_ATTR_MISC_FOG);
 	Util_DrawSpriteScaled(FX_Mul(centerline.x, length / 3) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, length / 3) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.25 * 2));
 
 	G3_Color(GX_RGB(mSunColorMatch & 0x1F, ((mSunColorMatch >> 5) & 0x1F) * 24 / 32, ((mSunColorMatch >> 10) & 0x1F) >> 1));
-	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 57, mFlareAlpha, 0);
+	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 57, mFlareAlpha, GX_POLYGON_ATTR_MISC_FOG);
 	Util_DrawSpriteScaled(FX_Mul(centerline.x, length / 2) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, length / 2) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(0.5 * 2));
 
 	G3_Color(GX_RGB((mSunColorMatch & 0x1F) >> 1, (mSunColorMatch >> 5) & 0x1F, ((mSunColorMatch >> 10) & 0x1F) >> 1));
-	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 59, mFlareAlpha, 0);
+	G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 59, mFlareAlpha, GX_POLYGON_ATTR_MISC_FOG);
 	Util_DrawSpriteScaled(FX_Mul(centerline.x, length) + 128 * FX32_ONE - 16 * FX32_ONE, FX_Mul(centerline.y, length) + 96 * FX32_ONE - 16 * FX32_ONE, -1 * FX32_ONE, 32 * FX32_ONE, 32 * FX32_ONE, FX32_CONST(2.0));
 
 	G3_MtxMode(GX_MTXMODE_TEXTURE);
@@ -278,17 +276,18 @@ void GameController::Render(RenderMode mode)
 	else
 	{
 		reg_G3X_DISP3DCNT = reg_G3X_DISP3DCNT | REG_G3X_DISP3DCNT_TME_MASK;
-		if (mode == RENDER_MODE_FAR)
+		//if (mode == RENDER_MODE_FAR)
 			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31, 0x7fff, 0, true);
-		else
-			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31, 0x7fff, 0, false);
+		//else
+			//G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31, 0x7fff, 0, false);
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(true);
 		G3X_AntiAlias(true);
-		if (mode == RENDER_MODE_FAR)
-			G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x2000, 0x8000 - 0x2000);
-		else
-			G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0200, 0x8000 - 0x200);
+		G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0200, 0x8000 - 0x200);
+		//if (mode == RENDER_MODE_FAR)
+			//G3X_SetFog(true, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x2000, 0x8000 - 0x2000);
+		//else
+			//G3X_SetFog(false, GX_FOGBLEND_ALPHA, GX_FOGSLOPE_0x0200, 0x8000 - 0x200);
 
 		//G3X_SetFog(/*true*/false, GX_FOGBLEND_COLOR_ALPHA, GX_FOGSLOPE_0x0400, 0x8000 - 0x100);
 		//G3X_SetFogColor(GX_RGB(119 >> 3, 199 >> 3, 244 >> 3), 25);
@@ -307,7 +306,7 @@ void GameController::Render(RenderMode mode)
 		G3X_SetToonTable(&sToonTable[0]);
 	}
 
-	if (mode == RENDER_MODE_NEAR)
+	/*if (mode == RENDER_MODE_NEAR)
 	{
 		//Do some 2d with the 3d engine when needed (AKA, fucking up matrices)
 		G3_MtxMode(GX_MTXMODE_PROJECTION);
@@ -328,7 +327,7 @@ void GameController::Render(RenderMode mode)
 		Util_DrawSprite(0 * FX32_ONE, 0 * FX32_ONE, -1024 * FX32_ONE, 256 * FX32_ONE, 192 * FX32_ONE);
 		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 8, 30, 0);
 		Util_DrawSprite(0 * FX32_ONE, 0 * FX32_ONE, -1024 * FX32_ONE, 256 * FX32_ONE, 192 * FX32_ONE);
-	}
+	}*/
 
 	mCamera->Apply();
 	VecFx32 camDir;
@@ -406,6 +405,7 @@ void GameController::Render(RenderMode mode)
 		}
 		NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4 * 4096, 50 * FX32_ONE, 40960 * 4);
 	}
+	NNS_G3dGlbPerspectiveW(FX32_SIN30, FX32_COS30, (256 * 4096 / 192), 4096 >> 3, 50 * FX32_ONE, 40960 * 4);
 
 	NNS_G3dGlbFlushP();
 	NNS_G3dGeFlushBuffer();

@@ -31,8 +31,9 @@ private:
 	enum FrameType
 	{
 		//regular rendering, these frames should always appear in pairs
-		FRAME_TYPE_MAIN_FAR,	//for the far part
-		FRAME_TYPE_MAIN_NEAR,	//for the near part
+		//FRAME_TYPE_MAIN_FAR,	//for the far part
+		//FRAME_TYPE_MAIN_NEAR,	//for the near part
+		FRAME_TYPE_NORMAL,
 		//injected frames
 		FRAME_TYPE_MAIN_PICKING,//for picking
 		FRAME_TYPE_SUB			//for sub screen 3d
@@ -136,7 +137,7 @@ public:
 
 public:
 	Game() : SimpleMenu(17, 17), mSelectedTrain(-1), mSelectedMapX(-1), mSelectedMapZ(-1), mKeyTimer(0), mDebugKeyTimer(0), mTrainMode(false), 
-		mPickingState(PICKING_STATE_READY), mPickingRequested(false), mCurFrameType(FRAME_TYPE_MAIN_FAR), mLastFrameType(FRAME_TYPE_MAIN_FAR),
+		mPickingState(PICKING_STATE_READY), mPickingRequested(false), mCurFrameType(FRAME_TYPE_NORMAL), mLastFrameType(FRAME_TYPE_NORMAL),
 		mSub3DCopyVAlarm(NULL), mSub3DInvalidated(false), mPassedFrameCounter(1)
 	{ }
 

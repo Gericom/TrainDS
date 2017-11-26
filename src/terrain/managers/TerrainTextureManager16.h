@@ -20,6 +20,7 @@ private:
 	coefd_texture_sample_t mCoefdTextureDatas[26][4][16 * 16];
 
 	uint8_t mVramCTexData[128 * 1024] ATTRIBUTE_ALIGN(32);
+	uint32_t mVramCacheChanged[256 / 32];
 
 	void WorkerThreadMain();
 
