@@ -1,5 +1,4 @@
-#ifndef __RCT2TREE1_H__
-#define __RCT2TREE1_H__
+#pragma once
 
 #include "terrain\scenery\BillboardSceneryObject.h"
 
@@ -12,5 +11,3 @@ public:
 
 	virtual void Render(TerrainManager* terrainManager);
 };
-
-#endif

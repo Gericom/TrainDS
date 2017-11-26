@@ -1,6 +1,4 @@
-#ifndef __UIMANAGER_H__
-#define __UIMANAGER_H__
-
+#pragma once
 
 class Layout;
 typedef void(*PenFunc)(void* arg, int x, int y);
@@ -54,5 +52,3 @@ public:
 	void Render();
 	void ProcessVBlank();
 };
-
-#endif

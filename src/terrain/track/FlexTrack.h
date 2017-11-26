@@ -1,5 +1,4 @@
-#ifndef __FLEXTRACK_H__
-#define __FLEXTRACK_H__
+#pragma once
 
 #include "TrackPieceEx.h"
 
@@ -115,8 +114,6 @@ public:
 
 	void GetPosition(VecFx32* dst) 
 	{
-		mVertices[0]->GetPosition(dst);
+		*dst = mVertices[0]->GetPosition();
 	}
 };
-
-#endif

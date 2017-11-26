@@ -1,5 +1,4 @@
-#ifndef __GAMECONTROLLER_H__
-#define __GAMECONTROLLER_H__
+#pragma once
 
 #include "Map.h"
 #include "engine/cameras/FreeRoamCamera.h"
@@ -100,5 +99,3 @@ public:
 		mapY = mPickingZStart + idx / (mPickingXEnd - mPickingXStart);
 	}
 };
-
-#endif

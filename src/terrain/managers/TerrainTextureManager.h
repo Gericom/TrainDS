@@ -1,5 +1,4 @@
-#ifndef __TERRAIN_TEXTURE_MANAGER_H__
-#define __TERRAIN_TEXTURE_MANAGER_H__
+#pragma once
 
 #define TEXTURE_CACHE_BLOCK_TAG_EMPTY	0xFFFFFFFF
 
@@ -34,5 +33,3 @@ public:
 			mResourceCounter++;
 	}
 };
-
-#endif

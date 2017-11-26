@@ -1,5 +1,4 @@
-#ifndef __TERRAIN_TEXTURE_MANAGER_8_H__
-#define __TERRAIN_TEXTURE_MANAGER_8_H__
+#pragma once
 
 #include "TerrainTextureManager.h"
 
@@ -38,5 +37,3 @@ public:
 		((TerrainTextureManager8*)arg)->WorkerThreadMain();
 	}
 };
-
-#endif

@@ -1,6 +1,4 @@
 #include "common.h"
-
-
 #include "util.h"
 #include "terrain/TerrainManager.h"
 #include "terrain/Map.h"
@@ -159,8 +157,7 @@ void FlexTrack::RenderMarkers()
 				G3_PushMtx();
 				{
 					//fx32 y = mMap->GetYOnMap(mPoints[i].x, mPoints[i].z);
-					VecFx32 pos;
-					mVertices[i]->GetPosition(&pos);
+					VecFx32 pos = mVertices[i]->GetPosition();
 					G3_Translate(pos.x, mCurvePoints[i * (FLEXTRACK_NR_POINTS - 1)].y + FX32_ONE / 64, pos.z);
 					reg_G3_TEXCOORD = GX_PACK_TEXCOORD_PARAM(0, 0);
 					G3_Vtx(-FLEXTRACK_TRACK_WIDTH >> 1, 0, -FLEXTRACK_TRACK_WIDTH >> 1);
@@ -216,8 +213,7 @@ void FlexTrack::CalculatePoint(int inPoint, fx32 progress, VecFx32* pPos, VecFx3
 			dirB.z = mCurveNormals[i].x;
 			break;
 		}
-		else
-			len += diff;
+		len += diff;
 	}
 
 	VEC_Lerp(a, b, FX_Div(dist - len, diff), pPos);
@@ -263,11 +259,8 @@ void FlexTrack::Invalidate()
 	fx32 zmin = FX32_MAX;
 	fx32 zmax = FX32_MIN;
 
-
-	VecFx32 startPoint;
-	mVertices[0]->GetPosition(&startPoint);
-	VecFx32 endPoint;
-	mVertices[1]->GetPosition(&endPoint);
+	VecFx32 startPoint = mVertices[0]->GetPosition();
+	VecFx32 endPoint = mVertices[1]->GetPosition();
 
 	fx32 len = 0;
 	for (int i = 0; i < FLEXTRACK_NR_POINTS; i++)

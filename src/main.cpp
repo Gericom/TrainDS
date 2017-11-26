@@ -315,7 +315,7 @@ static void Init()
 }
 #include <nitro/codereset.h>
 
-void OnIntroVideoFinish()
+static void OnIntroVideoFinish()
 {
 	TitleMenu::GotoMenu();
 	//Game::GotoMenu();

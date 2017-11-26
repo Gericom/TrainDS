@@ -48,7 +48,7 @@ void TrackVertex::GetNextPoint(TrackPieceEx* piece, VecFx32* dst)
 	int newInPoint;
 	GetNextTrack(piece, newPiece, newInPoint);
 	if (newPiece)
-		newPiece->GetVertex(newPiece->GetOutPointId(newInPoint))->GetPosition(dst);
+		*dst = newPiece->GetVertex(newPiece->GetOutPointId(newInPoint))->GetPosition();
 	else
 		*dst = mPosition;
 }
@@ -62,7 +62,7 @@ void TrackVertex::GetNextTrack(TrackPieceEx* cur, TrackPieceEx* &track, int &inP
 	{
 		if (mConnections[i] == cur)
 		{
-			cur->GetVertex(cur->GetOutPointId(mConnectionInPoints[i]))->GetPosition(&a);
+			a = cur->GetVertex(cur->GetOutPointId(mConnectionInPoints[i]))->GetPosition();
 			break;
 		}
 	}
@@ -72,7 +72,7 @@ void TrackVertex::GetNextTrack(TrackPieceEx* cur, TrackPieceEx* &track, int &inP
 	{
 		if (mConnections[i] != NULL && mConnections[i] != cur)
 		{
-			mConnections[i]->GetVertex(mConnections[i]->GetOutPointId(mConnectionInPoints[i]))->GetPosition(&a);
+			a = mConnections[i]->GetVertex(mConnections[i]->GetOutPointId(mConnectionInPoints[i]))->GetPosition();
 			VEC_Subtract(&a, &mPosition, &otherdir);
 			VEC_Normalize(&otherdir, &otherdir);
 			fx32 dot = VEC_DotProduct(&curdir, &otherdir);

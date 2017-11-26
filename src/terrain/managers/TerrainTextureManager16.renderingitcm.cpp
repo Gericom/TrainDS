@@ -1,6 +1,4 @@
 #include "common.h"
-
-
 #include "util.h"
 #include "TerrainTextureManager16.h"
 
@@ -86,7 +84,7 @@ loop2:
 void TerrainTextureManager16::WorkerThreadMain()
 {
 	OSMessage msg;
-	while (1)
+	while (true)
 	{
 		OS_ReceiveMessage(&mMessageQueue, &msg, OS_MESSAGE_BLOCK);
 		int cacheBlock = (int)msg;

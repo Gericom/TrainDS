@@ -1,6 +1,4 @@
-#ifndef __SCENERYOBJECT_H__
-#define __SCENERYOBJECT_H__
-
+#pragma once
 
 #include "terrain\Map.h"
 
@@ -32,5 +30,3 @@ public:
 
 	virtual void Render(TerrainManager* terrainManager) = 0;
 };
-
-#endif

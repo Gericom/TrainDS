@@ -40,7 +40,7 @@
     <NMakeOutput>run.bat</NMakeOutput>
     <NMakeCleanCommandLine>clean</NMakeCleanCommandLine>
     <NMakeReBuildCommandLine>rebuild</NMakeReBuildCommandLine>
-    <NMakePreprocessorDefinitions>SDK_ARM9;SDK_CODE_ARM;asm=;BOOL=bool;__arm__</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>SDK_ARM9;SDK_CODE_ARM;asm=;BOOL=bool;__arm__;SDK_CW</NMakePreprocessorDefinitions>
     <IncludePath>$(NITROSDK_ROOT)\include;$(ProjectDir)\src;$(NITROSYSTEM_ROOT)\include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C\MSL_Common\Include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_C++\MSL_Common\Include;$(CWFolder_NITRO)\ARM_EABI_Support\msl\MSL_Extras\MSL_ARM\Include</IncludePath>
     <NMakeForcedIncludes>
     </NMakeForcedIncludes>

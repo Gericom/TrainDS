@@ -1,5 +1,4 @@
-#ifndef __BILLBOARDSCENERYOBJECT_H__
-#define __BILLBOARDSCENERYOBJECT_H__
+#pragma once
 
 #include "terrain\scenery\SceneryObject.h"
 
@@ -12,5 +11,3 @@ public:
 
 	virtual void Render(TerrainManager* terrainManager) = 0;
 };
-
-#endif

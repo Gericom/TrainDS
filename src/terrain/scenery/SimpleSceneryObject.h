@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "engine/objects/WorldObject.h"
 
 class Map;

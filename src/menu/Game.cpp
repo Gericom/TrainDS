@@ -545,6 +545,7 @@ void Game::OnSub3DCopyVAlarm()
 
 void Game::SetSwapBuffersFlag()
 {
+	OS_Printf("Polygons: %d\n", G3X_GetPolygonListRamCount() / 3);
 	OSIntrMode old = OS_DisableInterrupts();
 	G3_SwapBuffers(SWAP_BUFFERS_SORTMODE, SWAP_BUFFERS_BUFFERMODE);
 	mSwap = true;

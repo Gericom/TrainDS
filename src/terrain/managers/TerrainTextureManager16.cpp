@@ -1,6 +1,4 @@
 #include "common.h"
-
-
 #include "util.h"
 #include "TerrainTextureManager16.h"
 

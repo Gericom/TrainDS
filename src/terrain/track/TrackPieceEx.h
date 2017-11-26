@@ -1,5 +1,4 @@
-#ifndef __TRACKPIECEEX_H__
-#define __TRACKPIECEEX_H__
+#pragma once
 
 #include "box2d.h"
 #include "engine/objects/WorldObject.h"
@@ -39,5 +38,3 @@ public:
 	virtual void GetPosition(VecFx32* dst) = 0;
 	virtual void GetBounds(box2d_t* box) = 0;
 };
-
-#endif

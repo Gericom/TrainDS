@@ -23,9 +23,9 @@ public:
 		mConnectionInPoints[3] = -1;
 	}
 
-	void GetPosition(VecFx32* dst)
+	VecFx32 GetPosition() const
 	{
-		*dst = mPosition;
+		return mPosition;
 	}
 
 	//void InvalidateAll();

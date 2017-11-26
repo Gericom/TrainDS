@@ -1,6 +1,4 @@
-#ifndef __TERRAIN_MANAGER_H__
-#define __TERRAIN_MANAGER_H__
-
+#pragma once
 
 typedef struct
 {
@@ -29,5 +27,3 @@ public:
 	texture_t* GetSunTexture() { return &mSunTexture; }
 	texture_t* GetFlareTexture() { return &mFlareTexture; }
 };
-
-#endif

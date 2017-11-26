@@ -1,5 +1,4 @@
-#ifndef __WORLDOBJECT_H__
-#define __WORLDOBJECT_H__
+#pragma once
 
 #include "box2d.h"
 
@@ -22,5 +21,3 @@ public:
 		return bounds.Intersects(box);
 	}
 };
-
-#endif
