@@ -101,7 +101,7 @@ void Core_Init()
 	NNS_GfdInitLnkPlttVramManager(64 * 1024, pMgrWork, szWork, TRUE);
 
 	NNS_G3dGeSetBuffer(&sGeBuffer);
-	NNS_G3dGeUseFastDma(true);
+	//NNS_G3dGeUseFastDma(true);
 
 	TP_RequestAutoSamplingStart(192, 2, &mTPData[0], 4);
 }

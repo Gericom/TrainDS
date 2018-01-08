@@ -382,7 +382,7 @@ void Map::RenderLod1(hvtx_t* pHMap, int xstart, int xend, int zstart, int zend, 
 						pmap2[2].tex,
 						pmap2[2 * MAP_BLOCK_WIDTH].tex,
 						pmap2[2 * MAP_BLOCK_WIDTH + 2].tex,
-						pmap2[0].texAddress << 3);
+						(pmap2[0].texAddress << 3) - 128 * 1024) + 128 * 1024;
 					texOffset >>= 3;
 					pmap2[0].texAddress = texOffset;
 

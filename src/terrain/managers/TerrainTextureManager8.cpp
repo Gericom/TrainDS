@@ -94,6 +94,7 @@ TerrainTextureManager8::TerrainTextureManager8()
 		mCacheBlocks[j].tag = TEXTURE_CACHE_BLOCK_TAG_EMPTY;
 		mCacheBlocks[j].last_accessed = 0;
 	}
+	MI_CpuClearFast(mVramCacheChanged, sizeof(mVramCacheChanged));
 	MI_CpuFillFast(&mVramCTexData[0], 0xFFFFFFFF, sizeof(mVramCTexData));
 	OS_InitMessageQueue(&mMessageQueue, &mMessageQueueData[0], TEXTURE8_QUEUE_LENGTH);
 	OS_CreateThread(&mWorkerThread, WorkerThreadMain, this, mWorkerThreadStack + TEXTURE8_WORKER_THREAD_STACK_SIZE / sizeof(u32), TEXTURE8_WORKER_THREAD_STACK_SIZE, TEXTURE8_WORKER_THREAD_PRIORITY);
@@ -102,12 +103,24 @@ TerrainTextureManager8::TerrainTextureManager8()
 
 static void OnVRAMCopyComplete(void* arg)
 {
-	GX_SetBankForTex(GX_VRAM_TEX_01_AC);
+	GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
 	//GX_SetBankForTex((GXVRamTex)(GX_GetBankForTex() | GX_VRAM_C));// GX_VRAM_TEX_01_AC);
 }
 
 void TerrainTextureManager8::UpdateVramC()
 {
-	GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_C);
-	MI_DmaCopy32Async(0, &mVramCTexData, (void*)HW_LCDC_VRAM_C, 128 * 1024, OnVRAMCopyComplete, NULL);
+	GX_BeginLoadTex();
+	{
+		for (int i = 0; i < 512; i += 8)
+		{
+			u8 oldVal = MI_SwapByte(0, &((u8*)mVramCacheChanged)[i >> 3]);
+			if (oldVal)
+				MI_DmaCopy32(0, &mVramCTexData[i * 256], (void*)(HW_LCDC_VRAM_C + i * 256), 256 * 8);
+		}
+	}
+	GX_EndLoadTex();
+	//GX_SetBankForLCDC(GX_GetBankForLCDC() | GX_VRAM_LCDC_C);
+	//MI_DmaCopy32(0, &mVramCTexData, (void*)HW_LCDC_VRAM_C, 128 * 1024);
+	//GX_SetBankForTex(GX_VRAM_TEX_012_ABC);
+	//MI_DmaCopy32Async(0, &mVramCTexData, (void*)HW_LCDC_VRAM_C, 128 * 1024, OnVRAMCopyComplete, NULL);
 }

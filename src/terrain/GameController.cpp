@@ -281,7 +281,7 @@ void GameController::Render(RenderMode mode)
 		if (mode == RENDER_MODE_FAR)
 			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31, 0x7fff, 0, true);
 		else
-			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 31, 0x7fff, 0, false);
+			G3X_SetClearColor(GX_RGB(168 >> 3, 209 >> 3, 255 >> 3), 0, 0x7fff, 0, false);
 		G3X_SetShading(GX_SHADING_HIGHLIGHT);
 		G3X_EdgeMarking(true);
 		G3X_AntiAlias(true);
@@ -307,7 +307,7 @@ void GameController::Render(RenderMode mode)
 		G3X_SetToonTable(&sToonTable[0]);
 	}
 
-	if (mode == RENDER_MODE_NEAR)
+	/*if (mode == RENDER_MODE_NEAR)
 	{
 		//Do some 2d with the 3d engine when needed (AKA, fucking up matrices)
 		G3_MtxMode(GX_MTXMODE_PROJECTION);
@@ -328,7 +328,7 @@ void GameController::Render(RenderMode mode)
 		Util_DrawSprite(0 * FX32_ONE, 0 * FX32_ONE, -1024 * FX32_ONE, 256 * FX32_ONE, 192 * FX32_ONE);
 		G3_PolygonAttr(0, GX_POLYGONMODE_MODULATE, GX_CULL_BACK, 8, 30, 0);
 		Util_DrawSprite(0 * FX32_ONE, 0 * FX32_ONE, -1024 * FX32_ONE, 256 * FX32_ONE, 192 * FX32_ONE);
-	}
+	}*/
 
 	mCamera->Apply();
 	VecFx32 camDir;

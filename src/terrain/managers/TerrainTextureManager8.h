@@ -12,6 +12,7 @@ private:
 	texture_cache_block_t mCacheBlocks[/*1024*//*1025*/513] ATTRIBUTE_ALIGN(32);
 
 	uint8_t mVramCTexData[128 * 1024] ATTRIBUTE_ALIGN(32);
+	uint32_t mVramCacheChanged[512 / 32];
 
 	uint16_t* mTextureDatas[26] ATTRIBUTE_ALIGN(32);
 	coefd_texture_sample_t mCoefdTextureDatas[26][4][16 * 8];
